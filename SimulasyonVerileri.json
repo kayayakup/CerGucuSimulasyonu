@@ -1,0 +1,34 @@
+{
+  "HatEgimleri": [],
+  "HatKurplari": [],
+  "CerKatener": {
+    "RijitKatenerKmDirenci": 15,
+    "NormalRayKmDirenci": 21,
+    "SertlestirilmisRayKmDirenci": 24,
+    "TrafoIcDirenci": 15,
+    "YuksuzDcBaraGerilimi": 1620,
+    "TrafoGucu": 3300,
+    "DogrultucuGucu": 3000,
+    "RayToprakArasiDirenc": 150
+  },
+  "TrafoMerkezleri": [],
+  "RayParalellemeleri": [],
+  "Tren": {
+    "MaksTasarimHizi": 90,
+    "MaksIsletmeHizi": 80,
+    "MaksIvmelenme": 1.1,
+    "MaksFrenlemeIvmesi": 1.1,
+    "JerkLimiti": 1,
+    "Aw0BosAgirlik": 152,
+    "Aw3DoluAgirlik": 236,
+    "DonerKutle": 8.75,
+    "YardimciGuc": 300,
+    "MaksGerilim": 1800,
+    "MinGerilim": 1000,
+    "MinIsletmeGerilimi": 1050,
+    "TrenUzunlugu": 90,
+    "TrenVerimi": 85
+  },
+  "Istasyonlar": [],
+  "HizLimitleri": []
+}

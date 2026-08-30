@@ -1,0 +1,395 @@
+<Window x:Class="CerGucuSimulasyonu.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Cer Gücü Simülasyonu Veri Arayüzü" Height="768" Width="1024"
+        Background="White"
+        FontFamily="Segoe UI" FontSize="14">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Background="#2196F3" Padding="16">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22" Foreground="White" FontWeight="Bold">Cer Gücü Simülasyonu Veri Arayüzü</TextBlock>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                    <Button Command="{Binding LoadDataCommand}" Content="YÜKLE" Margin="0,0,8,0" Background="Transparent" Foreground="White" BorderBrush="White" BorderThickness="1" />
+                    <Button Command="{Binding SaveDataCommand}" Content="KAYDET" Background="White" Foreground="#2196F3" BorderThickness="0" FontWeight="Bold"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <TabControl Grid.Row="1" Margin="10">
+            
+            <!-- Hat Eğimi Tab -->
+            <TabItem Header="Hat Eğimleri">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Command="{Binding AddHatEgimiCommand}" Content="Yeni Hat Eğimi Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.HatEgimleri}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Başlangıç (m)" Binding="{Binding Baslangic}" />
+                            <DataGridTextColumn Header="Bitiş (m)" Binding="{Binding Bitis}" />
+                            <DataGridTextColumn Header="Eğim (%)" Binding="{Binding EgimYuzdesi}" />
+                            <DataGridTextColumn Header="Hat Tipi" Binding="{Binding HatTipi}" />
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Sil" Command="{Binding DataContext.RemoveHatEgimiCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- Hat Kurpları Tab -->
+            <TabItem Header="Hat Kurpları">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Command="{Binding AddHatKurbuCommand}" Content="Yeni Hat Kurbu Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.HatKurplari}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Başlangıç (m)" Binding="{Binding Baslangic}" />
+                            <DataGridTextColumn Header="Bitiş (m)" Binding="{Binding Bitis}" />
+                            <DataGridTextColumn Header="Yarıçap R(m)" Binding="{Binding Yaricap}" />
+                            <DataGridTextColumn Header="Hat Tipi" Binding="{Binding HatTipi}" />
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Sil" Command="{Binding DataContext.RemoveHatKurbuCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- Cer & Katener Tab -->
+            <TabItem Header="Cer &amp; Katener">
+                <ScrollViewer>
+                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
+                        <TextBlock Text="Temel Parametreler" FontSize="18" FontWeight="Bold" Margin="0,0,0,16"/>
+                        
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Tek yol rijit katener sistemi km direnci (mΩ)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.RijitKatenerKmDirenci}" />
+                        </Grid>
+                        
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Tek hat normal ray sistemi km direnci (mΩ)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.NormalRayKmDirenci}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Tek hat mantarı sertleştirilmiş ray km direnci (mΩ)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.SertlestirilmisRayKmDirenci}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Tam trafo merkezi iç direnci (mΩ)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.TrafoIcDirenci}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Yüksüz DC bara gerilimi (V)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.YuksuzDcBaraGerilimi}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Trafo gücü (kVA)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.TrafoGucu}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Doğrultucu gücü (kW)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.DogrultucuGucu}" />
+                        </Grid>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Tek hat için ray-toprak arası direnç (Ωkm)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.RayToprakArasiDirenc}" />
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Trafo Merkezleri Tab -->
+            <TabItem Header="Trafo Merkezleri">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Command="{Binding AddTrafoMerkeziCommand}" Content="Yeni Trafo Merkezi Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.TrafoMerkezleri}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="TM Adı" Binding="{Binding Ad}" />
+                            <DataGridTextColumn Header="İstasyon" Binding="{Binding Istasyon}" />
+                            <DataGridTextColumn Header="Direnç (mΩ)" Binding="{Binding Direnc}" />
+                            <DataGridTextColumn Header="DILA-S Konumu H1 (m)" Binding="{Binding DilasKonumuH1}" />
+                            <DataGridTextColumn Header="DILA-S Konumu H2 (m)" Binding="{Binding DilasKonumuH2}" />
+                            <DataGridTextColumn Header="Fider Direnci (mΩ)" Binding="{Binding FiderKabloDirenci}" />
+                            <DataGridTextColumn Header="Geri Dönüş Direnci (mΩ)" Binding="{Binding GeriDonusKabloDirenci}" />
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Sil" Command="{Binding DataContext.RemoveTrafoMerkeziCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- Ray Paralellemesi Tab -->
+            <TabItem Header="Ray Paralellemeleri">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Command="{Binding AddRayParalellemesiCommand}" Content="Yeni Paralelleme Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.RayParalellemeleri}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="No" Binding="{Binding No}" />
+                            <DataGridTextColumn Header="H1 Bağlantı (KM)" Binding="{Binding H1BaglantiKm}" />
+                            <DataGridTextColumn Header="H2 Bağlantı (KM)" Binding="{Binding H2BaglantiKm}" />
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Sil" Command="{Binding DataContext.RemoveRayParalellemesiCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- Tren Verileri Tab -->
+            <TabItem Header="Tren Verileri">
+                <ScrollViewer>
+                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
+                        <TextBlock Text="Tren Ana Parametreleri (4'lü Dizi)" FontSize="18" FontWeight="Bold" Margin="0,0,0,16"/>
+                        
+                        <!-- Similar Grid layout for Tren Parametreleri as Cer/Katener -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Maksimum Tasarım Hızı (km/h)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksTasarimHizi}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Maksimum İşletme Hızı (km/h)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksIsletmeHizi}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Maksimum İvmelenme (m/s²)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksIvmelenme}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Maksimum Frenleme İvmesi (m/s²)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksFrenlemeIvmesi}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Jerk Limiti (m/s³)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.JerkLimiti}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="AW0 Boş Ağırlık (ton)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.Aw0BosAgirlik}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="AW3 Dolu Ağırlık (ton)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.Aw3DoluAgirlik}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Döner Kütle (% AW0)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.DonerKutle}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Yardımcı Güç (kW)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.YardimciGuc}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Maksimum Gerilim (EN 50163) (V)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksGerilim}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Minimum Gerilim (EN 50163) (V)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MinGerilim}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Minimum İşletme Gerilimi (V)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MinIsletmeGerilimi}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Tren Uzunluğu (m)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.TrenUzunlugu}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="Tren Verimi (%)"/>
+                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.TrenVerimi}" />
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- İstasyonlar Tab -->
+            <TabItem Header="İstasyonlar">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Command="{Binding AddIstasyonCommand}" Content="Yeni İstasyon Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.Istasyonlar}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="İstasyon Adı" Binding="{Binding Ad}" />
+                            <DataGridTextColumn Header="Kısa Ad" Binding="{Binding KisaAd}" />
+                            <DataGridTextColumn Header="H1 Orta Nokta (m)" Binding="{Binding H1OrtaNokta}" />
+                            <DataGridTextColumn Header="H2 Orta Nokta (m)" Binding="{Binding H2OrtaNokta}" />
+                            <DataGridTextColumn Header="Uzunluk (m)" Binding="{Binding Uzunluk}" />
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Sil" Command="{Binding DataContext.RemoveIstasyonCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- Hız Limitleri Tab -->
+            <TabItem Header="Hız Limitleri">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Command="{Binding AddHizLimitiCommand}" Content="Yeni Hız Limiti Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.HizLimitleri}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Başlangıç (m)" Binding="{Binding Baslangic}" />
+                            <DataGridTextColumn Header="Bitiş (m)" Binding="{Binding Bitis}" />
+                            <DataGridTextColumn Header="Hız Limiti (km/h)" Binding="{Binding Limit}" />
+                            <DataGridTextColumn Header="Hat Tipi" Binding="{Binding HatTipi}" />
+                            <DataGridTemplateColumn>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Sil" Command="{Binding DataContext.RemoveHizLimitiCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
