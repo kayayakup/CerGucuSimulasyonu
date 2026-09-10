@@ -4,15 +4,48 @@
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Basic Styles -->
-            <Style TargetType="Button">
-                <Setter Property="Padding" Value="10,5"/>
-                <Setter Property="Margin" Value="5"/>
-            </Style>
+            <!-- Modern Dark Theme Palette -->
+            <SolidColorBrush x:Key="BgDark" Color="#13141F"/>
+            <SolidColorBrush x:Key="PanelDark" Color="#1C1D2D"/>
+            <SolidColorBrush x:Key="CardDark" Color="#232438"/>
+            <SolidColorBrush x:Key="BorderDark" Color="#2F314C"/>
+            <SolidColorBrush x:Key="TextPrimary" Color="#F0F1F5"/>
+            <SolidColorBrush x:Key="TextSecondary" Color="#8C8FA6"/>
+            <SolidColorBrush x:Key="AccentPurple" Color="#7C4DFF"/>
+            <SolidColorBrush x:Key="AccentBlue" Color="#38BDF8"/>
+            <SolidColorBrush x:Key="AccentOrange" Color="#FB923C"/>
+            <SolidColorBrush x:Key="AccentGreen" Color="#34D399"/>
+            <SolidColorBrush x:Key="AccentYellow" Color="#FACC15"/>
+            <SolidColorBrush x:Key="AccentRed" Color="#F87171"/>
+
+            <!-- Global Control Styles -->
             <Style TargetType="TextBox">
-                <Setter Property="Margin" Value="0,5,0,15"/>
-                <Setter Property="Padding" Value="5"/>
+                <Setter Property="Background" Value="#2A2B42"/>
+                <Setter Property="Foreground" Value="#F0F1F5"/>
+                <Setter Property="CaretBrush" Value="#38BDF8"/>
+                <Setter Property="BorderBrush" Value="#3A3C59"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="6,4"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+            </Style>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                <Setter Property="FontFamily" Value="Segoe UI"/>
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="Background" Value="#292A3E"/>
+                <Setter Property="Foreground" Value="#F0F1F5"/>
+                <Setter Property="BorderBrush" Value="#3D3E5B"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="10,6"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
             </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
+

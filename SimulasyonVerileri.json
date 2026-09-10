@@ -1,6 +1,5 @@
 {
-  "HatEgimleri": [],
-  "HatKurplari": [],
+  "HatUzunlugu": 15350,
   "CerKatener": {
     "RijitKatenerKmDirenci": 15,
     "NormalRayKmDirenci": 21,
@@ -11,8 +10,6 @@
     "DogrultucuGucu": 3000,
     "RayToprakArasiDirenc": 150
   },
-  "TrafoMerkezleri": [],
-  "RayParalellemeleri": [],
   "Tren": {
     "MaksTasarimHizi": 90,
     "MaksIsletmeHizi": 80,
@@ -26,9 +23,872 @@
     "MaksGerilim": 1800,
     "MinGerilim": 1000,
     "MinIsletmeGerilimi": 1050,
-    "TrenUzunlugu": 90,
+    "TrenUzunlugu": 88,
     "TrenVerimi": 85
   },
-  "Istasyonlar": [],
-  "HizLimitleri": []
+  "HatEgimleri": [
+    {
+      "Baslangic": 0,
+      "Bitis": 2500,
+      "EgimYuzdesi": 0.8,
+      "HatTipi": "H1"
+    },
+    {
+      "Baslangic": 4500,
+      "Bitis": 6500,
+      "EgimYuzdesi": -1.2,
+      "HatTipi": "H1"
+    },
+    {
+      "Baslangic": 8500,
+      "Bitis": 11000,
+      "EgimYuzdesi": 1.5,
+      "HatTipi": "H1"
+    },
+    {
+      "Baslangic": 12500,
+      "Bitis": 15350,
+      "EgimYuzdesi": -0.5,
+      "HatTipi": "H1"
+    },
+    {
+      "Baslangic": 0,
+      "Bitis": 2500,
+      "EgimYuzdesi": -0.8,
+      "HatTipi": "H2"
+    },
+    {
+      "Baslangic": 4500,
+      "Bitis": 6500,
+      "EgimYuzdesi": 1.2,
+      "HatTipi": "H2"
+    },
+    {
+      "Baslangic": 8500,
+      "Bitis": 11000,
+      "EgimYuzdesi": -1.5,
+      "HatTipi": "H2"
+    },
+    {
+      "Baslangic": 12500,
+      "Bitis": 15350,
+      "EgimYuzdesi": 0.5,
+      "HatTipi": "H2"
+    }
+  ],
+  "HatKurplari": [
+    {
+      "Baslangic": 1200,
+      "Bitis": 1600,
+      "Yaricap": 350,
+      "HatTipi": "H1"
+    },
+    {
+      "Baslangic": 4500,
+      "Bitis": 4900,
+      "Yaricap": 400,
+      "HatTipi": "H1"
+    },
+    {
+      "Baslangic": 7800,
+      "Bitis": 8200,
+      "Yaricap": 500,
+      "HatTipi": "H2"
+    },
+    {
+      "Baslangic": 12800,
+      "Bitis": 13300,
+      "Yaricap": 320,
+      "HatTipi": "H2"
+    }
+  ],
+  "TrafoMerkezleri": [
+    {
+      "Ad": "TM-1 (Darıca Sahil)",
+      "Istasyon": "Darıca Sahil",
+      "Direnc": 15,
+      "DilasKonumuH1": 186,
+      "DilasKonumuH2": 186,
+      "FiderKabloDirenci": 2,
+      "GeriDonusKabloDirenci": 1.5,
+      "AnlikGucKw": 0,
+      "AnlikAkimA": 0,
+      "AnlikGerilimV": 1620,
+      "YuklenmeYuzdesi": 0,
+      "Durum": "BOŞTA",
+      "BeslenenTrenSayisi": 0
+    },
+    {
+      "Ad": "TM-2 (Darıca Cumhuriyet)",
+      "Istasyon": "Darıca Cumhuriyet",
+      "Direnc": 15,
+      "DilasKonumuH1": 1407,
+      "DilasKonumuH2": 1407,
+      "FiderKabloDirenci": 2,
+      "GeriDonusKabloDirenci": 1.5,
+      "AnlikGucKw": 750,
+      "AnlikAkimA": 465,
+      "AnlikGerilimV": 1613,
+      "YuklenmeYuzdesi": 25,
+      "Durum": "NORMAL",
+      "BeslenenTrenSayisi": 1
+    },
+    {
+      "Ad": "TM-3 (Gebze Marmaray Gar)",
+      "Istasyon": "Gebze Marmaray Gar",
+      "Direnc": 15,
+      "DilasKonumuH1": 4421,
+      "DilasKonumuH2": 4421,
+      "FiderKabloDirenci": 2,
+      "GeriDonusKabloDirenci": 1.5,
+      "AnlikGucKw": 1420,
+      "AnlikAkimA": 880,
+      "AnlikGerilimV": 1607,
+      "YuklenmeYuzdesi": 47.3,
+      "Durum": "NORMAL",
+      "BeslenenTrenSayisi": 2
+    },
+    {
+      "Ad": "TM-4 (Akse Sapağı)",
+      "Istasyon": "Akse Sapağı",
+      "Direnc": 15,
+      "DilasKonumuH1": 9032,
+      "DilasKonumuH2": 9032,
+      "FiderKabloDirenci": 2,
+      "GeriDonusKabloDirenci": 1.5,
+      "AnlikGucKw": 800,
+      "AnlikAkimA": 495,
+      "AnlikGerilimV": 1612,
+      "YuklenmeYuzdesi": 26.7,
+      "Durum": "NORMAL",
+      "BeslenenTrenSayisi": 1
+    },
+    {
+      "Ad": "TM-5 (Mutlukent)",
+      "Istasyon": "Mutlukent",
+      "Direnc": 15,
+      "DilasKonumuH1": 12073,
+      "DilasKonumuH2": 12073,
+      "FiderKabloDirenci": 2,
+      "GeriDonusKabloDirenci": 1.5,
+      "AnlikGucKw": 710,
+      "AnlikAkimA": 440,
+      "AnlikGerilimV": 1613,
+      "YuklenmeYuzdesi": 23.7,
+      "Durum": "NORMAL",
+      "BeslenenTrenSayisi": 1
+    },
+    {
+      "Ad": "TM-6 (OSB)",
+      "Istasyon": "OSB",
+      "Direnc": 15,
+      "DilasKonumuH1": 13892,
+      "DilasKonumuH2": 13892,
+      "FiderKabloDirenci": 2,
+      "GeriDonusKabloDirenci": 1.5,
+      "AnlikGucKw": 0,
+      "AnlikAkimA": 0,
+      "AnlikGerilimV": 1620,
+      "YuklenmeYuzdesi": 0,
+      "Durum": "BOŞTA",
+      "BeslenenTrenSayisi": 0
+    },
+    {
+      "Ad": "TM-7 (Depo)",
+      "Istasyon": "Depo",
+      "Direnc": 15,
+      "DilasKonumuH1": 15347,
+      "DilasKonumuH2": 15347,
+      "FiderKabloDirenci": 2,
+      "GeriDonusKabloDirenci": 1.5,
+      "AnlikGucKw": 720,
+      "AnlikAkimA": 445,
+      "AnlikGerilimV": 1613,
+      "YuklenmeYuzdesi": 24.0,
+      "Durum": "NORMAL",
+      "BeslenenTrenSayisi": 1
+    }
+  ],
+  "RayParalellemeleri": [
+    {
+      "No": 1,
+      "H1BaglantiKm": 2400,
+      "H2BaglantiKm": 2400
+    },
+    {
+      "No": 2,
+      "H1BaglantiKm": 5100,
+      "H2BaglantiKm": 5100
+    },
+    {
+      "No": 3,
+      "H1BaglantiKm": 7800,
+      "H2BaglantiKm": 7800
+    },
+    {
+      "No": 4,
+      "H1BaglantiKm": 11200,
+      "H2BaglantiKm": 11200
+    },
+    {
+      "No": 5,
+      "H1BaglantiKm": 14600,
+      "H2BaglantiKm": 14600
+    }
+  ],
+  "Istasyonlar": [
+    {
+      "IstasyonId": 1,
+      "Ad": "Darıca Sahil",
+      "KisaAd": "SAHİL",
+      "H1OrtaNokta": 186.1,
+      "H2OrtaNokta": 186.1,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 2,
+      "Ad": "Darıca Cumhuriyet Meydanı",
+      "KisaAd": "CUMHURİYET",
+      "H1OrtaNokta": 1407.0,
+      "H2OrtaNokta": 1407.0,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 3,
+      "Ad": "Farabi Devlet Hastanesi",
+      "KisaAd": "FARABİ",
+      "H1OrtaNokta": 3327.8,
+      "H2OrtaNokta": 3327.8,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 4,
+      "Ad": "Gebze Marmaray Gar",
+      "KisaAd": "GAR",
+      "H1OrtaNokta": 4421.1,
+      "H2OrtaNokta": 4421.1,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 5,
+      "Ad": "Fatih Devlet Hastanesi",
+      "KisaAd": "FATİH",
+      "H1OrtaNokta": 5790.6,
+      "H2OrtaNokta": 5790.6,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 6,
+      "Ad": "Gebze Kent Meydanı",
+      "KisaAd": "MEYDAN",
+      "H1OrtaNokta": 7131.8,
+      "H2OrtaNokta": 7131.8,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 7,
+      "Ad": "Gebze Stadyum",
+      "KisaAd": "STADYUM",
+      "H1OrtaNokta": 8225.3,
+      "H2OrtaNokta": 8225.3,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 8,
+      "Ad": "Akse Sapağı",
+      "KisaAd": "AKSE",
+      "H1OrtaNokta": 9032.3,
+      "H2OrtaNokta": 9032.3,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 9,
+      "Ad": "Adliye",
+      "KisaAd": "ADLİYE",
+      "H1OrtaNokta": 10366.9,
+      "H2OrtaNokta": 10366.9,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 10,
+      "Ad": "Mutlukent",
+      "KisaAd": "MUTLUKENT",
+      "H1OrtaNokta": 12073.2,
+      "H2OrtaNokta": 12073.2,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 11,
+      "Ad": "OSB",
+      "KisaAd": "OSB",
+      "H1OrtaNokta": 13891.6,
+      "H2OrtaNokta": 13891.6,
+      "Uzunluk": 115,
+      "BekleyenYolcu": 45,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    },
+    {
+      "IstasyonId": 12,
+      "Ad": "Depo / Portal",
+      "KisaAd": "DEPO",
+      "H1OrtaNokta": 15347.0,
+      "H2OrtaNokta": 15347.0,
+      "Uzunluk": 100,
+      "BekleyenYolcu": 0,
+      "YaklasanTrenler": "3 km içinde tren yok",
+      "Durum": "NORMAL"
+    }
+  ],
+  "HizLimitleri": [
+    {
+      "Baslangic": 0,
+      "Bitis": 15350,
+      "Limit": 80,
+      "HatTipi": "H1"
+    },
+    {
+      "Baslangic": 0,
+      "Bitis": 15350,
+      "Limit": 80,
+      "HatTipi": "H2"
+    }
+  ],
+  "Trenler": [],
+  "KatenerEtaplari": [
+    {
+      "EtapNo": 1,
+      "Ad": "Etap 01",
+      "BaslangicKm": 0,
+      "BitisKm": 290.9,
+      "Uzunluk": 290.9,
+      "TunelTipi": "Aç-Kapa",
+      "OrtaNoktaKm": 141.5,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 1,
+      "BesleyenTrafo": "TM-1 (Darıca Sahil)"
+    },
+    {
+      "EtapNo": 7,
+      "Ad": "Etap 07",
+      "BaslangicKm": 290.9,
+      "BitisKm": 686.9,
+      "Uzunluk": 396.0,
+      "TunelTipi": "Aç-Kapa / TBM",
+      "OrtaNoktaKm": 488.9,
+      "OverlapTipi": "İzoleli Overlap (PE 938 @ 0+514)",
+      "SeksiyonNo": 1,
+      "BesleyenTrafo": "TM-1 / TM-2"
+    },
+    {
+      "EtapNo": 9,
+      "Ad": "Etap 09",
+      "BaslangicKm": 686.9,
+      "BitisKm": 1082.9,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 884.9,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 2,
+      "BesleyenTrafo": "TM-2 (Darıca Cumhuriyet)"
+    },
+    {
+      "EtapNo": 11,
+      "Ad": "Etap 11",
+      "BaslangicKm": 1082.9,
+      "BitisKm": 1433.0,
+      "Uzunluk": 350.1,
+      "TunelTipi": "TBM / NATM",
+      "OrtaNoktaKm": 1258.0,
+      "OverlapTipi": "İzoleli Overlap (PE 938 @ 1+433)",
+      "SeksiyonNo": 2,
+      "BesleyenTrafo": "TM-2 (Darıca Cumhuriyet)"
+    },
+    {
+      "EtapNo": 13,
+      "Ad": "Etap 13",
+      "BaslangicKm": 1433.0,
+      "BitisKm": 1824.0,
+      "Uzunluk": 391.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 1628.5,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 15,
+      "Ad": "Etap 15",
+      "BaslangicKm": 1824.0,
+      "BitisKm": 2220.0,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 2022.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 17,
+      "Ad": "Etap 17",
+      "BaslangicKm": 2220.0,
+      "BitisKm": 2616.0,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 2418.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 19,
+      "Ad": "Etap 19",
+      "BaslangicKm": 2616.0,
+      "BitisKm": 2988.0,
+      "Uzunluk": 372.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 2802.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 21,
+      "Ad": "Etap 21",
+      "BaslangicKm": 2988.0,
+      "BitisKm": 3372.0,
+      "Uzunluk": 384.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 3180.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 23,
+      "Ad": "Etap 23",
+      "BaslangicKm": 3372.0,
+      "BitisKm": 3756.0,
+      "Uzunluk": 384.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 3564.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 25,
+      "Ad": "Etap 25",
+      "BaslangicKm": 3756.0,
+      "BitisKm": 4068.9,
+      "Uzunluk": 312.9,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 3912.4,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 27,
+      "Ad": "Etap 27",
+      "BaslangicKm": 4068.9,
+      "BitisKm": 4464.9,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM / Aç-Kapa",
+      "OrtaNoktaKm": 4266.9,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 33,
+      "Ad": "Etap 33",
+      "BaslangicKm": 4464.9,
+      "BitisKm": 4711.4,
+      "Uzunluk": 246.5,
+      "TunelTipi": "Aç-Kapa",
+      "OrtaNoktaKm": 4588.1,
+      "OverlapTipi": "İzoleli Overlap (PE 938 @ 4+711)",
+      "SeksiyonNo": 3,
+      "BesleyenTrafo": "TM-3 (Gebze Gar)"
+    },
+    {
+      "EtapNo": 35,
+      "Ad": "Etap 35",
+      "BaslangicKm": 4711.4,
+      "BitisKm": 5095.4,
+      "Uzunluk": 384.0,
+      "TunelTipi": "Aç-Kapa / TBM",
+      "OrtaNoktaKm": 4903.4,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 4,
+      "BesleyenTrafo": "TM-3 / TM-4 (Fatih)"
+    },
+    {
+      "EtapNo": 37,
+      "Ad": "Etap 37",
+      "BaslangicKm": 5095.4,
+      "BitisKm": 5491.4,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 5293.4,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 4,
+      "BesleyenTrafo": "TM-4 (Kent Meydanı)"
+    },
+    {
+      "EtapNo": 39,
+      "Ad": "Etap 39",
+      "BaslangicKm": 5491.4,
+      "BitisKm": 5887.4,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 5689.4,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 4,
+      "BesleyenTrafo": "TM-4 (Kent Meydanı)"
+    },
+    {
+      "EtapNo": 41,
+      "Ad": "Etap 41",
+      "BaslangicKm": 5887.4,
+      "BitisKm": 6283.4,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 6085.4,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 4,
+      "BesleyenTrafo": "TM-4 (Kent Meydanı)"
+    },
+    {
+      "EtapNo": 43,
+      "Ad": "Etap 43",
+      "BaslangicKm": 6283.4,
+      "BitisKm": 6511.4,
+      "Uzunluk": 228.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 6397.4,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 4,
+      "BesleyenTrafo": "TM-4 (Kent Meydanı)"
+    },
+    {
+      "EtapNo": 45,
+      "Ad": "Etap 45",
+      "BaslangicKm": 6511.4,
+      "BitisKm": 6826.3,
+      "Uzunluk": 314.9,
+      "TunelTipi": "TBM / Aç-Kapa",
+      "OrtaNoktaKm": 6668.8,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 4,
+      "BesleyenTrafo": "TM-4 (Kent Meydanı)"
+    },
+    {
+      "EtapNo": 47,
+      "Ad": "Etap 47",
+      "BaslangicKm": 6826.3,
+      "BitisKm": 7032.0,
+      "Uzunluk": 205.7,
+      "TunelTipi": "Aç-Kapa",
+      "OrtaNoktaKm": 6929.1,
+      "OverlapTipi": "İzoleli Overlap (PE 938 @ 7+032)",
+      "SeksiyonNo": 4,
+      "BesleyenTrafo": "TM-4 (Kent Meydanı)"
+    },
+    {
+      "EtapNo": 53,
+      "Ad": "Etap 53",
+      "BaslangicKm": 7032.0,
+      "BitisKm": 7428.0,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 7230.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 5,
+      "BesleyenTrafo": "TM-4 (Akse Sapağı)"
+    },
+    {
+      "EtapNo": 55,
+      "Ad": "Etap 55",
+      "BaslangicKm": 7428.0,
+      "BitisKm": 7824.0,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 7626.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 5,
+      "BesleyenTrafo": "TM-4 (Akse Sapağı)"
+    },
+    {
+      "EtapNo": 57,
+      "Ad": "Etap 57",
+      "BaslangicKm": 7824.0,
+      "BitisKm": 8220.0,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 8022.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 5,
+      "BesleyenTrafo": "TM-4 (Akse Sapağı)"
+    },
+    {
+      "EtapNo": 59,
+      "Ad": "Etap 59",
+      "BaslangicKm": 8220.0,
+      "BitisKm": 8616.0,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 8418.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 5,
+      "BesleyenTrafo": "TM-4 (Akse Sapağı)"
+    },
+    {
+      "EtapNo": 61,
+      "Ad": "Etap 61",
+      "BaslangicKm": 8616.0,
+      "BitisKm": 9010.9,
+      "Uzunluk": 394.9,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 8813.4,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 5,
+      "BesleyenTrafo": "TM-4 (Akse Sapağı)"
+    },
+    {
+      "EtapNo": 63,
+      "Ad": "Etap 63",
+      "BaslangicKm": 9010.9,
+      "BitisKm": 9389.0,
+      "Uzunluk": 378.1,
+      "TunelTipi": "TBM / Aç-Kapa",
+      "OrtaNoktaKm": 9200.0,
+      "OverlapTipi": "İzoleli Overlap (PE 938 @ 9+389)",
+      "SeksiyonNo": 5,
+      "BesleyenTrafo": "TM-4 (Akse Sapağı)"
+    },
+    {
+      "EtapNo": 65,
+      "Ad": "Etap 65",
+      "BaslangicKm": 9389.0,
+      "BitisKm": 9785.0,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 9587.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 6,
+      "BesleyenTrafo": "TM-5 (Mutlukent)"
+    },
+    {
+      "EtapNo": 67,
+      "Ad": "Etap 67",
+      "BaslangicKm": 9785.0,
+      "BitisKm": 10181.0,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 9983.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 6,
+      "BesleyenTrafo": "TM-5 (Mutlukent)"
+    },
+    {
+      "EtapNo": 69,
+      "Ad": "Etap 69",
+      "BaslangicKm": 10181.0,
+      "BitisKm": 10451.6,
+      "Uzunluk": 270.6,
+      "TunelTipi": "Aç-Kapa",
+      "OrtaNoktaKm": 10316.3,
+      "OverlapTipi": "İzoleli Overlap (PE 938 @ 10+300)",
+      "SeksiyonNo": 6,
+      "BesleyenTrafo": "TM-5 (Mutlukent)"
+    },
+    {
+      "EtapNo": 71,
+      "Ad": "Etap 71",
+      "BaslangicKm": 10451.6,
+      "BitisKm": 10840.1,
+      "Uzunluk": 388.5,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 10645.8,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 6,
+      "BesleyenTrafo": "TM-5 (Mutlukent)"
+    },
+    {
+      "EtapNo": 77,
+      "Ad": "Etap 77",
+      "BaslangicKm": 10840.1,
+      "BitisKm": 11236.1,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 11038.1,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 6,
+      "BesleyenTrafo": "TM-5 (Mutlukent)"
+    },
+    {
+      "EtapNo": 79,
+      "Ad": "Etap 79",
+      "BaslangicKm": 11236.1,
+      "BitisKm": 11620.1,
+      "Uzunluk": 384.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 11428.1,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 6,
+      "BesleyenTrafo": "TM-5 (Mutlukent)"
+    },
+    {
+      "EtapNo": 81,
+      "Ad": "Etap 81",
+      "BaslangicKm": 11620.1,
+      "BitisKm": 11934.7,
+      "Uzunluk": 314.6,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 11777.4,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 6,
+      "BesleyenTrafo": "TM-5 (Mutlukent)"
+    },
+    {
+      "EtapNo": 83,
+      "Ad": "Etap 83",
+      "BaslangicKm": 11934.7,
+      "BitisKm": 12186.1,
+      "Uzunluk": 251.4,
+      "TunelTipi": "Aç-Kapa",
+      "OrtaNoktaKm": 12060.4,
+      "OverlapTipi": "İzoleli Overlap (PE 938 @ 12+186)",
+      "SeksiyonNo": 6,
+      "BesleyenTrafo": "TM-5 (Mutlukent)"
+    },
+    {
+      "EtapNo": 85,
+      "Ad": "Etap 85",
+      "BaslangicKm": 12186.1,
+      "BitisKm": 12570.1,
+      "Uzunluk": 384.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 12378.1,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 7,
+      "BesleyenTrafo": "TM-6 (OSB)"
+    },
+    {
+      "EtapNo": 87,
+      "Ad": "Etap 87",
+      "BaslangicKm": 12570.1,
+      "BitisKm": 12966.1,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 12768.1,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 7,
+      "BesleyenTrafo": "TM-6 (OSB)"
+    },
+    {
+      "EtapNo": 89,
+      "Ad": "Etap 89",
+      "BaslangicKm": 12966.1,
+      "BitisKm": 13362.1,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 13164.1,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 7,
+      "BesleyenTrafo": "TM-6 (OSB)"
+    },
+    {
+      "EtapNo": 91,
+      "Ad": "Etap 91",
+      "BaslangicKm": 13362.1,
+      "BitisKm": 13758.1,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 13560.1,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 7,
+      "BesleyenTrafo": "TM-6 (OSB)"
+    },
+    {
+      "EtapNo": 93,
+      "Ad": "Etap 93",
+      "BaslangicKm": 13758.1,
+      "BitisKm": 14154.1,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM",
+      "OrtaNoktaKm": 13956.1,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 7,
+      "BesleyenTrafo": "TM-6 (OSB)"
+    },
+    {
+      "EtapNo": 95,
+      "Ad": "Etap 95",
+      "BaslangicKm": 14154.1,
+      "BitisKm": 14550.1,
+      "Uzunluk": 396.0,
+      "TunelTipi": "TBM / Aç-Kapa",
+      "OrtaNoktaKm": 14352.1,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 7,
+      "BesleyenTrafo": "TM-6 / TM-7"
+    },
+    {
+      "EtapNo": 97,
+      "Ad": "Etap 97",
+      "BaslangicKm": 14550.1,
+      "BitisKm": 14950.0,
+      "Uzunluk": 399.9,
+      "TunelTipi": "Aç-Kapa / Depo",
+      "OrtaNoktaKm": 14750.0,
+      "OverlapTipi": "İzolesiz Overlap",
+      "SeksiyonNo": 7,
+      "BesleyenTrafo": "TM-7 (Depo Sahası)"
+    },
+    {
+      "EtapNo": 99,
+      "Ad": "Etap 99",
+      "BaslangicKm": 14950.0,
+      "BitisKm": 15350.0,
+      "Uzunluk": 400.0,
+      "TunelTipi": "Depo Bağlantı",
+      "OrtaNoktaKm": 15150.0,
+      "OverlapTipi": "Hat Sonu Ayırıcı",
+      "SeksiyonNo": 7,
+      "BesleyenTrafo": "TM-7 (Depo Sahası)"
+    }
+  ]
 }

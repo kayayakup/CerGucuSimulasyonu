@@ -3,393 +3,1092 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:CerGucuSimulasyonu.ViewModels"
+        xmlns:models="clr-namespace:CerGucuSimulasyonu.Models"
         mc:Ignorable="d"
-        Title="Cer Gücü Simülasyonu Veri Arayüzü" Height="768" Width="1024"
-        Background="White"
-        FontFamily="Segoe UI" FontSize="14">
+        Title="⚡ Gebze-Darıca Metro Cer Gücü &amp; Sinyalizasyon Canlı Simülasyonu ve Analiz Sistemi"
+        Height="840" Width="1520"
+        MinHeight="720" MinWidth="1180"
+        Background="#10111D"
+        FontFamily="Segoe UI" FontSize="13"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <!-- DataGrid Başlık Stili: Siyah, Okunaklı, Kontrastlı ve Şık -->
+        <Style x:Key="CustomDataGridHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#334155"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="BorderBrush" Value="#475569"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+
+        <!-- DataGrid Hücre Stili -->
+        <Style x:Key="CustomDataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1E3A8A"/>
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- TabItem Stili (Koyu Tema İle Uyumlu, Okunaklı Başlıklar) -->
+        <Style TargetType="TabItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="TabBorder" Background="#1C1E32" CornerRadius="6,6,0,0" Padding="14,8" Margin="0,0,4,0" BorderBrush="#2C2F4D" BorderThickness="1,1,1,0">
+                            <ContentPresenter ContentSource="Header" TextElement.Foreground="#94A3B8" TextElement.FontWeight="SemiBold" TextElement.FontSize="12"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#2A2D4A"/>
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                <Setter Property="TextElement.Foreground" Value="#38BDF8"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#242740"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Mod Seçim Butonları Stili (Yüksek Kontrast, Okunaklı ve Şık) -->
+        <Style x:Key="ModeToggleButtonStyle" TargetType="RadioButton">
+            <Setter Property="Background" Value="#1E2238"/>
+            <Setter Property="Foreground" Value="#F1F5F9"/>
+            <Setter Property="BorderBrush" Value="#3E446E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#2E3458"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#60A5FA"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#2563EB"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#93C5FD"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter Property="FontWeight" Value="Bold"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="#1D4ED8"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#BFDBFE"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
+            <!-- Top Toolbar -->
             <RowDefinition Height="Auto"/>
+            <!-- Main Content (Left Sidebar + Center Canvas) -->
             <RowDefinition Height="*"/>
+            <!-- Bottom Status Bar -->
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Background="#2196F3" Padding="16">
-            <DockPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="22" Foreground="White" FontWeight="Bold">Cer Gücü Simülasyonu Veri Arayüzü</TextBlock>
+        <!-- ═══════════════════════════════════════════════════════════════
+             ÜST ARAÇ ÇUBUĞU (TOOLBAR & SIMULATION CONTROLS)
+             ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#181928" BorderBrush="#2A2C44" BorderThickness="0,0,0,1" Padding="8,6">
+            <DockPanel LastChildFill="False">
+                
+                <!-- SOL ALAN: SİMÜLASYON OYNATMA, HIZ VE MOD SEÇİM BUTONLARI -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <!-- SİMÜLASYON OYNATMA VE HIZ -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
+                        <Button Command="{Binding ToggleSimulationCommand}" Margin="1,0" Padding="10,4" FontWeight="Bold" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="#10B981"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Content" Value="▶ Başlat"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSimulationRunning}" Value="True">
+                                            <Setter Property="Background" Value="#EF4444"/>
+                                            <Setter Property="Content" Value="⏸ Durdur"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Button Command="{Binding ResetSimulationCommand}" Content="🔄 Sıfırla" Background="#24263D" Foreground="#E2E8F0" BorderBrush="#3F4263" Margin="2,0" Padding="6,4" Cursor="Hand"/>
+
+                        <Border Background="#0F101A" CornerRadius="4" Padding="6,3" Margin="4,0" BorderBrush="#2F314C" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⏱ " Foreground="#FACC15"/>
+                                <TextBlock Text="{Binding SimulationTimeString}" FontWeight="Bold" Foreground="#FACC15" FontFamily="Consolas"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Hız -->
+                        <Button Command="{Binding SetSpeedCommand}" CommandParameter="1.0" Content="1x" Background="#23243B" Foreground="White" BorderBrush="#3F4263" Margin="1,0" Padding="5,2" Cursor="Hand"/>
+                        <Button Command="{Binding SetSpeedCommand}" CommandParameter="2.0" Content="2x" Background="#23243B" Foreground="White" BorderBrush="#3F4263" Margin="1,0" Padding="5,2" Cursor="Hand"/>
+                        <Button Command="{Binding SetSpeedCommand}" CommandParameter="5.0" Content="5x" Background="#23243B" Foreground="White" BorderBrush="#3F4263" Margin="1,0" Padding="5,2" Cursor="Hand"/>
+                    </StackPanel>
+
+                    <Separator Width="1" Height="20" Background="#2F314C" Margin="4,0"/>
+
+                    <!-- Mod Seçim Butonları -->
+                    <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
+                        <RadioButton x:Name="BtnModeSelect" GroupName="ToolMode" Content="🔍 Seç / İzle" IsChecked="True" 
+                                     Click="OnModeChanged" Tag="SELECT"
+                                     Style="{StaticResource ModeToggleButtonStyle}"/>
+
+                        <RadioButton x:Name="BtnModeStation" GroupName="ToolMode" Content="🚉 İstasyon" 
+                                     Click="OnModeChanged" Tag="STATION"
+                                     Style="{StaticResource ModeToggleButtonStyle}"/>
+
+                        <RadioButton x:Name="BtnModeTrafo" GroupName="ToolMode" Content="⚡ Trafo" 
+                                     Click="OnModeChanged" Tag="TRAFO"
+                                     Style="{StaticResource ModeToggleButtonStyle}"/>
+
+                        <RadioButton x:Name="BtnModeSpeed" GroupName="ToolMode" Content="🚦 Hız" 
+                                     Click="OnModeChanged" Tag="SPEED"
+                                     Style="{StaticResource ModeToggleButtonStyle}"/>
+
+                        <RadioButton x:Name="BtnModeEgim" GroupName="ToolMode" Content="📐 Eğim" 
+                                     Click="OnModeChanged" Tag="EGIM"
+                                     Style="{StaticResource ModeToggleButtonStyle}"/>
+
+                        <RadioButton x:Name="BtnModeKurp" GroupName="ToolMode" Content="↩ Kurp" 
+                                     Click="OnModeChanged" Tag="KURP"
+                                     Style="{StaticResource ModeToggleButtonStyle}"/>
+
+                        <RadioButton x:Name="BtnModeParallel" GroupName="ToolMode" Content="⊥ Paralel" 
+                                     Click="OnModeChanged" Tag="PARALLEL"
+                                     Style="{StaticResource ModeToggleButtonStyle}"/>
+                    </StackPanel>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                    <Button Command="{Binding LoadDataCommand}" Content="YÜKLE" Margin="0,0,8,0" Background="Transparent" Foreground="White" BorderBrush="White" BorderThickness="1" />
-                    <Button Command="{Binding SaveDataCommand}" Content="KAYDET" Background="White" Foreground="#2196F3" BorderThickness="0" FontWeight="Bold"/>
+
+                <!-- SAĞ ALAN: TREN ÜRET DAHİL SAĞDA KALAN BUTONLAR -->
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Command="{Binding GenerateRandomTrainsCommand}" Content="🎲 Tren Üret" Background="#7C4DFF" Foreground="White" BorderThickness="0" Margin="2,0" Padding="8,4" FontWeight="Bold" Cursor="Hand"/>
+                    <Button Command="{Binding AddSingleTrainCommand}" Content="🚃 +1 Tren" Background="#24263D" Foreground="#38BDF8" BorderBrush="#38BDF8" Margin="2,0" Padding="6,4" Cursor="Hand"/>
+                    <Button Command="{Binding ZoomInCommand}" Content="🔍+" ToolTip="Yakınlaştır" Margin="1,0" Padding="6,4" Cursor="Hand"/>
+                    <Button Command="{Binding ZoomOutCommand}" Content="🔍-" ToolTip="Uzaklaştır" Margin="1,0" Padding="6,4" Cursor="Hand"/>
+                    <Button Command="{Binding ZoomResetCommand}" Content="🔄 %100" ToolTip="Yakınlaştırmayı Sıfırla" Margin="1,0" Padding="6,4" Cursor="Hand"/>
+                    <Button Command="{Binding SaveDataCommand}" Content="💾 Kaydet" Background="#059669" Foreground="White" BorderThickness="0" Margin="3,0" Padding="8,4" Cursor="Hand"/>
+                    <Button Command="{Binding LoadDataCommand}" Content="📂 Yükle" Margin="1,0" Padding="6,4" Cursor="Hand"/>
+                    <Button Command="{Binding ExportWordReportCommand}" Content="📝 Word Raporu" Background="#2563EB" Foreground="White" BorderThickness="0" Margin="3,0" Padding="8,4" Cursor="Hand"/>
+                    <Button Command="{Binding ExportExcelReportCommand}" Content="📊 Excel Raporu" Background="#16A34A" Foreground="White" BorderThickness="0" Margin="1,0" Padding="8,4" Cursor="Hand"/>
+                    <Button Command="{Binding RunAllScenariosCommand}" Content="▶ Tüm Senaryolar" Background="#9333EA" Foreground="White" BorderThickness="0" Margin="3,0" Padding="8,4" Cursor="Hand"/>
                 </StackPanel>
+
             </DockPanel>
         </Border>
 
-        <TabControl Grid.Row="1" Margin="10">
-            
-            <!-- Hat Eğimi Tab -->
-            <TabItem Header="Hat Eğimleri">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Button Command="{Binding AddHatEgimiCommand}" Content="Yeni Hat Eğimi Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.HatEgimleri}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Başlangıç (m)" Binding="{Binding Baslangic}" />
-                            <DataGridTextColumn Header="Bitiş (m)" Binding="{Binding Bitis}" />
-                            <DataGridTextColumn Header="Eğim (%)" Binding="{Binding EgimYuzdesi}" />
-                            <DataGridTextColumn Header="Hat Tipi" Binding="{Binding HatTipi}" />
-                            <DataGridTemplateColumn>
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Sil" Command="{Binding DataContext.RemoveHatEgimiCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+        <!-- ═══════════════════════════════════════════════════════════════
+             ANA İÇERİK ALANI (SOL CANLI PANEL + SAĞ CANVAS VE GRAFİKLER)
+             ═══════════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Sol Panel (Canlı İzleme, Tablolar, Rapor & Parametreler) -->
+                <ColumnDefinition Width="430" MinWidth="350" MaxWidth="620"/>
+                <!-- Splitter -->
+                <ColumnDefinition Width="4"/>
+                <!-- Sağ Alan (İnteraktif Canvas + Canlı Grafikler) -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- SOL PANEL: CANLI İZLEME, METRİKLER, TABLOLAR VE PARAMETRELER -->
+            <Border Grid.Column="0" Background="#141524" BorderBrush="#25273D" BorderThickness="0,0,1,0">
+                <TabControl Background="Transparent" BorderThickness="0" Margin="4">
+                    
+                    <!-- 1. TAB: CANLI İZLEME & SEÇİLİ NESNE BİLGİSİ -->
+                    <TabItem Header="📊 Canlı İzleme" FontWeight="SemiBold">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="8,10">
+                            <StackPanel>
+
+                                <!-- SİSTEM ÖZETİ CANLI DASHBOARD -->
+                                <Border Background="#1C1E32" CornerRadius="8" Padding="12" Margin="0,0,0,10" BorderBrush="#2C2F4D" BorderThickness="1">
+                                    <StackPanel>
+                                        <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                                            <Border Background="#10B981" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                <TextBlock Text="TÜM HAT TOPLAMI" FontWeight="Bold" FontSize="9" Foreground="White"/>
+                                            </Border>
+                                            <TextBlock Text="🌐  SİSTEM GENEL CER &amp; ŞEBEKE ÖZETİ" FontWeight="Bold" FontSize="11.5" Foreground="#38BDF8"/>
+                                        </DockPanel>
+
+                                        <TextBlock Text="* Aşağıdaki 4 metrik tüm metro hattının toplam anlık cer ve şebeke değerleridir." Foreground="#94A3B8" FontSize="9.5" Margin="0,0,0,6"/>
+
+                                        <UniformGrid Columns="2" Margin="0,2">
+                                            <Border Background="#111220" CornerRadius="6" Padding="8" Margin="2">
+                                                <StackPanel>
+                                                    <TextBlock Text="Toplam Çekilen Güç" Foreground="#94A3B8" FontSize="10"/>
+                                                    <TextBlock Text="{Binding ToplamCekilenGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="14" Foreground="#F59E0B"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Background="#111220" CornerRadius="6" Padding="8" Margin="2">
+                                                <StackPanel>
+                                                    <TextBlock Text="Rejeneratif Güç" Foreground="#94A3B8" FontSize="10"/>
+                                                    <TextBlock Text="{Binding ToplamRejeneratifGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="14" Foreground="#34D399"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Background="#111220" CornerRadius="6" Padding="8" Margin="2">
+                                                <StackPanel>
+                                                    <TextBlock Text="Net Şebeke Yükü" Foreground="#94A3B8" FontSize="10"/>
+                                                    <TextBlock Text="{Binding NetSistemGucuKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="14" Foreground="#38BDF8"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <Border Background="#111220" CornerRadius="6" Padding="8" Margin="2">
+                                                <StackPanel>
+                                                    <TextBlock Text="Pik Trafo Yükü" Foreground="#94A3B8" FontSize="10"/>
+                                                    <TextBlock Text="{Binding EnYuksekTrafoYukYuzdesi, StringFormat='%{0:N1}'}" FontWeight="Bold" FontSize="14" Foreground="#EC4899"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </UniformGrid>
+
+                                        <Grid Margin="0,6,0,2">
+                                            <TextBlock Text="Toplam Tüketilen Enerji:" Foreground="#9CA3AF" FontSize="11"/>
+                                            <TextBlock Text="{Binding ToplamTuketilenEnerjiKwh, StringFormat='{}{0:N3} kWh'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/>
+                                        </Grid>
+                                        <Grid Margin="0,2">
+                                            <TextBlock Text="Geri Kazanılan Enerji:" Foreground="#9CA3AF" FontSize="11"/>
+                                            <TextBlock Text="{Binding ToplamGeriKazanilanEnerjiKwh, StringFormat='{}{0:N3} kWh'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/>
+                                        </Grid>
+                                        <Grid Margin="0,2">
+                                            <TextBlock Text="En Çok Yüklenen Trafo:" Foreground="#9CA3AF" FontSize="11"/>
+                                            <TextBlock Text="{Binding EnCokYuklenenTrafoAdi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#C084FC" FontSize="11"/>
+                                        </Grid>
+                                        <Grid Margin="0,2">
+                                            <TextBlock Text="Ortalama / Min Gerilim:" Foreground="#9CA3AF" FontSize="11"/>
+                                            <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}{0:N0} V / {1:N0} V">
+                                                        <Binding Path="OrtalamaKatenerGerilimiV"/>
+                                                        <Binding Path="MinHatGerilimiV"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- SEÇİLİ NESNEYE ÖZEL CANLI METRİKLER (TRAFO, TREN, PARALELLEME, EĞİM, KURP) -->
+                                <Border Background="#1F2238" CornerRadius="8" Padding="12" Margin="0,0,0,10" BorderBrush="#3B3F66" BorderThickness="1.5">
+                                    <StackPanel>
+                                        <DockPanel LastChildFill="True" Margin="0,0,0,8">
+                                            <Border Background="#3B82F6" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                <TextBlock Text="ÖZEL METRİK" FontWeight="Bold" FontSize="9" Foreground="White"/>
+                                            </Border>
+                                            <TextBlock Text="🎯  SEÇİLİ NESNE VE DETAY METRİKLERİ" FontWeight="Bold" FontSize="11.5" Foreground="#FACC15"/>
+                                        </DockPanel>
+
+                                        <!-- Seçili Nesne İçeriği -->
+                                        <ContentControl Content="{Binding SelectedItem}">
+                                            <ContentControl.Resources>
+                                                <!-- 1. TREN ŞABLONU VE METRİKLERİ -->
+                                                <DataTemplate DataType="{x:Type models:TrenKonumu}">
+                                                    <StackPanel>
+                                                        <Border Background="#101B33" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#2563EB" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#2563EB" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="{Binding Durum}" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding TrenAdi, StringFormat='🚃 {0} (Aktif Tren Metrikleri)'}" FontWeight="Bold" FontSize="13" Foreground="#38BDF8"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="⚡ Çekilen/Verilen Güç" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding CekilenGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="⚡ Çekilen Akım" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding CekilenAkimA, StringFormat='{}{0:N1} A'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="🔋 Katener Gerilimi" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding KatenerGerilimiV, StringFormat='{}{0:N1} V'}" FontWeight="Bold" FontSize="13.5" Foreground="#38BDF8"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="🚀 Anlık Hız" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AnlikHiz, StringFormat='{}{0:N1} km/h'}" FontWeight="Bold" FontSize="13.5" Foreground="#10B981"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </UniformGrid>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="Anlık Konum (Hat KM):" Foreground="#9CA3AF" FontSize="11"/><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"><TextBlock.Text><MultiBinding StringFormat="{}{0:N0} m ({1:N3} km)"><Binding Path="Konum"/><Binding Path="Konum" ConverterParameter="1000"/></MultiBinding></TextBlock.Text></TextBlock></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Hat &amp; Seyir Yönü:" Foreground="#9CA3AF" FontSize="11"/><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"><TextBlock.Text><MultiBinding StringFormat="{}{0} ({1})"><Binding Path="HatTipi"/><Binding Path="Yon"/></MultiBinding></TextBlock.Text></TextBlock></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="İvmelenme:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Ivme, StringFormat='{}{0:N2} m/s²'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Yolcu Yükü:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding YolcuSayisi, StringFormat='{}{0} Yolcu'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#60A5FA" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Sonraki İstasyon:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding SonrakiIstasyon}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Kalan Mesafe:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding SonrakiIstasyonMesafe, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Besleyen DC Trafo:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding EnYakinTrafo}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#C084FC" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Tüketilen Enerji:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding ToplamTuketilenEnerjiKwh, StringFormat='{}{0:N3} kWh'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#F59E0B" FontSize="11"/></Grid>
+                                                    </StackPanel>
+                                                </DataTemplate>
+
+                                                <!-- 2. TRAFO MERKEZİ ŞABLONU VE METRİKLERİ -->
+                                                <DataTemplate DataType="{x:Type models:TrafoMerkezi}">
+                                                    <StackPanel>
+                                                        <Border Background="#201335" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#7C4DFF" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#7C4DFF" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="{Binding Durum}" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Ad, StringFormat='⚡ {0} (Trafo Metrikleri)'}" FontWeight="Bold" FontSize="13" Foreground="#C084FC"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="⚡ Çekilen Güç" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AnlikGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="⚡ Toplam Akım" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AnlikAkimA, StringFormat='{}{0:N1} A'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="🔋 Bara Gerilimi" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AnlikGerilimV, StringFormat='{}{0:N1} V'}" FontWeight="Bold" FontSize="13.5" Foreground="#38BDF8"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="📈 Yüklenme Oranı" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding YuklenmeYuzdesi, StringFormat='%{0:N1}'}" FontWeight="Bold" FontSize="13.5" Foreground="#10B981"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </UniformGrid>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="Trafo Konumu (KM):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding DilasKonumuH1, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="İç Direnç (R_trafo):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Direnc, StringFormat='{}{0:N1} mΩ'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Fider Kablo Direnci:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding FiderKabloDirenci, StringFormat='{}{0:N1} mΩ'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Geri Dönüş Kablo Direnci:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding GeriDonusKabloDirenci, StringFormat='{}{0:N1} mΩ'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Beslenen Aktif Tren:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding BeslenenTrenSayisi, StringFormat='{}{0} Tren'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Nominal Güç Kapasitesi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="3300 kVA / 3000 kW" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/></Grid>
+                                                    </StackPanel>
+                                                </DataTemplate>
+
+                                                <!-- 3. RAY PARALELLEMESİ ŞABLONU VE METRİKLERİ -->
+                                                <DataTemplate DataType="{x:Type models:RayParalellemesi}">
+                                                    <StackPanel>
+                                                        <Border Background="#1E293B" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#64748B" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#0284C7" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="AKTİF" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Ad, StringFormat='⊥ {0} (Paralelleme Metrikleri)'}" FontWeight="Bold" FontSize="13" Foreground="#94A3B8"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="📍 Bağlantı Noktası" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding H1BaglantiKm, StringFormat='{}{0:N0} m'}" FontWeight="Bold" FontSize="13.5" Foreground="#38BDF8"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="⚡ Bağlantı Hatları" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="H1 ↔ H2" FontWeight="Bold" FontSize="13.5" Foreground="#34D399"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </UniformGrid>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="H1 Ray Bağlantı KM:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding H1BaglantiKm, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="H2 Ray Bağlantı KM:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding H2BaglantiKm, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Paralelleme Tipi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="Çapraz Ray Eşpotansiyeli" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
+
+                                                        <Border Background="#101827" CornerRadius="6" Padding="8" Margin="0,6,0,0">
+                                                            <TextBlock Text="🛡️ Ray Paralellemesi (Cross-Bonding), iki ray hattı arasındaki cer geri dönüş akımlarını eşitleyerek hat empedansını düşürür ve katener gerilim düşümlerini minimize eder." Foreground="#94A3B8" FontSize="10.5" TextWrapping="Wrap"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </DataTemplate>
+
+                                                <!-- 4. HAT EĞİMİ ŞABLONU VE METRİKLERİ -->
+                                                <DataTemplate DataType="{x:Type models:HatEgimi}">
+                                                    <StackPanel>
+                                                        <Border Background="#2B1D1D" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#EF4444" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#EF4444" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="{Binding HatTipi}" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding EgimYuzdesi, StringFormat='📐 Eğim Bölgesi: %{0:0.#}'}" FontWeight="Bold" FontSize="13" Foreground="#F87171"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="📐 Eğim Oranı" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding EgimYuzdesi, StringFormat='%{0:0.#}'}" FontWeight="Bold" FontSize="13.5" Foreground="#F87171"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="📏 Eğim Uzunluğu" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding Uzunluk, StringFormat='{}{0:N0} m'}" FontWeight="Bold" FontSize="13.5" Foreground="#38BDF8"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </UniformGrid>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="Başlangıç Noktası:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Baslangic, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Bitiş Noktası:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Bitis, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Eğim Karakteristiği:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding EgimTipi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Spesifik Eğim Direnci (w_i):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding EgimBinde, StringFormat='{}{0:0.#} N/kN (‰)'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#60A5FA" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="236t Tren Ek Eğim Kuvveti:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding EkEgitimKuvvetiKn, StringFormat='{}{0:N1} kN'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#F59E0B" FontSize="11"/></Grid>
+                                                    </StackPanel>
+                                                </DataTemplate>
+
+                                                <!-- 5. HAT KURPU ŞABLONU VE METRİKLERİ -->
+                                                <DataTemplate DataType="{x:Type models:HatKurbu}">
+                                                    <StackPanel>
+                                                        <Border Background="#2B2418" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#F59E0B" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#F59E0B" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="{Binding HatTipi}" Foreground="Black" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Yaricap, StringFormat='↩ Kurp Bölgesi: R={0:0} m'}" FontWeight="Bold" FontSize="13" Foreground="#FBBF24"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="↩ Kurp Yarıçapı (R)" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding Yaricap, StringFormat='{}{0:0} m'}" FontWeight="Bold" FontSize="13.5" Foreground="#FBBF24"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="📏 Kurp Uzunluğu" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding Uzunluk, StringFormat='{}{0:N0} m'}" FontWeight="Bold" FontSize="13.5" Foreground="#38BDF8"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </UniformGrid>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="Başlangıç Noktası:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Baslangic, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Bitiş Noktası:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Bitis, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Röckl Kurp Direnci (w_r):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding RocklDirenci, StringFormat='{}{0:0.##} N/kN'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#60A5FA" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Maks. Güvenli Hız Limiti:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding MaksHiz, StringFormat='~{0:0} km/h'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/></Grid>
+                                                    </StackPanel>
+                                                </DataTemplate>
+
+                                                <!-- 6. İSTASYON ŞABLONU (CER VERİSİ OLMADIĞINI BELİRTEN BİLGİLENDİRME) -->
+                                                <DataTemplate DataType="{x:Type models:Istasyon}">
+                                                    <StackPanel>
+                                                        <Border Background="#10251E" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#10B981" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#10B981" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="İSTASYON" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Ad, StringFormat='🚉 {0}'}" FontWeight="Bold" FontSize="13" Foreground="#34D399"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="İstasyon Konumu (KM):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding H1OrtaNokta, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Peron Uzunluğu:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Uzunluk, StringFormat='{}{0:N0} m (H1 &amp; H2 Karşılıklı)'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+
+                                                        <Border Background="#161827" CornerRadius="6" Padding="8" Margin="0,8,0,0" BorderBrush="#374151" BorderThickness="1">
+                                                            <TextBlock Text="ℹ️ İstasyon peronları için cer gücü metriği bulunmamaktadır. Cer gücü ve elektriksel analiz için lütfen Trafo Merkezi, Tren, Ray Paralellemesi, Katener Seksiyonu, Hat Eğimi veya Kurp seçiniz." Foreground="#9CA3AF" FontSize="10.5" TextWrapping="Wrap"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </DataTemplate>
+
+                                                <!-- 7. KATENER SEKSİYONU ŞABLONU VE METRİKLERİ (MONTAJ KARNESİ) -->
+                                                <DataTemplate DataType="{x:Type models:KatenerSeksiyonu}">
+                                                    <StackPanel>
+                                                        <Border Background="#1E1B4B" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#6366F1" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#6366F1" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="SEKSİYON" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Ad, StringFormat='⚡ {0} (Katener Seksiyonu)'}" FontWeight="Bold" FontSize="13" Foreground="#A5B4FC"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="⚡ Seksiyon Toplam Güç" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AnlikToplamGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="⚡ Seksiyon Akımı" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AnlikToplamAkimA, StringFormat='{}{0:N1} A'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="🔋 Ortalama Gerilim" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding OrtalamaGerilimV, StringFormat='{}{0:N1} V'}" FontWeight="Bold" FontSize="13.5" Foreground="#38BDF8"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="🚆 Aktif Tren Sayısı" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AktifTrenSayisi, StringFormat='{}{0} Tren'}" FontWeight="Bold" FontSize="13.5" Foreground="#10B981"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </UniformGrid>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="Konum Aralığı (KM):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding KonumAraligi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Seksiyon Uzunluğu:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Uzunluk, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#38BDF8" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Besleyen Cer Trafoları:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding BesleyenTrafolar}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#C084FC" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Montaj Karnesi Etapları:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding MontajEtaplari}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
+
+                                                        <Border Background="#101827" CornerRadius="6" Padding="8" Margin="0,6,0,0">
+                                                            <TextBlock Text="📋 EK-1 Hat-01 Montaj Karnesi standardına göre seksiyonlar izoleli overlap ayırıcılar (PE 938) ile ayrılmış olup cer gücü bu bölgelere göre hesaplanmaktadır." Foreground="#94A3B8" FontSize="10.5" TextWrapping="Wrap"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </DataTemplate>
+
+                                                <!-- 8. SEKSİYON AYIRICI ŞABLONU (İZOLELİ OVERLAP) -->
+                                                <DataTemplate DataType="{x:Type models:SeksiyonAyirici}">
+                                                    <StackPanel>
+                                                        <Border Background="#2E1065" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#8B5CF6" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#8B5CF6" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="AYIRICI" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Ad, StringFormat='⫽ {0}'}" FontWeight="Bold" FontSize="13" Foreground="#DDD6FE"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="📍 Ayırıcı Konumu" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding Konum, StringFormat='{}{0:N0} m'}" FontWeight="Bold" FontSize="13.5" Foreground="#38BDF8"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="📏 Hat Kilometresi" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding Konum, StringFormat='KM {0:0+000}'}" FontWeight="Bold" FontSize="13.5" Foreground="#A78BFA"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </UniformGrid>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="Ayırıcı Tipi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Tip}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Hat Tipi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding HatTipi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#38BDF8" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Açıklama:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Aciklama}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
+
+                                                        <Border Background="#101827" CornerRadius="6" Padding="8" Margin="0,6,0,0">
+                                                            <TextBlock Text="⫽ İzoleli Overlap Seksiyon Ayırıcı (PE 938), komşu iki besleme bölgesini elektriksel olarak izole eder ve pantograf geçişinde ark oluşumunu engeller." Foreground="#94A3B8" FontSize="10.5" TextWrapping="Wrap"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </DataTemplate>
+
+                                                <!-- 9. MONTAJ ETABI ŞABLONU (EK-1 MONTAJ KARNESİ) -->
+                                                <DataTemplate DataType="{x:Type models:KatenerEtap}">
+                                                    <StackPanel>
+                                                        <Border Background="#0F2B38" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#06B6D4" BorderThickness="1">
+                                                            <DockPanel LastChildFill="True">
+                                                                <Border Background="#0891B2" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
+                                                                    <TextBlock Text="MONTAJ ETABI" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding Ad, StringFormat='🔩 {0} (Montaj Karnesi)'}" FontWeight="Bold" FontSize="13" Foreground="#67E8F9"/>
+                                                            </DockPanel>
+                                                        </Border>
+
+                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="⚡ Etap Anlık Güç" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AnlikToplamGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="🚆 Aktif Tren" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding AktifTrenSayisi, StringFormat='{}{0} Tren'}" FontWeight="Bold" FontSize="13.5" Foreground="#10B981"/>
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </UniformGrid>
+
+                                                        <Grid Margin="0,2"><TextBlock Text="Etap Konumu:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding KonumAraligi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Etap / Profil Uzunluğu:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Uzunluk, StringFormat='{}{0:N1} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#38BDF8" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Tünel / Yapı Tipi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding TunelTipi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Orta Nokta (Ankraj):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding OrtaNoktaKm, StringFormat='{}{0:N1} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#A78BFA" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Geçiş / Overlap Tipi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding OverlapTipi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Bağlı Seksiyon:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding SeksiyonNo, StringFormat='Seksiyon {0}'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#818CF8" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Besleyen Cer Trafosu:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding BesleyenTrafo}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#C084FC" FontSize="11"/></Grid>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ContentControl.Resources>
+                                        </ContentControl>
+                                    </StackPanel>
+                                </Border>
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- 2. TAB: CANLI TABLOLAR (TRENLER, TRAFOLAR, İSTASYONLAR) -->
+                    <TabItem Header="📋 Tablolar" FontWeight="SemiBold">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="4,6">
+                            <StackPanel>
+                                <!-- AKTİF TRENLER TABLOSU -->
+                                <TextBlock Text="🚆 AKTİF TRENLER TABLOSU" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" Margin="4,4,4,6"/>
+                                <DataGrid ItemsSource="{Binding Data.Trenler}" SelectedItem="{Binding SelectedItem}"
+                                          ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
+                                          CellStyle="{StaticResource CustomDataGridCellStyle}"
+                                          AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                                          Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
+                                          BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
+                                          Margin="0,0,0,14" MaxHeight="220">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Tren" Binding="{Binding TrenAdi}" Width="65"/>
+                                        <DataGridTextColumn Header="Hat" Binding="{Binding HatTipi}" Width="45"/>
+                                        <DataGridTextColumn Header="Konum (m)" Binding="{Binding Konum, StringFormat='{}{0:N0}'}" Width="80"/>
+                                        <DataGridTextColumn Header="Hız (km/h)" Binding="{Binding AnlikHiz, StringFormat='{}{0:N0}'}" Width="75"/>
+                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding CekilenGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
+                                        <DataGridTextColumn Header="Gerilim (V)" Binding="{Binding KatenerGerilimiV, StringFormat='{}{0:N0}'}" Width="75"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <!-- CER TRAFOLARI TABLOSU -->
+                                <TextBlock Text="⚡ CER TRAFO MERKEZLERİ TABLOSU" FontWeight="Bold" FontSize="12" Foreground="#C084FC" Margin="4,4,4,6"/>
+                                <DataGrid ItemsSource="{Binding Data.TrafoMerkezleri}" SelectedItem="{Binding SelectedItem}"
+                                          ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
+                                          CellStyle="{StaticResource CustomDataGridCellStyle}"
+                                          AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                                          Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
+                                          BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
+                                          Margin="0,0,0,14" MaxHeight="220">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Trafo Adı" Binding="{Binding Ad}" Width="*"/>
+                                        <DataGridTextColumn Header="Konum (m)" Binding="{Binding DilasKonumuH1, StringFormat='{}{0:N0}'}" Width="80"/>
+                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
+                                        <DataGridTextColumn Header="Akım (A)" Binding="{Binding AnlikAkimA, StringFormat='{}{0:N0}'}" Width="70"/>
+                                        <DataGridTextColumn Header="Yük %" Binding="{Binding YuklenmeYuzdesi, StringFormat='%{0:N0}'}" Width="60"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <!-- İSTASYONLAR TABLOSU -->
+                                <TextBlock Text="🚉 İSTASYONLAR LİSTESİ" FontWeight="Bold" FontSize="12" Foreground="#34D399" Margin="4,4,4,6"/>
+                                <DataGrid ItemsSource="{Binding Data.Istasyonlar}" SelectedItem="{Binding SelectedItem}"
+                                          ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
+                                          CellStyle="{StaticResource CustomDataGridCellStyle}"
+                                          AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                                          Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
+                                          BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
+                                          Margin="0,0,0,14" MaxHeight="200">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="İstasyon Adı" Binding="{Binding Ad}" Width="*"/>
+                                        <DataGridTextColumn Header="Konum (m)" Binding="{Binding H1OrtaNokta, StringFormat='{}{0:N0}'}" Width="80"/>
+                                        <DataGridTextColumn Header="Bekleyen" Binding="{Binding BekleyenYolcu, StringFormat='{}{0} Yolcu'}" Width="90"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <!-- KATENER SEKSİYONLARI TABLOSU (MONTAJ KARNESİ) -->
+                                <TextBlock Text="⚡ KATENER SEKSİYONLARI (MONTAJ KARNESİ)" FontWeight="Bold" FontSize="12" Foreground="#818CF8" Margin="4,4,4,6"/>
+                                <DataGrid ItemsSource="{Binding Data.KatenerSeksiyonlari}" SelectedItem="{Binding SelectedItem}"
+                                          ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
+                                          CellStyle="{StaticResource CustomDataGridCellStyle}"
+                                          AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                                          Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
+                                          BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
+                                          MaxHeight="220">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Seksiyon" Binding="{Binding Ad}" Width="75"/>
+                                        <DataGridTextColumn Header="Aralık (m)" Binding="{Binding KonumAraligi}" Width="*"/>
+                                        <DataGridTextColumn Header="Trafolar" Binding="{Binding BesleyenTrafolar}" Width="90"/>
+                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikToplamGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
+                                        <DataGridTextColumn Header="Tren" Binding="{Binding AktifTrenSayisi, StringFormat='{}{0} Tren'}" Width="60"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- 3. TAB: MONTAJ ETAPLARI VE SEKSİYONLAR (EK-1 DOKÜMANI) -->
+                    <TabItem Header="⚡ Etaplar (Montaj Karnesi)" FontWeight="SemiBold">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="6,8">
+                            <StackPanel>
+                                <Border Background="#1E1B4B" CornerRadius="6" Padding="8,6" Margin="0,0,0,10" BorderBrush="#4F46E5" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="📋 EK-1 HAT-01 MONTAJ KARNESİ ETAPLARI" FontWeight="Bold" FontSize="12" Foreground="#A5B4FC"/>
+                                        <TextBlock Text="Her etap rijit katener profil uzunluğunu, ankraj orta noktasını ve overlap geçiş tipini temsil eder. Tıklayarak anlık cer yükünü inceleyebilirsiniz." Foreground="#94A3B8" FontSize="10" TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- ETAPLAR LİSTESİ TABLOSU -->
+                                <TextBlock Text="🔩 MONTAJ ETAPLARI (42 ETAP)" FontWeight="Bold" FontSize="11.5" Foreground="#38BDF8" Margin="2,0,0,6"/>
+                                <DataGrid ItemsSource="{Binding Data.KatenerEtaplari}" SelectedItem="{Binding SelectedItem}"
+                                          ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
+                                          CellStyle="{StaticResource CustomDataGridCellStyle}"
+                                          AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                                          Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
+                                          BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
+                                          Margin="0,0,0,14" MaxHeight="280">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Etap" Binding="{Binding Ad}" Width="70"/>
+                                        <DataGridTextColumn Header="Aralık (m)" Binding="{Binding KonumAraligi}" Width="*"/>
+                                        <DataGridTextColumn Header="Boy (m)" Binding="{Binding Uzunluk, StringFormat='{}{0:N1}'}" Width="65"/>
+                                        <DataGridTextColumn Header="Tünel" Binding="{Binding TunelTipi}" Width="65"/>
+                                        <DataGridTextColumn Header="Orta Nokta" Binding="{Binding OrtaNoktaKm, StringFormat='{}{0:N0}m'}" Width="75"/>
+                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikToplamGucKw, StringFormat='{}{0:N0}'}" Width="65"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <!-- 7 BESLEME SEKSİYONU TABLOSU -->
+                                <TextBlock Text="⚡ 7 BESLEME SEKSİYONU" FontWeight="Bold" FontSize="11.5" Foreground="#F59E0B" Margin="2,0,0,6"/>
+                                <DataGrid ItemsSource="{Binding Data.KatenerSeksiyonlari}" SelectedItem="{Binding SelectedItem}"
+                                          ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
+                                          CellStyle="{StaticResource CustomDataGridCellStyle}"
+                                          AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                                          Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
+                                          BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
+                                          MaxHeight="180">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Seksiyon" Binding="{Binding Ad}" Width="80"/>
+                                        <DataGridTextColumn Header="Konum (m)" Binding="{Binding KonumAraligi}" Width="*"/>
+                                        <DataGridTextColumn Header="Trafolar" Binding="{Binding BesleyenTrafolar}" Width="90"/>
+                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikToplamGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- 4. TAB: RAPOR ANALİZİ VE SANİYE BAZLI İNCELEME -->
+                    <TabItem Header="📑 Analiz / Rapor" FontWeight="SemiBold">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="8,10">
+                            <StackPanel>
+                                <Border Background="#1E293B" CornerRadius="6" Padding="10" Margin="0,0,0,10" BorderBrush="#38BDF8" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="📑 RAPOR KOŞUSU VE ZAMAN İNCELEME" FontWeight="Bold" FontSize="12" Foreground="#38BDF8"/>
+                                        <TextBlock Text="Koşu durdurulduğunda kayıtlanan saniyeler arasında gezinin. Word ve Excel düğmeleri son tamamlanan koşuyu dışa aktarır." Foreground="#94A3B8" FontSize="10" TextWrapping="Wrap" Margin="0,3,0,8"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Saniye" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                            <Slider Grid.Column="1" Minimum="0" Maximum="3600" Value="{Binding SelectedReportSecond, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding SelectedReportSecond, StringFormat='{}{0} s'}" Foreground="#FACC15" FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <TextBlock Text="Senaryo karşılaştırması" Foreground="#FACC15" FontWeight="Bold" Margin="2,2,0,5"/>
+                                <DataGrid ItemsSource="{Binding ScenarioResults}" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="240" Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E" Margin="0,0,0,10">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Senaryo" Binding="{Binding Scenario.Name}" Width="*"/>
+                                        <DataGridTextColumn Header="Süre [s]" Binding="{Binding DurationSeconds}" Width="65"/>
+                                        <DataGridTextColumn Header="Min. gerilim [V]" Binding="{Binding MinimumTrainVoltageV, StringFormat='{}{0:N1}'}" Width="95"/>
+                                        <DataGridTextColumn Header="Max. TM yük [%]" Binding="{Binding MaximumSubstationLoadPercent, StringFormat='{}{0:N1}'}" Width="95"/>
+                                        <DataGridTextColumn Header="Enerji [kWh]" Binding="{Binding TotalConsumedEnergyKwh, StringFormat='{}{0:N2}'}" Width="80"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <UniformGrid Columns="2" Margin="0,0,0,10">
+                                    <Border Background="#161827" CornerRadius="6" Padding="8" Margin="2">
+                                        <StackPanel>
+                                            <TextBlock Text="Minimum tren gerilimi" Foreground="#94A3B8" FontSize="10"/>
+                                            <TextBlock Text="{Binding LastRunResult.MinimumTrainVoltageV, StringFormat='{}{0:N1} V'}" Foreground="#38BDF8" FontWeight="Bold" FontSize="14"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Background="#161827" CornerRadius="6" Padding="8" Margin="2">
+                                        <StackPanel>
+                                            <TextBlock Text="Maksimum TM yükü" Foreground="#94A3B8" FontSize="10"/>
+                                            <TextBlock Text="{Binding LastRunResult.MaximumSubstationLoadPercent, StringFormat='%{0:N1}'}" Foreground="#F59E0B" FontWeight="Bold" FontSize="14"/>
+                                        </StackPanel>
+                                    </Border>
+                                </UniformGrid>
+
+                                <TextBlock Text="Seçilen saniyedeki trenler" Foreground="#38BDF8" FontWeight="Bold" Margin="2,2,0,5"/>
+                                <DataGrid ItemsSource="{Binding SelectedSnapshot.Trains}" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="220" Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E" Margin="0,0,0,10">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Tren" Binding="{Binding TrainName}" Width="70"/>
+                                        <DataGridTextColumn Header="Hat" Binding="{Binding Line}" Width="45"/>
+                                        <DataGridTextColumn Header="Konum [m]" Binding="{Binding PositionM, StringFormat='{}{0:N0}'}" Width="75"/>
+                                        <DataGridTextColumn Header="Hız [km/h]" Binding="{Binding SpeedKmh, StringFormat='{}{0:N1}'}" Width="75"/>
+                                        <DataGridTextColumn Header="Güç [kW]" Binding="{Binding PowerKw, StringFormat='{}{0:N1}'}" Width="70"/>
+                                        <DataGridTextColumn Header="Gerilim [V]" Binding="{Binding VoltageV, StringFormat='{}{0:N1}'}" Width="75"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock Text="Seçilen saniyedeki cer trafoları" Foreground="#C084FC" FontWeight="Bold" Margin="2,2,0,5"/>
+                                <DataGrid ItemsSource="{Binding SelectedSnapshot.Substations}" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="220" Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Trafo" Binding="{Binding Name}" Width="*"/>
+                                        <DataGridTextColumn Header="Güç [kW]" Binding="{Binding PowerKw, StringFormat='{}{0:N1}'}" Width="75"/>
+                                        <DataGridTextColumn Header="Akım [A]" Binding="{Binding CurrentA, StringFormat='{}{0:N1}'}" Width="75"/>
+                                        <DataGridTextColumn Header="Yük [%]" Binding="{Binding LoadPercent, StringFormat='%{0:N1}'}" Width="65"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock Text="Standart değerlendirmeleri" Foreground="#34D399" FontWeight="Bold" Margin="2,12,0,5"/>
+                                <DataGrid ItemsSource="{Binding ComplianceResults}" AutoGenerateColumns="False" IsReadOnly="True" MaxHeight="220" Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Standart" Binding="{Binding Reference.Standard}" Width="80"/>
+                                        <DataGridTextColumn Header="Madde" Binding="{Binding Reference.Clause}" Width="100"/>
+                                        <DataGridTextColumn Header="Durum" Binding="{Binding Status}" Width="70"/>
+                                        <DataGridTextColumn Header="Gözlenen" Binding="{Binding ObservedValue}" Width="100"/>
+                                        <DataGridTextColumn Header="Açıklama" Binding="{Binding Comment}" Width="*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <!-- 5. TAB: HAT & ELEKTRİK PARAMETRELERİ -->
+                    <TabItem Header="⚙️ Parametreler" FontWeight="SemiBold">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="8,10">
+                            <StackPanel>
+                                <!-- HAT BİLGİLERİ -->
+                                <Border Background="#202237" CornerRadius="6" Padding="10" Margin="0,0,0,10" BorderBrush="#2E304F" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="🛤️  HAT GENEL BİLGİLERİ" FontWeight="Bold" FontSize="12" Foreground="#38BDF8" Margin="0,0,0,8"/>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Hat Uzunluğu (m)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.HatUzunlugu, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- CER VE KATENER -->
+                                <Border Background="#202237" CornerRadius="6" Padding="10" Margin="0,0,0,10" BorderBrush="#2E304F" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="⚡  CER &amp; KATENER PARAMETRELERİ" FontWeight="Bold" FontSize="12" Foreground="#C084FC" Margin="0,0,0,8"/>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Rijit Katener Direnci (mΩ/km)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.RijitKatenerKmDirenci, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Ray Direnci (mΩ/km)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.NormalRayKmDirenci, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Yüksüz DC Bara Gerilimi (V)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.YuksuzDcBaraGerilimi, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Trafo Gücü (kVA)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.TrafoGucu, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Doğrultucu Gücü (kW)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.DogrultucuGucu, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- TREN PARAMETRELERİ -->
+                                <Border Background="#202237" CornerRadius="6" Padding="10" Margin="0,0,0,10" BorderBrush="#2E304F" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="🚃  TREN PARAMETRELERİ" FontWeight="Bold" FontSize="12" Foreground="#FACC15" Margin="0,0,0,8"/>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Maks. İşletme Hızı (km/h)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksIsletmeHizi, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Maks. İvmelenme (m/s²)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksIvmelenme, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="AW0 Boş Ağırlık (ton)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.Aw0BosAgirlik, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Yardımcı Güç (kW)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.YardimciGuc, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+                </TabControl>
+            </Border>
+
+            <!-- SPLITTER -->
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#24263B"/>
+
+            <!-- SAĞ ALAN: İNTERAKTİF ÇİZİM CANVAS'I + CANLI GRAFİKLER ALANI -->
+            <Grid Grid.Column="2" Background="#0C0D17">
+                <Grid.RowDefinitions>
+                    <!-- Üst: Hat İnteraktif Görsel Canvas -->
+                    <RowDefinition Height="3*" MinHeight="260"/>
+                    <!-- Splitter -->
+                    <RowDefinition Height="4"/>
+                    <!-- Alt: Canlı Çıktı Grafikleri (Cer Raporu Odaklı) -->
+                    <RowDefinition Height="2*" MinHeight="200"/>
+                </Grid.RowDefinitions>
+
+                <!-- 1. ÜST KISIM: İNTERAKTİF ÇİZİM CANVAS'I -->
+                <Grid Grid.Row="0" Background="#0C0D17">
+                    <ScrollViewer x:Name="CanvasScrollViewer" 
+                                  HorizontalScrollBarVisibility="Auto" 
+                                  VerticalScrollBarVisibility="Disabled"
+                                  Focusable="True">
+                        <Canvas x:Name="TrackCanvas" 
+                                Background="#0C0D17" 
+                                Height="480" 
+                                VerticalAlignment="Center"
+                                ClipToBounds="True"
+                                MouseDown="TrackCanvas_MouseDown"
+                                MouseMove="TrackCanvas_MouseMove"
+                                MouseUp="TrackCanvas_MouseUp"
+                                MouseWheel="TrackCanvas_MouseWheel"/>
+                    </ScrollViewer>
+
+                    <!-- HAT BİLGİ ETİKETİ (Overlay) -->
+                    <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="15" 
+                            Background="#DD141524" CornerRadius="6" Padding="12,6" BorderBrush="#2F314C" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="10" Height="10" Fill="#38BDF8" Margin="0,0,5,0"/>
+                            <TextBlock Text="H1 (Darıca → Depo)" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,0,15,0" FontSize="11"/>
+                            <Ellipse Width="10" Height="10" Fill="#FB923C" Margin="0,0,5,0"/>
+                            <TextBlock Text="H2 (Depo → Darıca)" Foreground="#FB923C" FontWeight="SemiBold" Margin="0,0,15,0" FontSize="11"/>
+                            <TextBlock Text="🚉 12 İstasyon | ⚡ 7 DC Trafo" Foreground="#C5C7D9" FontSize="11"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
-            </TabItem>
 
-            <!-- Hat Kurpları Tab -->
-            <TabItem Header="Hat Kurpları">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Button Command="{Binding AddHatKurbuCommand}" Content="Yeni Hat Kurbu Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.HatKurplari}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Başlangıç (m)" Binding="{Binding Baslangic}" />
-                            <DataGridTextColumn Header="Bitiş (m)" Binding="{Binding Bitis}" />
-                            <DataGridTextColumn Header="Yarıçap R(m)" Binding="{Binding Yaricap}" />
-                            <DataGridTextColumn Header="Hat Tipi" Binding="{Binding HatTipi}" />
-                            <DataGridTemplateColumn>
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Sil" Command="{Binding DataContext.RemoveHatKurbuCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                <!-- YATAY SPLITTER -->
+                <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" Background="#24263B"/>
+
+                <!-- 2. ALT KISIM: CANLI CER GÜCÜ GRAFİKLERİ PANELİ -->
+                <Grid Grid.Row="2" Background="#111220" Margin="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Grafik 1: Toplam Sistem Çekilen ve Rejeneratif Cer Gücü (kW) -->
+                    <Border Grid.Column="0" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
+                        <vm:LiveChartsControl x:Name="ChartSistemGucu"
+                                              Title="⚡ Toplam Çekilen &amp; Rejeneratif Güç"
+                                              YAxisTitle="Güç (kW)"
+                                              XAxisTitle="Zaman"
+                                              PrimaryLegend="Cer Gücü (kW)"
+                                              SecondaryLegend="Rejenerasyon (kW)"
+                                              HasSecondarySeries="True"
+                                              MinY="0" MaxY="4000"/>
+                    </Border>
+
+                    <!-- Grafik 2: Ortalama & Minimum Katener Gerilim Seviyesi (V) -->
+                    <Border Grid.Column="1" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
+                        <vm:LiveChartsControl x:Name="ChartGerilim"
+                                              Title="🔋 Katener Gerilim Profili (EN 50163)"
+                                              YAxisTitle="Gerilim (V)"
+                                              XAxisTitle="Zaman"
+                                              PrimaryLegend="Ortalama (V)"
+                                              SecondaryLegend="Kritik Min (V)"
+                                              HasSecondarySeries="True"
+                                              MinY="1100" MaxY="1750"/>
+                    </Border>
+
+                    <!-- Grafik 3: Seçili Tren Anlık Hız ve Çekilen Cer Gücü -->
+                    <Border Grid.Column="2" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
+                        <vm:LiveChartsControl x:Name="ChartSeciliTren"
+                                              Title="🚀 Seçili Tren Hız &amp; Cer Gücü"
+                                              YAxisTitle="Hız / Güç"
+                                              XAxisTitle="Zaman"
+                                              PrimaryLegend="Hız (km/h)"
+                                              SecondaryLegend="Güç (kW)"
+                                              HasSecondarySeries="True"
+                                              MinY="0" MaxY="1200"/>
+                    </Border>
                 </Grid>
-            </TabItem>
 
-            <!-- Cer & Katener Tab -->
-            <TabItem Header="Cer &amp; Katener">
-                <ScrollViewer>
-                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
-                        <TextBlock Text="Temel Parametreler" FontSize="18" FontWeight="Bold" Margin="0,0,0,16"/>
-                        
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tek yol rijit katener sistemi km direnci (mΩ)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.RijitKatenerKmDirenci}" />
-                        </Grid>
-                        
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tek hat normal ray sistemi km direnci (mΩ)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.NormalRayKmDirenci}" />
-                        </Grid>
+            </Grid>
+        </Grid>
 
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tek hat mantarı sertleştirilmiş ray km direnci (mΩ)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.SertlestirilmisRayKmDirenci}" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tam trafo merkezi iç direnci (mΩ)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.TrafoIcDirenci}" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Yüksüz DC bara gerilimi (V)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.YuksuzDcBaraGerilimi}" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Trafo gücü (kVA)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.TrafoGucu}" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Doğrultucu gücü (kW)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.DogrultucuGucu}" />
-                        </Grid>
-
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tek hat için ray-toprak arası direnç (Ωkm)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.RayToprakArasiDirenc}" />
-                        </Grid>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- Trafo Merkezleri Tab -->
-            <TabItem Header="Trafo Merkezleri">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Button Command="{Binding AddTrafoMerkeziCommand}" Content="Yeni Trafo Merkezi Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.TrafoMerkezleri}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="TM Adı" Binding="{Binding Ad}" />
-                            <DataGridTextColumn Header="İstasyon" Binding="{Binding Istasyon}" />
-                            <DataGridTextColumn Header="Direnç (mΩ)" Binding="{Binding Direnc}" />
-                            <DataGridTextColumn Header="DILA-S Konumu H1 (m)" Binding="{Binding DilasKonumuH1}" />
-                            <DataGridTextColumn Header="DILA-S Konumu H2 (m)" Binding="{Binding DilasKonumuH2}" />
-                            <DataGridTextColumn Header="Fider Direnci (mΩ)" Binding="{Binding FiderKabloDirenci}" />
-                            <DataGridTextColumn Header="Geri Dönüş Direnci (mΩ)" Binding="{Binding GeriDonusKabloDirenci}" />
-                            <DataGridTemplateColumn>
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Sil" Command="{Binding DataContext.RemoveTrafoMerkeziCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
-
-            <!-- Ray Paralellemesi Tab -->
-            <TabItem Header="Ray Paralellemeleri">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Button Command="{Binding AddRayParalellemesiCommand}" Content="Yeni Paralelleme Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.RayParalellemeleri}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="No" Binding="{Binding No}" />
-                            <DataGridTextColumn Header="H1 Bağlantı (KM)" Binding="{Binding H1BaglantiKm}" />
-                            <DataGridTextColumn Header="H2 Bağlantı (KM)" Binding="{Binding H2BaglantiKm}" />
-                            <DataGridTemplateColumn>
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Sil" Command="{Binding DataContext.RemoveRayParalellemesiCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
-
-            <!-- Tren Verileri Tab -->
-            <TabItem Header="Tren Verileri">
-                <ScrollViewer>
-                    <StackPanel Margin="16" MaxWidth="600" HorizontalAlignment="Left">
-                        <TextBlock Text="Tren Ana Parametreleri (4'lü Dizi)" FontSize="18" FontWeight="Bold" Margin="0,0,0,16"/>
-                        
-                        <!-- Similar Grid layout for Tren Parametreleri as Cer/Katener -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Maksimum Tasarım Hızı (km/h)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksTasarimHizi}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Maksimum İşletme Hızı (km/h)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksIsletmeHizi}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Maksimum İvmelenme (m/s²)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksIvmelenme}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Maksimum Frenleme İvmesi (m/s²)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksFrenlemeIvmesi}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Jerk Limiti (m/s³)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.JerkLimiti}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="AW0 Boş Ağırlık (ton)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.Aw0BosAgirlik}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="AW3 Dolu Ağırlık (ton)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.Aw3DoluAgirlik}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Döner Kütle (% AW0)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.DonerKutle}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Yardımcı Güç (kW)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.YardimciGuc}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Maksimum Gerilim (EN 50163) (V)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksGerilim}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Minimum Gerilim (EN 50163) (V)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MinGerilim}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Minimum İşletme Gerilimi (V)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MinIsletmeGerilimi}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tren Uzunluğu (m)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.TrenUzunlugu}" />
-                        </Grid>
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="Tren Verimi (%)"/>
-                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.TrenVerimi}" />
-                        </Grid>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- İstasyonlar Tab -->
-            <TabItem Header="İstasyonlar">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Button Command="{Binding AddIstasyonCommand}" Content="Yeni İstasyon Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.Istasyonlar}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="İstasyon Adı" Binding="{Binding Ad}" />
-                            <DataGridTextColumn Header="Kısa Ad" Binding="{Binding KisaAd}" />
-                            <DataGridTextColumn Header="H1 Orta Nokta (m)" Binding="{Binding H1OrtaNokta}" />
-                            <DataGridTextColumn Header="H2 Orta Nokta (m)" Binding="{Binding H2OrtaNokta}" />
-                            <DataGridTextColumn Header="Uzunluk (m)" Binding="{Binding Uzunluk}" />
-                            <DataGridTemplateColumn>
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Sil" Command="{Binding DataContext.RemoveIstasyonCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
-
-            <!-- Hız Limitleri Tab -->
-            <TabItem Header="Hız Limitleri">
-                <Grid Margin="16">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <Button Command="{Binding AddHizLimitiCommand}" Content="Yeni Hız Limiti Ekle" HorizontalAlignment="Left" Margin="0,0,0,16"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding Data.HizLimitleri}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Başlangıç (m)" Binding="{Binding Baslangic}" />
-                            <DataGridTextColumn Header="Bitiş (m)" Binding="{Binding Bitis}" />
-                            <DataGridTextColumn Header="Hız Limiti (km/h)" Binding="{Binding Limit}" />
-                            <DataGridTextColumn Header="Hat Tipi" Binding="{Binding HatTipi}" />
-                            <DataGridTemplateColumn>
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="Sil" Command="{Binding DataContext.RemoveHizLimitiCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Padding="4" Height="25"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </TabItem>
-        </TabControl>
+        <!-- ═══════════════════════════════════════════════════════════════
+             ALT DURUM ÇUBUĞU (STATUS BAR)
+             ═══════════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="2" Background="#141524" BorderBrush="#2F314C" BorderThickness="0,1,0,0" Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusText}" Foreground="#C5C7D9" VerticalAlignment="Center" FontSize="12"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock x:Name="TxtCursorInfo" Text="📍 Konum: 0 m | Hat: H1" Foreground="#38BDF8" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0" FontSize="12"/>
+                    <Separator Width="1" Height="14" Background="#2F314C" Margin="6,0"/>
+                    <TextBlock Text="{Binding ZoomLevel, StringFormat='Zoom: %{0:P0}'}" Foreground="#94A3B8" VerticalAlignment="Center" FontSize="12"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
