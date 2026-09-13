@@ -177,8 +177,10 @@ namespace CerGucuSimulasyonu
                 // Grid line
                 var gridLine = new Line
                 {
-                    X1 = x, Y1 = 40,
-                    X2 = x, Y2 = 440,
+                    X1 = x,
+                    Y1 = 40,
+                    X2 = x,
+                    Y2 = 440,
                     Stroke = new SolidColorBrush(Color.FromArgb(25, 255, 255, 255)),
                     StrokeThickness = 1,
                     StrokeDashArray = new DoubleCollection { 2, 6 }
@@ -188,8 +190,10 @@ namespace CerGucuSimulasyonu
                 // Ruler tick top
                 var tick = new Line
                 {
-                    X1 = x, Y1 = 60,
-                    X2 = x, Y2 = 72,
+                    X1 = x,
+                    Y1 = 60,
+                    X2 = x,
+                    Y2 = 72,
                     Stroke = new SolidColorBrush(Color.FromArgb(140, 200, 220, 255)),
                     StrokeThickness = 1.5
                 };
@@ -326,7 +330,8 @@ namespace CerGucuSimulasyonu
                     double xOrta = KmToX(etap.OrtaNoktaKm);
                     var pin = new Ellipse
                     {
-                        Width = 4, Height = 4,
+                        Width = 4,
+                        Height = 4,
                         Fill = new SolidColorBrush(Color.FromRgb(167, 139, 250)),
                         Tag = etap,
                         ToolTip = $"⚓ Orta Nokta Ankraj: {etap.Ad} ({etap.OrtaNoktaKm:0.#} m)"
@@ -350,13 +355,15 @@ namespace CerGucuSimulasyonu
                 // Hatları kesen izole overlap ayırıcı çizgisi
                 var isolatorLine = new Line
                 {
-                    X1 = x, Y1 = 140,
-                    X2 = x, Y2 = 360,
+                    X1 = x,
+                    Y1 = 140,
+                    X2 = x,
+                    Y2 = 360,
                     Stroke = new SolidColorBrush(isSelected ? Colors.White : Color.FromRgb(167, 139, 250)),
                     StrokeThickness = isSelected ? 2.5 : 1.5,
                     StrokeDashArray = new DoubleCollection { 3, 2 },
                     Tag = ayirici,
-                    ToolTip = $"⫽ {ayirici.Ad}\nKonum: {ayirici.Konum:0} m (KM {ayirici.Konum/1000.0:0.000})\nTip: {ayirici.Tip}\n{ayirici.Aciklama}"
+                    ToolTip = $"⫽ {ayirici.Ad}\nKonum: {ayirici.Konum:0} m (KM {ayirici.Konum / 1000.0:0.000})\nTip: {ayirici.Tip}\n{ayirici.Aciklama}"
                 };
                 AttachItemEvents(isolatorLine, ayirici);
                 TrackCanvas.Children.Add(isolatorLine);
@@ -371,7 +378,7 @@ namespace CerGucuSimulasyonu
                     BorderThickness = new Thickness(1),
                     CornerRadius = new CornerRadius(3),
                     Tag = ayirici,
-                    ToolTip = $"⫽ {ayirici.Ad} ({ayirici.Tip}) | KM {ayirici.Konum/1000.0:0.000}"
+                    ToolTip = $"⫽ {ayirici.Ad} ({ayirici.Tip}) | KM {ayirici.Konum / 1000.0:0.000}"
                 };
 
                 badge.Child = new TextBlock
@@ -404,8 +411,10 @@ namespace CerGucuSimulasyonu
 
                 var line = new Line
                 {
-                    X1 = x1, Y1 = y + 7,
-                    X2 = x2, Y2 = y + 7,
+                    X1 = x1,
+                    Y1 = y + 7,
+                    X2 = x2,
+                    Y2 = y + 7,
                     Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)),
                     StrokeThickness = 2.5,
                     StrokeDashArray = new DoubleCollection { 4, 3 },
@@ -452,7 +461,8 @@ namespace CerGucuSimulasyonu
                     Fill = new SolidColorBrush(col),
                     Stroke = new SolidColorBrush(Color.FromArgb(160, col.R, col.G, col.B)),
                     StrokeThickness = 1,
-                    RadiusX = 3, RadiusY = 3,
+                    RadiusX = 3,
+                    RadiusY = 3,
                     Tag = egim,
                     ToolTip = $"Hat Eğimi: %{egim.EgimYuzdesi:0.#} ({egim.Baslangic:0}m - {egim.Bitis:0}m) [{egim.HatTipi}]"
                 };
@@ -490,7 +500,8 @@ namespace CerGucuSimulasyonu
                     Fill = new SolidColorBrush(Color.FromArgb(70, 255, 183, 77)),
                     Stroke = new SolidColorBrush(Color.FromRgb(255, 183, 77)),
                     StrokeThickness = 1,
-                    RadiusX = 3, RadiusY = 3,
+                    RadiusX = 3,
+                    RadiusY = 3,
                     Tag = kurp,
                     ToolTip = $"Kurp R={kurp.Yaricap:0}m ({kurp.Baslangic:0}m - {kurp.Bitis:0}m) [{kurp.HatTipi}]"
                 };
@@ -518,8 +529,10 @@ namespace CerGucuSimulasyonu
             // H1 Rayı (Üst Hat - Darıca -> Depo)
             var h1Line = new Line
             {
-                X1 = xs, Y1 = H1_Y,
-                X2 = xe, Y2 = H1_Y,
+                X1 = xs,
+                Y1 = H1_Y,
+                X2 = xe,
+                Y2 = H1_Y,
                 Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)),
                 StrokeThickness = 6,
                 StrokeStartLineCap = PenLineCap.Round,
@@ -541,8 +554,10 @@ namespace CerGucuSimulasyonu
             // H2 Rayı (Alt Hat - Depo -> Darıca)
             var h2Line = new Line
             {
-                X1 = xs, Y1 = H2_Y,
-                X2 = xe, Y2 = H2_Y,
+                X1 = xs,
+                Y1 = H2_Y,
+                X2 = xe,
+                Y2 = H2_Y,
                 Stroke = new SolidColorBrush(Color.FromRgb(251, 146, 60)),
                 StrokeThickness = 6,
                 StrokeStartLineCap = PenLineCap.Round,
@@ -572,13 +587,18 @@ namespace CerGucuSimulasyonu
 
                 var line = new Line
                 {
-                    X1 = x1, Y1 = H1_Y,
-                    X2 = x2, Y2 = H2_Y,
+                    X1 = x1,
+                    Y1 = H1_Y,
+                    X2 = x2,
+                    Y2 = H2_Y,
                     Stroke = new SolidColorBrush(Color.FromRgb(120, 144, 156)),
                     StrokeThickness = 2.5,
                     StrokeDashArray = new DoubleCollection { 4, 3 },
                     Tag = rp,
-                    ToolTip = $"Ray Paralellemesi P{rp.No} ({rp.H1BaglantiKm:0}m)"
+                    ToolTip = $"⊥ Ray Paralellemesi P{rp.No}\n" +
+                             $"─────────────────────\n" +
+                             $"📍 H1 Bağlantı: {rp.H1BaglantiKm:0} m ({rp.H1BaglantiKm / 1000.0:0.00} km)\n" +
+                             $"📍 H2 Bağlantı: {rp.H2BaglantiKm:0} m ({rp.H2BaglantiKm / 1000.0:0.00} km)"
                 };
                 AttachItemEvents(line, rp);
                 TrackCanvas.Children.Add(line);
@@ -652,7 +672,11 @@ namespace CerGucuSimulasyonu
                     BorderThickness = new Thickness(isSelected ? 2 : 1),
                     CornerRadius = new CornerRadius(5),
                     Tag = ist,
-                    ToolTip = $"🚉 İstasyon: {ist.Ad} ({ist.KisaAd})\nKonum: {ist.H1OrtaNokta:0.#} m (Km: {ist.H1OrtaNokta/1000.0:0.000})\nPeron: {ist.Uzunluk:0} m (H1 & H2 Karşılıklı Eşit)"
+                    ToolTip = $"🚉 İstasyon: {ist.Ad} ({ist.KisaAd})\n" +
+                             $"─────────────────────\n" +
+                             $"📍 Konum: {ist.H1OrtaNokta:0.#} m (KM {ist.H1OrtaNokta / 1000.0:0.000})\n" +
+                             $"📏 Peron: {ist.Uzunluk:0} m (H1 & H2 Karşılıklı Eşit)\n" +
+                             $"🚃 Yaklaşan Trenler: {ist.YaklasanTrenler}"
                 };
 
                 var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
@@ -695,8 +719,10 @@ namespace CerGucuSimulasyonu
                 // Trafoyu ray hattına bağlayan besleme çizgisi
                 var feederLine = new Line
                 {
-                    X1 = x, Y1 = TRAFO_Y + 38,
-                    X2 = x, Y2 = H1_Y,
+                    X1 = x,
+                    Y1 = TRAFO_Y + 38,
+                    X2 = x,
+                    Y2 = H1_Y,
                     Stroke = new SolidColorBrush(Color.FromArgb(140, 192, 132, 252)),
                     StrokeThickness = 1.5,
                     StrokeDashArray = new DoubleCollection { 2, 2 }
@@ -712,7 +738,18 @@ namespace CerGucuSimulasyonu
                     BorderThickness = new Thickness(isSelected ? 2.5 : 1.5),
                     CornerRadius = new CornerRadius(6),
                     Tag = tm,
-                    ToolTip = $"⚡ Trafo: {tm.Ad}\nKonum: {tm.DilasKonumuH1:0} m\nAnlık Güç: {tm.AnlikGucKw:0.#} kW (%{tm.YuklenmeYuzdesi:0} Yük)"
+                    ToolTip = $"⚡ Trafo Merkezi: {tm.Ad}\n" +
+                             $"─────────────────────\n" +
+                             $"📍 Konum: {tm.DilasKonumuH1:0} m ({tm.DilasKonumuH1 / 1000.0:0.00} km)\n" +
+                             $"🏗 Bağlı İstasyon: {tm.Istasyon}\n" +
+                             $"⚡ Anlık Güç: {tm.AnlikGucKw:0.0} kW\n" +
+                             $"🔌 Anlık Akım: {tm.AnlikAkimA:0.0} A\n" +
+                             $"🔋 Bara Gerilimi: {tm.AnlikGerilimV:0.0} V\n" +
+                             $"📊 Yüklenme: %{tm.YuklenmeYuzdesi:0.0}\n" +
+                             $"🚃 Beslenen Tren: {tm.BeslenenTrenSayisi}\n" +
+                             $"Ω İç Direnç: {tm.Direnc:0.0} mΩ\n" +
+                             $"🔗 Fider Kablo: {tm.FiderKabloDirenci:0.0} mΩ\n" +
+                             $"⚙ Durum: {tm.Durum}"
                 };
 
                 var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
@@ -748,7 +785,19 @@ namespace CerGucuSimulasyonu
                     BorderThickness = new Thickness(isSelected ? 2.5 : 1),
                     CornerRadius = new CornerRadius(4),
                     Tag = tren,
-                    ToolTip = $"🚃 {tren.TrenAdi} (#{tren.Id}) | Konum: {tren.Konum:0}m | Hız: {tren.AnlikHiz:0} km/h | Güç: {tren.CekilenGucKw:0} kW | Durum: {tren.Durum}"
+                    ToolTip = $"🚃 {tren.TrenAdi} (#{tren.Id})\n" +
+                             $"─────────────────────\n" +
+                             $"📍 Konum: {tren.Konum:0} m ({tren.Konum / 1000.0:0.00} km)\n" +
+                             $"🛤 Hat: {tren.HatTipi} | Yön: {(tren.Yon == "ileri" ? "➔ İleri" : "⬅ Geri")}\n" +
+                             $"⏱ Hız: {tren.AnlikHiz:0.0} km/h (Hedef: {tren.HedefHiz:0} km/h)\n" +
+                             $"⚡ Çekilen Güç: {tren.CekilenGucKw:0.0} kW\n" +
+                             $"🔌 Çekilen Akım: {tren.CekilenAkimA:0.0} A\n" +
+                             $"🔋 Katener Gerilimi: {tren.KatenerGerilimiV:0.0} V\n" +
+                             $"📊 İvme: {tren.Ivme:0.00} m/s²\n" +
+                             $"👥 Yolcu: {tren.YolcuSayisi}\n" +
+                             $"🏁 Sonraki İstasyon: {tren.SonrakiIstasyon} ({tren.SonrakiIstasyonMesafe:0} m)\n" +
+                             $"🔗 En Yakın Trafo: {tren.EnYakinTrafo}\n" +
+                             $"⚙ Durum: {tren.Durum}"
                 };
 
                 string arrow = tren.Yon == "ileri" ? "➔" : "⬅";
@@ -782,7 +831,7 @@ namespace CerGucuSimulasyonu
                     _draggedItem = itemData;
                     _dragStartMouseX = e.GetPosition(TrackCanvas).X;
                     _dragItemOriginalKm = GetItemKm(itemData);
-                    
+
                     // TrackCanvas üzerinde Capture yap (Element üzerinde değil)
                     TrackCanvas.CaptureMouse();
 

@@ -167,7 +167,7 @@ namespace CerGucuSimulasyonu.ViewModels
                     {
                         GenerateRandomTrains();
                     }
-                    UpdateSimulationCalculations(0.1);
+                    UpdateUiMetricsAndCharts();
                     return;
                 }
                 catch
@@ -283,7 +283,7 @@ namespace CerGucuSimulasyonu.ViewModels
 
             // Başlangıç Trenleri
             GenerateRandomTrains();
-            UpdateSimulationCalculations(0.1);
+            UpdateUiMetricsAndCharts();
         }
 
         #region Canlı Simülasyon Motoru (Simulation Engine)
@@ -433,6 +433,7 @@ namespace CerGucuSimulasyonu.ViewModels
             SimulationTimeString = _elapsedSimTime.ToString(@"hh\:mm\:ss");
 
             _engine.AdvanceOneStep(dt);
+            UpdateUiMetricsAndCharts();
 
             _simulationRecorder.CaptureIfDue(Data, _elapsedSimTime.TotalSeconds);
             if (_simulationRecorder.IsComplete)
@@ -444,354 +445,17 @@ namespace CerGucuSimulasyonu.ViewModels
             }
         }
 
-        private void AdvanceSimulationStep(double dt)
+        private void UpdateUiMetricsAndCharts()
         {
-            double maxLine = Data.HatUzunlugu > 0 ? Data.HatUzunlugu : 15350;
+            double totalTractionKw = Data.Trenler.Where(t => t.CekilenGucKw > 0).Sum(t => t.CekilenGucKw);
+            double totalRegenKw = Data.Trenler.Where(t => t.CekilenGucKw < 0).Sum(t => Math.Abs(t.CekilenGucKw));
 
-            foreach (var tren in Data.Trenler)
-            {
-                // İstasyon kontrolü ve bekleme
-                if (tren.IstasyonBeklemeSayaci > 0)
-                {
-                    tren.IstasyonBeklemeSayaci -= dt;
-                    tren.AnlikHiz = 0;
-                    tren.Ivme = 0;
-                    tren.Durum = "İSTASYONDA (YOLCU ALIYOR)";
-                    continue;
-                }
-
-                // En yakın ve sonraki istasyon
-                Istasyon? nextStation = null;
-                if (tren.Yon == "ileri")
-                {
-                    nextStation = Data.Istasyonlar
-                        .Where(s => s.H1OrtaNokta > tren.Konum)
-                        .OrderBy(s => s.H1OrtaNokta)
-                        .FirstOrDefault();
-                }
-                else
-                {
-                    nextStation = Data.Istasyonlar
-                        .Where(s => s.H1OrtaNokta < tren.Konum)
-                        .OrderByDescending(s => s.H1OrtaNokta)
-                        .FirstOrDefault();
-                }
-
-                double distToNext = 99999;
-                if (nextStation != null)
-                {
-                    distToNext = Math.Abs(nextStation.H1OrtaNokta - tren.Konum);
-                    tren.SonrakiIstasyon = nextStation.Ad;
-                    tren.SonrakiIstasyonMesafe = Math.Round(distToNext, 0);
-
-                    // İstasyon yaklaşımı: Eğer 25m içindeyse dur
-                    if (distToNext <= 25 && tren.AnlikHiz <= 25)
-                    {
-                        tren.Konum = nextStation.H1OrtaNokta;
-                        tren.AnlikHiz = 0;
-                        tren.Ivme = 0;
-                        tren.IstasyonBeklemeSayaci = 6.0; // 6 saniye dur
-                        tren.Durum = "İSTASYONDA (YOLCU ALIYOR)";
-
-                        // Yolcu iniş binişi
-                        int degisim = _rand.Next(-20, 30);
-                        tren.YolcuSayisi = Math.Max(20, Math.Min(400, tren.YolcuSayisi + degisim));
-                        continue;
-                    }
-                }
-                else
-                {
-                    tren.SonrakiIstasyon = tren.Yon == "ileri" ? "Hat Sonu (Depo)" : "Hat Başı (Sahil)";
-                    tren.SonrakiIstasyonMesafe = tren.Yon == "ileri" ? Math.Max(0, maxLine - tren.Konum) : tren.Konum;
-                }
-
-                // Hedef Hız & Frenleme / Hızlanma
-                double targetSpeed = Data.Tren.MaksIsletmeHizi;
-
-                // İstasyona yaklaşıyorsa frenleme profili
-                if (distToNext < 400 && distToNext > 10)
-                {
-                    targetSpeed = Math.Max(15, (distToNext / 400.0) * Data.Tren.MaksIsletmeHizi);
-                }
-
-                // Hız Limitlerini kontrol et
-                var applicableHizLimiti = Data.HizLimitleri
-                    .FirstOrDefault(h => h.HatTipi == tren.HatTipi && tren.Konum >= h.Baslangic && tren.Konum <= h.Bitis);
-                if (applicableHizLimiti != null)
-                {
-                    targetSpeed = Math.Min(targetSpeed, applicableHizLimiti.Limit);
-                }
-
-                tren.HedefHiz = targetSpeed;
-
-                // İvmelenme / Frenleme
-                double speedDiff = targetSpeed - tren.AnlikHiz;
-                double maxAcc = Data.Tren.MaksIvmelenme * 3.6; // (km/h) / s
-                double maxDec = Data.Tren.MaksFrenlemeIvmesi * 3.6;
-
-                if (speedDiff > 0.5)
-                {
-                    double dV = Math.Min(speedDiff, maxAcc * dt);
-                    tren.AnlikHiz += dV;
-                    tren.Ivme = Math.Round(dV / (dt * 3.6), 2);
-                    tren.Durum = "HIZLANIYOR (CER GÜCÜ ÇEKİYOR)";
-                }
-                else if (speedDiff < -0.5)
-                {
-                    double dV = Math.Min(Math.Abs(speedDiff), maxDec * dt);
-                    tren.AnlikHiz -= dV;
-                    tren.Ivme = -Math.Round(dV / (dt * 3.6), 2);
-                    tren.Durum = "FRENLİYOR (REJENERATİF FREN)";
-                }
-                else
-                {
-                    tren.Ivme = 0;
-                    tren.Durum = "SABİT HIZLA HAREKET HALİNDE";
-                }
-
-                // Pozisyon güncelleme
-                double vMs = tren.AnlikHiz / 3.6;
-                double deltaDistance = vMs * dt;
-                tren.KatEdilenMesafeKm += deltaDistance / 1000.0;
-
-                if (tren.Yon == "ileri")
-                {
-                    tren.Konum += deltaDistance;
-                    if (tren.Konum >= maxLine)
-                    {
-                        tren.Konum = maxLine;
-                        tren.Yon = "geri";
-                        tren.HatTipi = "H2"; // H2 hattına geçiş
-                        tren.AnlikHiz = 0;
-                        tren.IstasyonBeklemeSayaci = 8.0;
-                    }
-                }
-                else
-                {
-                    tren.Konum -= deltaDistance;
-                    if (tren.Konum <= 0)
-                    {
-                        tren.Konum = 0;
-                        tren.Yon = "ileri";
-                        tren.HatTipi = "H1"; // H1 hattına geçiş
-                        tren.AnlikHiz = 0;
-                        tren.IstasyonBeklemeSayaci = 8.0;
-                    }
-                }
-            }
-
-            // Elektriksel Cer Gücü ve Trafo Hesaplamalarını Yap
-            UpdateSimulationCalculations(dt);
-        }
-
-        private void UpdateSimulationCalculations(double dt)
-        {
-            double vNominal = Data.CerKatener.YuksuzDcBaraGerilimi > 0 ? Data.CerKatener.YuksuzDcBaraGerilimi : 1620;
-            double auxPowerKw = 150.0; // Gerçekçi yardımcı güç (klima, kompresör, aydınlatma)
-            double maxTrainTractionKw = 1750.0; // 4'lü metro dizisi için fiziksel cer invertör gücü sınırı
-            double maxTrainRegenKw = 1400.0; // Maksimum elektrikli rejenerasyon gücü
-            double trainWeightTon = 210.0; // AW2/AW3 ortalama 4'lü dizi kütlesi
-
-            double totalTractionKw = 0;
-            double totalRegenKw = 0;
-
-            // Hat iletkenlik parametresi (Rijit Katener + Ray Direnci)
-            double rLineM = ((Data.CerKatener.RijitKatenerKmDirenci + Data.CerKatener.NormalRayKmDirenci) / 1000.0) / 1000.0;
-            if (rLineM <= 0) rLineM = 0.000036; // 0.036 Ohm/km
-
-            // 1. TRENLERİN FİZİKSEL ÇEKİŞ / FREN GÜÇLERİ HESAPLANIR
-            foreach (var tren in Data.Trenler)
-            {
-                double vMs = tren.AnlikHiz / 3.6;
-                double vKmh = tren.AnlikHiz;
-                double cerPowerKw = 0;
-
-                // Davis Sürtünme Direnci (kN)
-                double davisKn = (2.5 * trainWeightTon + 0.03 * trainWeightTon * vKmh + 0.004 * Math.Pow(vKmh, 2)) / 1000.0;
-
-                // Yerel Hat Eğimi Direnci (kN)
-                var localEgim = Data.HatEgimleri.FirstOrDefault(e => e.HatTipi == tren.HatTipi && tren.Konum >= e.Baslangic && tren.Konum <= e.Bitis);
-                double gradeKn = 0;
-                if (localEgim != null)
-                {
-                    gradeKn = trainWeightTon * 9.81 * (localEgim.EgimYuzdesi / 100.0);
-                    if (tren.Yon == "geri") gradeKn = -gradeKn;
-                }
-
-                // Yerel Kurp Direnci (kN)
-                var localKurp = Data.HatKurplari.FirstOrDefault(k => k.HatTipi == tren.HatTipi && tren.Konum >= k.Baslangic && tren.Konum <= k.Bitis);
-                double curveKn = 0;
-                if (localKurp != null && localKurp.Yaricap > 55)
-                {
-                    curveKn = trainWeightTon * 9.81 * (650.0 / (localKurp.Yaricap - 55.0)) / 1000.0;
-                }
-
-                if (tren.Durum.StartsWith("HIZLANIYOR") || (tren.Ivme > 0.05 && vKmh > 1))
-                {
-                    // Hızlanma: F_cer = m*(1+rotary)*a + R_davis + F_grade + F_curve
-                    double fAccKn = trainWeightTon * 1.08 * Math.Max(0.05, tren.Ivme);
-                    double fTotalKn = Math.Max(0, fAccKn + davisKn + gradeKn + curveKn);
-
-                    // Güç = F * v / verim
-                    double pMechKw = (fTotalKn * vMs) / (Data.Tren.TrenVerimi > 0 ? (Data.Tren.TrenVerimi / 100.0) : 0.88);
-
-                    // Fiziksel inverter güç limiti ile sınırla
-                    pMechKw = Math.Min(maxTrainTractionKw, pMechKw);
-                    cerPowerKw = pMechKw + auxPowerKw;
-                    totalTractionKw += cerPowerKw;
-                    tren.ToplamTuketilenEnerjiKwh += (cerPowerKw * (dt / 3600.0));
-                }
-                else if (tren.Durum.StartsWith("FRENLİYOR") || (tren.Ivme < -0.05 && vKmh > 2))
-                {
-                    // Rejeneratif Frenleme: Güç şebekeye geri basılır
-                    double fDecKn = trainWeightTon * Math.Abs(tren.Ivme);
-                    double pBrakeMechKw = fDecKn * vMs * 0.72; // %72 geri kazanım verimi
-                    double pRegenKw = Math.Min(maxTrainRegenKw, pBrakeMechKw);
-
-                    cerPowerKw = -pRegenKw + auxPowerKw;
-                    totalRegenKw += pRegenKw;
-                    tren.ToplamRejeneratifEnerjiKwh += (pRegenKw * (dt / 3600.0));
-                }
-                else if (vKmh > 0)
-                {
-                    // Sabit Hızda Seyir
-                    double fCruisKn = Math.Max(0, davisKn + gradeKn + curveKn);
-                    double pCruisKw = (fCruisKn * vMs) / 0.88;
-                    pCruisKw = Math.Min(600.0, pCruisKw);
-                    cerPowerKw = pCruisKw + auxPowerKw;
-                    totalTractionKw += cerPowerKw;
-                    tren.ToplamTuketilenEnerjiKwh += (cerPowerKw * (dt / 3600.0));
-                }
-                else
-                {
-                    // İstasyonda bekleme / duruş
-                    cerPowerKw = auxPowerKw;
-                    totalTractionKw += auxPowerKw;
-                    tren.ToplamTuketilenEnerjiKwh += (auxPowerKw * (dt / 3600.0));
-                }
-
-                tren.CekilenGucKw = Math.Round(cerPowerKw, 1);
-                tren.CekilenAkimA = Math.Round((cerPowerKw * 1000.0) / vNominal, 1);
-            }
-
-            // 2. DC CER BESLEME AĞ ÇÖZÜCÜSÜ (Bilateral DC Traction Power Solver)
-            // Her trafonun yükü ve akımı komşuluk ve hat mesafesine göre pürüzsüz paylaştırılır.
-            foreach (var tm in Data.TrafoMerkezleri)
-            {
-                double tmTotalKw = 0;
-                int fedCount = 0;
-
-                foreach (var tren in Data.Trenler)
-                {
-                    if (tren.CekilenGucKw <= 0) continue;
-
-                    double distM = Math.Abs(tm.DilasKonumuH1 - tren.Konum);
-
-                    // Eğer tren bu trafoya 3800m'den yakınsa akım payı hesapla
-                    if (distM < 3800)
-                    {
-                        // Tüm aday trafolar arasındaki elektriksel iletkenlik (1 / R_toplam)
-                        double gTm = 1.0 / (Math.Max(5.0, tm.Direnc) + (distM * rLineM * 1000.0));
-
-                        double sumG = 0;
-                        foreach (var otherTm in Data.TrafoMerkezleri)
-                        {
-                            double otherDist = Math.Abs(otherTm.DilasKonumuH1 - tren.Konum);
-                            if (otherDist < 3800)
-                            {
-                                sumG += 1.0 / (Math.Max(5.0, otherTm.Direnc) + (otherDist * rLineM * 1000.0));
-                            }
-                        }
-
-                        if (sumG > 0)
-                        {
-                            double weight = gTm / sumG;
-                            tmTotalKw += tren.CekilenGucKw * weight;
-                            if (weight > 0.15) fedCount++;
-                        }
-                    }
-                }
-
-                tm.AnlikGucKw = Math.Round(tmTotalKw, 1);
-                tm.BeslenenTrenSayisi = fedCount;
-                tm.AnlikAkimA = Math.Round((tmTotalKw * 1000.0) / vNominal, 1);
-
-                double trafoMaxKw = Data.CerKatener.DogrultucuGucu > 0 ? Data.CerKatener.DogrultucuGucu : 3000;
-                tm.YuklenmeYuzdesi = Math.Round((tmTotalKw / trafoMaxKw) * 100.0, 1);
-
-                // Trafo iç direnci kaynaklı bara gerilim düşümü
-                double rTrafoOhm = tm.Direnc / 1000.0;
-                tm.AnlikGerilimV = Math.Round(Math.Max(1400, vNominal - (tm.AnlikAkimA * rTrafoOhm)), 1);
-
-                tm.Durum = tm.YuklenmeYuzdesi switch
-                {
-                    > 100 => "AŞIRI YÜK (% KAPASİTE AŞILDI)",
-                    > 75 => "YÜKSEK YÜK",
-                    > 5 => "NORMAL",
-                    _ => "BOŞTA"
-                };
-            }
-
-            // 3. TREN KATENER GERİLİMLERİNİ GÜNCELLE
-            foreach (var tren in Data.Trenler)
-            {
-                var nearestTrafo = Data.TrafoMerkezleri
-                    .OrderBy(t => Math.Abs(t.DilasKonumuH1 - tren.Konum))
-                    .FirstOrDefault();
-
-                if (nearestTrafo != null)
-                {
-                    tren.EnYakinTrafo = nearestTrafo.Ad;
-                    double distM = Math.Abs(nearestTrafo.DilasKonumuH1 - tren.Konum);
-                    double rLine = distM * rLineM;
-                    double iTrain = Math.Max(0, (tren.CekilenGucKw * 1000.0) / vNominal);
-                    double vDrop = iTrain * rLine;
-
-                    // Katener gerilimi
-                    double vKatener = nearestTrafo.AnlikGerilimV - vDrop;
-                    if (tren.CekilenGucKw < 0)
-                    {
-                        // Rejeneratif frenlemede gerilim hafif yükselir
-                        vKatener = vNominal + Math.Min(120.0, Math.Abs(tren.CekilenGucKw) * 0.08);
-                    }
-                    tren.KatenerGerilimiV = Math.Round(Math.Max(1100, Math.Min(1780, vKatener)), 1);
-                }
-            }
-
-            // 4. KATENER SEKSİYONLARI VE MONTAJ ETAPLARI ENERJİ ANALİZİNİ GÜNCELLE
-            foreach (var sek in Data.KatenerSeksiyonlari)
-            {
-                var sekTrains = Data.Trenler
-                    .Where(t => t.Konum >= sek.BaslangicKm && t.Konum <= sek.BitisKm)
-                    .ToList();
-
-                sek.AktifTrenSayisi = sekTrains.Count;
-                double sekKw = sekTrains.Sum(t => Math.Max(0, t.CekilenGucKw));
-                sek.AnlikToplamGucKw = Math.Round(sekKw, 1);
-                sek.AnlikToplamAkimA = Math.Round((sekKw * 1000.0) / vNominal, 1);
-                sek.OrtalamaGerilimV = sekTrains.Count > 0
-                    ? Math.Round(sekTrains.Average(t => t.KatenerGerilimiV), 1)
-                    : vNominal;
-            }
-
-            foreach (var etap in Data.KatenerEtaplari)
-            {
-                var etapTrains = Data.Trenler
-                    .Where(t => t.Konum >= etap.BaslangicKm && t.Konum <= etap.BitisKm)
-                    .ToList();
-
-                etap.AktifTrenSayisi = etapTrains.Count;
-                double etapKw = etapTrains.Sum(t => Math.Max(0, t.CekilenGucKw));
-                etap.AnlikToplamGucKw = Math.Round(etapKw, 1);
-                etap.AnlikToplamAkimA = Math.Round((etapKw * 1000.0) / vNominal, 1);
-            }
-
-            // 5. GLOBAL METRİKLERİ GÜNCELLE
             ToplamCekilenGucKw = Math.Round(totalTractionKw, 1);
             ToplamRejeneratifGucKw = Math.Round(totalRegenKw, 1);
             NetSistemGucuKw = Math.Round(totalTractionKw - totalRegenKw, 1);
-            ToplamTuketilenEnerjiKwh += Math.Round((totalTractionKw * (dt / 3600.0)), 3);
-            ToplamGeriKazanilanEnerjiKwh += Math.Round((totalRegenKw * (dt / 3600.0)), 3);
+
+            ToplamTuketilenEnerjiKwh = Math.Round(Data.Trenler.Sum(t => t.ToplamTuketilenEnerjiKwh), 3);
+            ToplamGeriKazanilanEnerjiKwh = Math.Round(Data.Trenler.Sum(t => t.ToplamRejeneratifEnerjiKwh), 3);
 
             var peakTrafo = Data.TrafoMerkezleri.OrderByDescending(t => t.YuklenmeYuzdesi).FirstOrDefault();
             EnYuksekTrafoYukYuzdesi = peakTrafo?.YuklenmeYuzdesi ?? 0;
@@ -805,7 +469,6 @@ namespace CerGucuSimulasyonu.ViewModels
                 ToplamTasınanYolcu = Data.Trenler.Sum(t => t.YolcuSayisi);
             }
 
-            // 3. İstasyonlardaki yaklaşan tren ETA bilgilerini güncelle
             foreach (var ist in Data.Istasyonlar)
             {
                 var approaching = Data.Trenler
@@ -830,7 +493,6 @@ namespace CerGucuSimulasyonu.ViewModels
                 }
             }
 
-            // 4. Canlı Grafikleri Besle
             string timeStr = DateTime.Now.ToString("HH:mm:ss");
             PowerChart?.AddPoint(ToplamCekilenGucKw, ToplamRejeneratifGucKw, timeStr);
             VoltageChart?.AddPoint(OrtalamaKatenerGerilimiV, MinHatGerilimiV, timeStr);
@@ -841,6 +503,7 @@ namespace CerGucuSimulasyonu.ViewModels
                 SelectedTrainSpeedChart?.AddPoint(selTrain.AnlikHiz, selTrain.CekilenGucKw, timeStr);
             }
         }
+
 
         #endregion
 

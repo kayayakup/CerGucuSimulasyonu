@@ -43,6 +43,12 @@
             </Style.Triggers>
         </Style>
 
+        <Style TargetType="DataGrid">
+            <Setter Property="ColumnHeaderStyle" Value="{StaticResource CustomDataGridHeaderStyle}"/>
+            <Setter Property="CellStyle" Value="{StaticResource CustomDataGridCellStyle}"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+        </Style>
+
         <!-- TabItem Stili (Koyu Tema İle Uyumlu, Okunaklı Başlıklar) -->
         <Style TargetType="TabItem">
             <Setter Property="Template">
@@ -139,7 +145,7 @@
             <DockPanel LastChildFill="False">
                 
                 <!-- SOL ALAN: SİMÜLASYON OYNATMA, HIZ VE MOD SEÇİM BUTONLARI -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                <WrapPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
                     <!-- SİMÜLASYON OYNATMA VE HIZ -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,8,0">
                         <Button Command="{Binding ToggleSimulationCommand}" Margin="1,0" Padding="10,4" FontWeight="Bold" Cursor="Hand">
@@ -178,7 +184,7 @@
 
                     <!-- Mod Seçim Butonları -->
                     <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
-                        <RadioButton x:Name="BtnModeSelect" GroupName="ToolMode" Content="🔍 Seç / İzle" IsChecked="True" 
+                        <RadioButton x:Name="BtnModeSelect" GroupName="ToolMode" Content="🔍Seç" IsChecked="True" 
                                      Click="OnModeChanged" Tag="SELECT"
                                      Style="{StaticResource ModeToggleButtonStyle}"/>
 
@@ -206,10 +212,10 @@
                                      Click="OnModeChanged" Tag="PARALLEL"
                                      Style="{StaticResource ModeToggleButtonStyle}"/>
                     </StackPanel>
-                </StackPanel>
+                </WrapPanel>
 
                 <!-- SAĞ ALAN: TREN ÜRET DAHİL SAĞDA KALAN BUTONLAR -->
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <WrapPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Button Command="{Binding GenerateRandomTrainsCommand}" Content="🎲 Tren Üret" Background="#7C4DFF" Foreground="White" BorderThickness="0" Margin="2,0" Padding="8,4" FontWeight="Bold" Cursor="Hand"/>
                     <Button Command="{Binding AddSingleTrainCommand}" Content="🚃 +1 Tren" Background="#24263D" Foreground="#38BDF8" BorderBrush="#38BDF8" Margin="2,0" Padding="6,4" Cursor="Hand"/>
                     <Button Command="{Binding ZoomInCommand}" Content="🔍+" ToolTip="Yakınlaştır" Margin="1,0" Padding="6,4" Cursor="Hand"/>
@@ -220,7 +226,7 @@
                     <Button Command="{Binding ExportWordReportCommand}" Content="📝 Word Raporu" Background="#2563EB" Foreground="White" BorderThickness="0" Margin="3,0" Padding="8,4" Cursor="Hand"/>
                     <Button Command="{Binding ExportExcelReportCommand}" Content="📊 Excel Raporu" Background="#16A34A" Foreground="White" BorderThickness="0" Margin="1,0" Padding="8,4" Cursor="Hand"/>
                     <Button Command="{Binding RunAllScenariosCommand}" Content="▶ Tüm Senaryolar" Background="#9333EA" Foreground="White" BorderThickness="0" Margin="3,0" Padding="8,4" Cursor="Hand"/>
-                </StackPanel>
+                </WrapPanel>
 
             </DockPanel>
         </Border>
@@ -918,8 +924,26 @@
 
                                         <Grid Margin="0,3">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
-                                            <TextBlock Text="Ray Direnci (mΩ/km)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBlock Text="Normal Ray Direnci (mΩ/km)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
                                             <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.NormalRayKmDirenci, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Sertleştirilmiş Ray Direnci (mΩ/km)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.SertlestirilmisRayKmDirenci, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Ray-Toprak Arası Direnç (Ω/km)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.RayToprakArasiDirenc, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Trafo İç Direnci (mΩ)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.TrafoIcDirenci, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
                                         </Grid>
 
                                         <Grid Margin="0,3">
@@ -949,6 +973,12 @@
 
                                         <Grid Margin="0,3">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Maks. Tasarım Hızı (km/h)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksTasarimHizi, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
                                             <TextBlock Text="Maks. İşletme Hızı (km/h)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
                                             <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksIsletmeHizi, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
                                         </Grid>
@@ -961,8 +991,32 @@
 
                                         <Grid Margin="0,3">
                                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Maks. Frenleme İvmesi (m/s²)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksFrenlemeIvmesi, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Jerk Limiti (m/s³)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.JerkLimiti, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
                                             <TextBlock Text="AW0 Boş Ağırlık (ton)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
                                             <TextBox Grid.Column="1" Text="{Binding Data.Tren.Aw0BosAgirlik, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="AW3 Dolu Ağırlık (ton)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.Aw3DoluAgirlik, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Döner Kütle (% AW0)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.DonerKutle, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
                                         </Grid>
 
                                         <Grid Margin="0,3">
@@ -970,6 +1024,37 @@
                                             <TextBlock Text="Yardımcı Güç (kW)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
                                             <TextBox Grid.Column="1" Text="{Binding Data.Tren.YardimciGuc, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
                                         </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Maks. Gerilim (V)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MaksGerilim, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Min. Gerilim (V)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MinGerilim, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Min. İşletme Gerilimi (V)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.MinIsletmeGerilimi, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Tren Uzunluğu (m)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.TrenUzunlugu, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Tren Verimi (%)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.Tren.TrenVerimi, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
