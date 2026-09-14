@@ -17,6 +17,10 @@ namespace CerGucuSimulasyonu.Services
         private readonly IReadOnlySet<string> _outOfServiceSubstations;
         private readonly Random _rand = new();
 
+        private double _simTotalElapsed = 0;
+
+        public void ResetTime() => _simTotalElapsed = 0;
+
         public RailwaySimulationEngine(
             SimulationData data,
             IReadOnlySet<string>? outOfServiceSubstations = null)
@@ -31,10 +35,33 @@ namespace CerGucuSimulasyonu.Services
         /// </summary>
         public void AdvanceOneStep(double dt)
         {
-            // 1. Kinematic update for each train (same as original AdvanceSimulationStep)
+            _simTotalElapsed += dt;
             double maxLine = _data.HatUzunlugu > 0 ? _data.HatUzunlugu : 15350;
+            double minSafeDistance = _data.Isletme?.MinimumTrenMesafesiMetre > 0 ? _data.Isletme.MinimumTrenMesafesiMetre : 400.0;
+
+            // 1. Kinematic update for each train
             foreach (var tren in _data.Trenler)
             {
+                // Dispatch check for multi-train headway (e.g. 0s, 90s, 180s)
+                if (!tren.IsDispatched)
+                {
+                    if (_simTotalElapsed >= tren.DispatchTimeSeconds)
+                    {
+                        tren.IsDispatched = true;
+                        tren.Durum = "SEFERE BAŞLADI";
+                        tren.YolcuSayisi = 120;
+                    }
+                    else
+                    {
+                        tren.AnlikHiz = 0;
+                        tren.Ivme = 0;
+                        tren.CekilenGucKw = 0;
+                        tren.CekilenAkimA = 0;
+                        tren.Durum = $"SEFER BEKLİYOR (~{Math.Max(0, tren.DispatchTimeSeconds - _simTotalElapsed):0} sn)";
+                        continue;
+                    }
+                }
+
                 // Station waiting logic
                 if (tren.IstasyonBeklemeSayaci > 0)
                 {
@@ -88,7 +115,7 @@ namespace CerGucuSimulasyonu.Services
                     tren.SonrakiIstasyonMesafe = tren.Yon == "ileri" ? Math.Max(0, maxLine - tren.Konum) : tren.Konum;
                 }
 
-                // Determine target speed
+                // Determine target speed based on line speed limits and station approach
                 double targetSpeed = _data.Tren.MaksIsletmeHizi;
                 if (distToNext < 400 && distToNext > 10)
                 {
@@ -100,9 +127,40 @@ namespace CerGucuSimulasyonu.Services
                 {
                     targetSpeed = Math.Min(targetSpeed, applicableHizLimiti.Limit);
                 }
+
+                // Automatic Train Protection (ATP): Safety Distance to leading train on the same track
+                TrenKonumu? leadingTrain = null;
+                if (tren.Yon == "ileri")
+                {
+                    leadingTrain = _data.Trenler
+                        .Where(t => t != tren && t.IsDispatched && t.HatTipi == tren.HatTipi && t.Yon == tren.Yon && t.Konum > tren.Konum)
+                        .OrderBy(t => t.Konum)
+                        .FirstOrDefault();
+                }
+                else
+                {
+                    leadingTrain = _data.Trenler
+                        .Where(t => t != tren && t.IsDispatched && t.HatTipi == tren.HatTipi && t.Yon == tren.Yon && t.Konum < tren.Konum)
+                        .OrderByDescending(t => t.Konum)
+                        .FirstOrDefault();
+                }
+
+                if (leadingTrain != null)
+                {
+                    double gap = Math.Abs(leadingTrain.Konum - tren.Konum);
+                    if (gap < minSafeDistance * 0.7)
+                    {
+                        targetSpeed = 0; // Emergency safe stop
+                    }
+                    else if (gap < minSafeDistance)
+                    {
+                        targetSpeed = Math.Min(targetSpeed, Math.Max(10, ((gap - minSafeDistance * 0.7) / (minSafeDistance * 0.3)) * 35));
+                    }
+                }
+
                 tren.HedefHiz = targetSpeed;
 
-                // Acceleration / braking
+                // Acceleration / braking dynamics
                 double speedDiff = targetSpeed - tren.AnlikHiz;
                 double maxAcc = _data.Tren.MaksIvmelenme * 3.6; // km/h per second
                 double maxDec = _data.Tren.MaksFrenlemeIvmesi * 3.6;
@@ -156,29 +214,31 @@ namespace CerGucuSimulasyonu.Services
                 }
             }
 
-            // 2. Power calculation – fixed voltage at 1500 V
-            double vNominal = 1500; // V
-            double auxPowerKw = 150.0;
-            double maxTrainTractionKw = 1750.0;
-            double maxTrainRegenKw = 1400.0;
-            double trainWeightTon = 210.0;
+            // 2. Power calculation – EN 50122-1 1500 V DC
+            double vNominal = _data.CerKatener.YuksuzDcBaraGerilimi > 0 ? _data.CerKatener.YuksuzDcBaraGerilimi : 1500; // V
+            double auxPowerKw = _data.Tren.YardimciGuc > 0 ? _data.Tren.YardimciGuc : 150.0;
+            double maxTrainTractionKw = _data.Tren.MotorGucuKw > 0 ? _data.Tren.MotorGucuKw : 1800.0;
+            double maxTrainRegenKw = maxTrainTractionKw * 0.8;
+            double trainWeightTon = _data.Tren.Aw3DoluAgirlik > 0 ? _data.Tren.Aw3DoluAgirlik : 236.0;
+            double rotMassRatio = 1.0 + (_data.Tren.DonerKutle / 100.0);
+            double dA = _data.Tren.DavisA > 0 ? _data.Tren.DavisA : 2.5;
+            double dB = _data.Tren.DavisB > 0 ? _data.Tren.DavisB : 0.03;
+            double dC = _data.Tren.DavisC > 0 ? _data.Tren.DavisC : 0.004;
+            double eta = _data.Tren.TrenVerimi > 0 ? _data.Tren.TrenVerimi / 100.0 : 0.88;
 
             double totalTractionKw = 0;
             double totalRegenKw = 0;
 
-            double rLineM = ((
-                _data.CerKatener.RijitKatenerKmDirenci +
-                _data.CerKatener.NormalRayKmDirenci) / 1000.0) / 1000.0;
-            if (rLineM <= 0) rLineM = 0.000036;
-
-            foreach (var tren in _data.Trenler)
+            foreach (var tren in _data.Trenler.Where(t => t.IsDispatched))
             {
                 double vMs = tren.AnlikHiz / 3.6;
                 double vKmh = tren.AnlikHiz;
                 double cerPowerKw = 0;
 
-                double davisKn = (2.5 * trainWeightTon + 0.03 * trainWeightTon * vKmh + 0.004 * Math.Pow(vKmh, 2)) / 1000.0;
+                // Davis running resistance
+                double davisKn = (dA * trainWeightTon + dB * trainWeightTon * vKmh + dC * Math.Pow(vKmh, 2)) / 1000.0;
 
+                // Gradient resistance / assistance
                 var localEgim = _data.HatEgimleri.FirstOrDefault(e => e.HatTipi == tren.HatTipi && tren.Konum >= e.Baslangic && tren.Konum <= e.Bitis);
                 double gradeKn = 0;
                 if (localEgim != null)
@@ -187,6 +247,7 @@ namespace CerGucuSimulasyonu.Services
                     if (tren.Yon == "geri") gradeKn = -gradeKn;
                 }
 
+                // Curve resistance (Rockl formula)
                 var localKurp = _data.HatKurplari.FirstOrDefault(k => k.HatTipi == tren.HatTipi && tren.Konum >= k.Baslangic && tren.Konum <= k.Bitis);
                 double curveKn = 0;
                 if (localKurp != null && localKurp.Yaricap > 55)
@@ -196,9 +257,9 @@ namespace CerGucuSimulasyonu.Services
 
                 if (tren.Durum.StartsWith("HIZLANIYOR") || (tren.Ivme > 0.05 && vKmh > 1))
                 {
-                    double fAccKn = trainWeightTon * 1.08 * Math.Max(0.05, tren.Ivme);
+                    double fAccKn = trainWeightTon * rotMassRatio * Math.Max(0.05, tren.Ivme);
                     double fTotalKn = Math.Max(0, fAccKn + davisKn + gradeKn + curveKn);
-                    double pMechKw = (fTotalKn * vMs) / (_data.Tren.TrenVerimi > 0 ? (_data.Tren.TrenVerimi / 100.0) : 0.88);
+                    double pMechKw = (fTotalKn * vMs) / eta;
                     pMechKw = Math.Min(maxTrainTractionKw, pMechKw);
                     cerPowerKw = pMechKw + auxPowerKw;
                     totalTractionKw += cerPowerKw;
@@ -207,7 +268,7 @@ namespace CerGucuSimulasyonu.Services
                 else if (tren.Durum.StartsWith("FRENLİYOR") || (tren.Ivme < -0.05 && vKmh > 2))
                 {
                     double fDecKn = trainWeightTon * Math.Abs(tren.Ivme);
-                    double pBrakeMechKw = fDecKn * vMs * 0.72;
+                    double pBrakeMechKw = fDecKn * vMs * 0.75;
                     double pRegenKw = Math.Min(maxTrainRegenKw, pBrakeMechKw);
                     cerPowerKw = -pRegenKw + auxPowerKw;
                     totalRegenKw += pRegenKw;
@@ -216,8 +277,8 @@ namespace CerGucuSimulasyonu.Services
                 else if (vKmh > 0)
                 {
                     double fCruisKn = Math.Max(0, davisKn + gradeKn + curveKn);
-                    double pCruisKw = (fCruisKn * vMs) / 0.88;
-                    pCruisKw = Math.Min(600.0, pCruisKw);
+                    double pCruisKw = (fCruisKn * vMs) / eta;
+                    pCruisKw = Math.Min(650.0, pCruisKw);
                     cerPowerKw = pCruisKw + auxPowerKw;
                     totalTractionKw += cerPowerKw;
                     tren.ToplamTuketilenEnerjiKwh += (cerPowerKw * (dt / 3600.0));
@@ -231,10 +292,15 @@ namespace CerGucuSimulasyonu.Services
 
                 tren.CekilenGucKw = Math.Round(cerPowerKw, 1);
                 tren.CekilenAkimA = Math.Round((cerPowerKw * 1000.0) / vNominal, 1);
-                tren.KatenerGerilimiV = 1500; // constant voltage
+                tren.KatenerGerilimiV = vNominal; // EN 50122-1 1500 V DC
             }
 
-            // 3. Transformer loading – constant voltage
+            // 3. Transformer loading – EN 50122-1 1500 V
+            double rLineM = ((
+                _data.CerKatener.RijitKatenerKmDirenci +
+                _data.CerKatener.NormalRayKmDirenci) / 1000.0) / 1000.0;
+            if (rLineM <= 0) rLineM = 0.000036;
+
             foreach (var tm in _data.TrafoMerkezleri)
             {
                 if (_outOfServiceSubstations.Contains(tm.Ad))

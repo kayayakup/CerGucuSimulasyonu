@@ -49,6 +49,12 @@ namespace CerGucuSimulasyonu
                 HookEvents();
                 Redraw();
                 StartUiRenderLoop();
+
+                // Parametre & Çekiş Gücü Başlangıç Sihirbazını Aç
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    OpenStartupWizard();
+                }), DispatcherPriority.ApplicationIdle);
             };
         }
 
@@ -100,7 +106,7 @@ namespace CerGucuSimulasyonu
             HookCollection(ViewModel.Data.Istasyonlar);
             HookCollection(ViewModel.Data.HizLimitleri);
             HookCollection(ViewModel.Data.KatenerSeksiyonlari);
-            HookCollection(ViewModel.Data.KatenerEtaplari);
+// HookCollection for KatenerEtap removed
             HookCollection(ViewModel.Data.SeksiyonAyiricilar);
             HookCollection(ViewModel.Data.Trenler);
         }
@@ -286,62 +292,7 @@ namespace CerGucuSimulasyonu
                 TrackCanvas.Children.Add(banner);
             }
 
-            // 2. ALT ŞERİT: MONTAJ ETAPLARI (Etap 01, Etap 07, Etap 09 ... Etap 99 - EK-1 Montaj Karnesi)
-            for (int i = 0; i < ViewModel.Data.KatenerEtaplari.Count; i++)
-            {
-                var etap = ViewModel.Data.KatenerEtaplari[i];
-                double x1 = KmToX(etap.BaslangicKm);
-                double x2 = KmToX(etap.BitisKm);
-                double w = Math.Max(10, x2 - x1);
-                bool isSelected = ViewModel.SelectedItem == etap;
-                Color col = (i % 2 == 0) ? Color.FromRgb(6, 182, 212) : Color.FromRgb(59, 130, 246);
-
-                var etapBox = new Border
-                {
-                    Width = w,
-                    Height = 16,
-                    Background = new SolidColorBrush(Color.FromArgb(isSelected ? (byte)180 : (byte)35, col.R, col.G, col.B)),
-                    BorderBrush = new SolidColorBrush(isSelected ? Colors.White : Color.FromArgb(120, col.R, col.G, col.B)),
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(2),
-                    Tag = etap,
-                    ToolTip = $"🔩 {etap.Ad} ({etap.TunelTipi})\nKonum: {etap.BaslangicKm:0.#}m – {etap.BitisKm:0.#}m (Boy: {etap.Uzunluk:0.#} m)\nOrta Nokta (Ankraj): {etap.OrtaNoktaKm:0.#} m\nGeçiş: {etap.OverlapTipi}\nBesleyen: {etap.BesleyenTrafo}\nAnlık Güç: {etap.AnlikToplamGucKw:0} kW"
-                };
-
-                var sp = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                sp.Children.Add(new TextBlock
-                {
-                    Text = $"{etap.Ad} ({etap.Uzunluk:0}m)",
-                    FontSize = 8,
-                    FontWeight = FontWeights.SemiBold,
-                    Foreground = isSelected ? Brushes.White : new SolidColorBrush(Color.FromRgb(203, 213, 225)),
-                    VerticalAlignment = VerticalAlignment.Center
-                });
-                etapBox.Child = sp;
-
-                AttachItemEvents(etapBox, etap);
-                Canvas.SetLeft(etapBox, x1);
-                Canvas.SetTop(etapBox, 164);
-                TrackCanvas.Children.Add(etapBox);
-
-                // Orta Nokta (Midpoint Anchor ⚓) İşareti
-                if (etap.OrtaNoktaKm > 0)
-                {
-                    double xOrta = KmToX(etap.OrtaNoktaKm);
-                    var pin = new Ellipse
-                    {
-                        Width = 4,
-                        Height = 4,
-                        Fill = new SolidColorBrush(Color.FromRgb(167, 139, 250)),
-                        Tag = etap,
-                        ToolTip = $"⚓ Orta Nokta Ankraj: {etap.Ad} ({etap.OrtaNoktaKm:0.#} m)"
-                    };
-                    AttachItemEvents(pin, etap);
-                    Canvas.SetLeft(pin, xOrta - 2);
-                    Canvas.SetTop(pin, 178);
-                    TrackCanvas.Children.Add(pin);
-                }
-            }
+            // KatenerEtap rendering block removed
         }
 
         private void DrawSeksiyonAyiricilar()
@@ -444,43 +395,51 @@ namespace CerGucuSimulasyonu
                 TrackCanvas.Children.Add(badge);
             }
 
-            // Eğimler (Gradients)
+            // Eğimler (Gradients with directional indicators)
             for (int i = 0; i < ViewModel.Data.HatEgimleri.Count; i++)
             {
                 var egim = ViewModel.Data.HatEgimleri[i];
                 double x1 = KmToX(egim.Baslangic);
                 double x2 = KmToX(egim.Bitis);
-                double w = Math.Max(6, x2 - x1);
-                double y = egim.HatTipi == "H1" ? H1_Y - 30 : H2_Y + 24;
-                Color col = egim.EgimYuzdesi >= 0 ? Color.FromArgb(70, 239, 83, 80) : Color.FromArgb(70, 76, 175, 80);
+                double w = Math.Max(12, x2 - x1);
+                double y = egim.HatTipi == "H1" ? H1_Y - 34 : H2_Y + 24;
+
+                bool isUp = egim.EgimYuzdesi > 0;
+                bool isDown = egim.EgimYuzdesi < 0;
+                Color colBg = isUp 
+                    ? Color.FromArgb(100, 239, 68, 68) 
+                    : (isDown ? Color.FromArgb(100, 16, 185, 129) : Color.FromArgb(80, 100, 116, 139));
+                Color colBorder = isUp ? Color.FromRgb(248, 113, 113) : (isDown ? Color.FromRgb(52, 211, 153) : Color.FromRgb(148, 163, 184));
 
                 var rect = new Rectangle
                 {
                     Width = w,
-                    Height = 14,
-                    Fill = new SolidColorBrush(col),
-                    Stroke = new SolidColorBrush(Color.FromArgb(160, col.R, col.G, col.B)),
-                    StrokeThickness = 1,
-                    RadiusX = 3,
-                    RadiusY = 3,
+                    Height = 18,
+                    Fill = new SolidColorBrush(colBg),
+                    Stroke = new SolidColorBrush(colBorder),
+                    StrokeThickness = 1.2,
+                    RadiusX = 4,
+                    RadiusY = 4,
                     Tag = egim,
-                    ToolTip = $"Hat Eğimi: %{egim.EgimYuzdesi:0.#} ({egim.Baslangic:0}m - {egim.Bitis:0}m) [{egim.HatTipi}]"
+                    ToolTip = $"📐 Eğim Bölgesi ({egim.HatTipi}): %{egim.EgimYuzdesi:0.#} {(isUp ? "↗ Tırmanış (Çıkış)" : (isDown ? "↘ İniş" : "➡ Düz"))} | {egim.Baslangic:0}m - {egim.Bitis:0}m ({egim.Uzunluk:0}m)"
                 };
                 AttachItemEvents(rect, egim);
                 Canvas.SetLeft(rect, x1);
                 Canvas.SetTop(rect, y);
                 TrackCanvas.Children.Add(rect);
 
+                string arrowSymbol = isUp ? "↗" : (isDown ? "↘" : "➡");
+                string desc = isUp ? "Çıkış" : (isDown ? "İniş" : "Düz");
                 var txt = new TextBlock
                 {
-                    Text = $"%{egim.EgimYuzdesi:0.#}",
-                    FontSize = 9,
-                    Foreground = new SolidColorBrush(Color.FromRgb(240, 240, 240)),
+                    Text = $"{arrowSymbol} %{Math.Abs(egim.EgimYuzdesi):0.#} ({desc})",
+                    FontSize = 9.5,
+                    Foreground = Brushes.White,
                     FontWeight = FontWeights.Bold,
                     IsHitTestVisible = false
                 };
-                Canvas.SetLeft(txt, x1 + (w / 2) - 10);
-                Canvas.SetTop(txt, y - 1);
+                Canvas.SetLeft(txt, x1 + Math.Max(4, (w / 2) - 28));
+                Canvas.SetTop(txt, y + 1);
                 TrackCanvas.Children.Add(txt);
             }
 
@@ -841,7 +800,7 @@ namespace CerGucuSimulasyonu
                         TrafoMerkezi tm => $"⚡ Trafo {tm.Ad} seçildi | Çekilen Güç: {tm.AnlikGucKw:0} kW (%{tm.YuklenmeYuzdesi:0} Yük)",
                         Istasyon ist => $"🚉 İstasyon {ist.Ad} seçildi | Konum: {ist.H1OrtaNokta:0} m",
                         KatenerSeksiyonu sek => $"⚡ {sek.Ad} seçildi | Aralık: {sek.KonumAraligi}, Güç: {sek.AnlikToplamGucKw:0} kW, Aktif Tren: {sek.AktifTrenSayisi}",
-                        KatenerEtap et => $"🔩 {et.Ad} seçildi | Aralık: {et.KonumAraligi}, Boy: {et.Uzunluk:0.#} m, Orta Nokta: {et.OrtaNoktaKm:0} m, Güç: {et.AnlikToplamGucKw:0} kW",
+// KatenerEtap info removed
                         SeksiyonAyirici ay => $"⫽ {ay.Ad} seçildi | Konum: {ay.Konum:0} m ({ay.Tip})",
                         RayParalellemesi rp => $"⊥ Ray Paralellemesi P{rp.No} seçildi | Konum: {rp.H1BaglantiKm:0} m",
                         HatEgimi eg => $"📐 Eğim Bölgesi seçildi | %{eg.EgimYuzdesi:0.#} ({eg.Baslangic:0}m - {eg.Bitis:0}m)",
@@ -897,7 +856,7 @@ namespace CerGucuSimulasyonu
                 RayParalellemesi rp => rp.H1BaglantiKm,
                 SeksiyonAyirici ay => ay.Konum,
                 KatenerSeksiyonu sek => sek.BaslangicKm,
-                KatenerEtap et => et.BaslangicKm,
+// KatenerEtap get km removed
                 HizLimiti hz => hz.Baslangic,
                 HatEgimi eg => eg.Baslangic,
                 HatKurbu kr => kr.Baslangic,
@@ -935,11 +894,7 @@ namespace CerGucuSimulasyonu
                     sek.BaslangicKm = clamped;
                     sek.BitisKm = Math.Min(hat, clamped + lenSek);
                     break;
-                case KatenerEtap et:
-                    double lenEt = et.BitisKm - et.BaslangicKm;
-                    et.BaslangicKm = clamped;
-                    et.BitisKm = Math.Min(hat, clamped + lenEt);
-                    break;
+// case KatenerEtap removed
                 case HizLimiti hz:
                     double lenHz = hz.Bitis - hz.Baslangic;
                     hz.Baslangic = clamped;
@@ -1178,7 +1133,7 @@ namespace CerGucuSimulasyonu
                 case TrafoMerkezi tm: ViewModel.Data.TrafoMerkezleri.Remove(tm); break;
                 case RayParalellemesi rp: ViewModel.Data.RayParalellemeleri.Remove(rp); break;
                 case KatenerSeksiyonu sek: ViewModel.Data.KatenerSeksiyonlari.Remove(sek); break;
-                case KatenerEtap et: ViewModel.Data.KatenerEtaplari.Remove(et); break;
+// case KatenerEtap removal removed
                 case SeksiyonAyirici ay: ViewModel.Data.SeksiyonAyiricilar.Remove(ay); break;
                 case HizLimiti hz: ViewModel.Data.HizLimitleri.Remove(hz); break;
                 case HatEgimi eg: ViewModel.Data.HatEgimleri.Remove(eg); break;
@@ -1221,14 +1176,6 @@ namespace CerGucuSimulasyonu
 
             switch (item)
             {
-                case KatenerEtap et:
-                    AddField("Etap Adı", et.Ad, v => et.Ad = v);
-                    AddField("Başlangıç (m)", et.BaslangicKm.ToString(), v => { if (double.TryParse(v, out var d)) et.BaslangicKm = d; });
-                    AddField("Bitiş (m)", et.BitisKm.ToString(), v => { if (double.TryParse(v, out var d)) et.BitisKm = d; });
-                    AddField("Tünel Tipi", et.TunelTipi, v => et.TunelTipi = v);
-                    AddField("Orta Nokta (m)", et.OrtaNoktaKm.ToString(), v => { if (double.TryParse(v, out var d)) et.OrtaNoktaKm = d; });
-                    AddField("Besleyen Trafo", et.BesleyenTrafo, v => et.BesleyenTrafo = v);
-                    break;
                 case KatenerSeksiyonu sek:
                     AddField("Seksiyon Adı", sek.Ad, v => sek.Ad = v);
                     AddField("Başlangıç (m)", sek.BaslangicKm.ToString(), v => { if (double.TryParse(v, out var d)) sek.BaslangicKm = d; });
@@ -1281,6 +1228,24 @@ namespace CerGucuSimulasyonu
             win.Content = sp;
             win.ShowDialog();
             Redraw();
+        }
+
+        private void OnOpenStartupWizard(object sender, RoutedEventArgs e)
+        {
+            OpenStartupWizard();
+        }
+
+        private void OpenStartupWizard()
+        {
+            var wizard = new Views.StartupWizardWindow(ViewModel.Data)
+            {
+                Owner = this
+            };
+            if (wizard.ShowDialog() == true)
+            {
+                ViewModel.StatusText = $"⚙️ Parametreler güncellendi. Toplam {ViewModel.Data.Trenler.Count} tren, Sefer aralığı: {ViewModel.Data.Isletme.SeferAraligiHeadwaySaniye}s.";
+                Redraw();
+            }
         }
 
         #endregion

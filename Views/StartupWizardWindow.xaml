@@ -1,0 +1,398 @@
+<Window x:Class="CerGucuSimulasyonu.Views.StartupWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="⚡ Cer Gücü Simülasyonu - Parametre Girişi ve Çekiş Gücü (Traction Effort) Analiz Sihirbazı"
+        Height="780" Width="1140"
+        MinHeight="700" MinWidth="1020"
+        Background="#0F111D"
+        Foreground="#F0F1F5"
+        FontFamily="Segoe UI" FontSize="13"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="CardBg" Color="#181A2A"/>
+        <SolidColorBrush x:Key="BorderCol" Color="#2A2D48"/>
+        <SolidColorBrush x:Key="AccentBlue" Color="#38BDF8"/>
+        <SolidColorBrush x:Key="AccentPurple" Color="#8B5CF6"/>
+        <SolidColorBrush x:Key="AccentGreen" Color="#10B981"/>
+        <SolidColorBrush x:Key="AccentYellow" Color="#FACC15"/>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#22253B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#383C5E"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Right"/>
+        </Style>
+
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource NavButtonStyle}">
+            <Setter Property="Background" Value="#252840"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <!-- Header & Stepper -->
+            <RowDefinition Height="Auto"/>
+            <!-- Content Area -->
+            <RowDefinition Height="*"/>
+            <!-- Footer Buttons -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- HEADER & STEPPER -->
+        <Border Grid.Row="0" Background="#161828" BorderBrush="#282B46" BorderThickness="1" CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <TextBlock Text="⚡ Cer Gücü Simülasyonu Kurulum &amp; Parametre Sihirbazı" FontSize="17" FontWeight="Bold" Foreground="#38BDF8"/>
+                    <TextBlock Text="EN 50122-1 &amp; Tren Çekiş Gücü (Traction Effort) Performans Hesaplama Sistemi" FontSize="11.5" Foreground="#94A3B8" Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <!-- STEP INDICATOR -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- Step 1 -->
+                    <Border x:Name="Step1Badge" Background="#2563EB" CornerRadius="14" Padding="12,6" Margin="4,0">
+                        <TextBlock Text="1. 🚆 Tren Verileri" FontWeight="Bold" FontSize="11.5" Foreground="White"/>
+                    </Border>
+                    <TextBlock Text="➔" Foreground="#475569" VerticalAlignment="Center" Margin="2,0"/>
+                    <!-- Step 2 -->
+                    <Border x:Name="Step2Badge" Background="#1E2034" CornerRadius="14" Padding="12,6" Margin="4,0">
+                        <TextBlock Text="2. ⚡ Çekiş Grafiği" FontWeight="Bold" FontSize="11.5" Foreground="#94A3B8"/>
+                    </Border>
+                    <TextBlock Text="➔" Foreground="#475569" VerticalAlignment="Center" Margin="2,0"/>
+                    <!-- Step 3 -->
+                    <Border x:Name="Step3Badge" Background="#1E2034" CornerRadius="14" Padding="12,6" Margin="4,0">
+                        <TextBlock Text="3. 🛤️ Sefer &amp; Hat" FontWeight="Bold" FontSize="11.5" Foreground="#94A3B8"/>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- MAIN CONTENT AREA -->
+        <Grid Grid.Row="1">
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ADIM 1: TREN VE CER MOTORU PARAMETRELERİ
+                 ═══════════════════════════════════════════════════════════════ -->
+            <ScrollViewer x:Name="Step1Panel" Visibility="Visible" VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Sol Kolon: Kinematik ve Ağırlık Verileri -->
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource BorderCol}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="🚆 HIZ VE KİNEMATİK PARAMETRELER" FontWeight="Bold" FontSize="13" Foreground="#38BDF8" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Maks. Tasarım Hızı (km/h):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtMaksTasarimHizi" Width="100" HorizontalAlignment="Right" Text="90"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Maks. İşletme Hızı (km/h):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtMaksIsletmeHizi" Width="100" HorizontalAlignment="Right" Text="80"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Maks. İvmelenme a (m/s²):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtMaksIvme" Width="100" HorizontalAlignment="Right" Text="1.1"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Maks. Frenleme İvmesi a_brk (m/s²):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtMaksFrenIvme" Width="100" HorizontalAlignment="Right" Text="1.1"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Jerk Limiti (m/s³):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtJerkLimiti" Width="100" HorizontalAlignment="Right" Text="1.0"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Tren Uzunluğu (m):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtTrenUzunlugu" Width="100" HorizontalAlignment="Right" Text="90"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource BorderCol}" BorderThickness="1" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="⚖️ TREN AĞIRLIKLARI &amp; DÖNER KÜTLE" FontWeight="Bold" FontSize="13" Foreground="#FACC15" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="AW0 Boş Tren Ağırlığı (ton):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtAw0" Width="100" HorizontalAlignment="Right" Text="152"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="AW3 Dolu Tren Ağırlığı (ton):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtAw3" Width="100" HorizontalAlignment="Right" Text="236"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Döner Kütle Katsayısı (% AW0):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtDonerKutle" Width="100" HorizontalAlignment="Right" Text="8.75"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Sağ Kolon: Cer Motoru, Çekiş Gücü & Davis Direnç Katsayıları -->
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource BorderCol}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="⚡ CER MOTORU &amp; GÜÇ DEĞERLERİ" FontWeight="Bold" FontSize="13" Foreground="#C084FC" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Maksimum Çekme Kuvveti F_max (kN):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtMaksCekisKuvveti" Width="100" HorizontalAlignment="Right" Text="240"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Cer Motor Mekanik Gücü P_mech (kW):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtMotorGucu" Width="100" HorizontalAlignment="Right" Text="1800"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Yardımcı Tüketim Gücü P_aux (kW):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtYardimciGuc" Width="100" HorizontalAlignment="Right" Text="300"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Tren Toplam Cer Verimi η (%):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtTrenVerimi" Width="100" HorizontalAlignment="Right" Text="88"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Nominal Katener Gerilimi (V):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtNominalGerilim" Width="100" HorizontalAlignment="Right" Text="1500"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource BorderCol}" BorderThickness="1" CornerRadius="8" Padding="16">
+                            <StackPanel>
+                                <TextBlock Text="📐 DAVIS TREN İLERLEME DİRENCİ (R = A + B·v + C·v²)" FontWeight="Bold" FontSize="13" Foreground="#34D399" Margin="0,0,0,8"/>
+                                <TextBlock Text="Davis formülü trenin mekanik sürtünme ve aerodinamik hava direncini hesaplar." FontSize="11" Foreground="#94A3B8" Margin="0,0,0,10"/>
+
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="A (Rulman &amp; Mekanik Sürtünme - N/ton):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtDavisA" Width="100" HorizontalAlignment="Right" Text="2.5"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="B (Flanş &amp; Ray Temas Direnci - N/(ton·km/h)):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtDavisB" Width="100" HorizontalAlignment="Right" Text="0.03"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="C (Aerodinamik Hava Direnci - N/(km/h)²):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtDavisC" Width="100" HorizontalAlignment="Right" Text="0.004"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ADIM 2: ÇEKİŞ GÜCÜ (TRACTION EFFORT) GRAFİĞİ & RAPORU
+                 ═══════════════════════════════════════════════════════════════ -->
+            <Grid x:Name="Step2Panel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <!-- Top Metric Cards -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Interactive Graph Canvas -->
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- METRIC SUMMARY CARDS -->
+                <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,12">
+                    <Border Background="#1E2034" CornerRadius="6" Padding="10,8" Margin="0,0,6,0" BorderBrush="#3B82F6" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="TEMEL HIZ (V_base)" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LblVBase" Text="33.0 km/h" FontSize="16" FontWeight="Bold" Foreground="#38BDF8"/>
+                            <TextBlock Text="Sabit Kuvvet ➔ Sabit Güç" FontSize="9.5" Foreground="#64748B"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#1E2034" CornerRadius="6" Padding="10,8" Margin="3,0,3,0" BorderBrush="#10B981" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="MAKS. ÇEKME KUVVETİ" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LblFMax" Text="240.0 kN" FontSize="16" FontWeight="Bold" Foreground="#34D399"/>
+                            <TextBlock Text="0 - V_base aralığında sabit" FontSize="9.5" Foreground="#64748B"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#1E2034" CornerRadius="6" Padding="10,8" Margin="3,0,3,0" BorderBrush="#8B5CF6" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="CER MOTOR GÜCÜ (P_max)" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LblPMax" Text="1800.0 kW" FontSize="16" FontWeight="Bold" Foreground="#C084FC"/>
+                            <TextBlock Text="V_base sonrası sabit güç" FontSize="9.5" Foreground="#64748B"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#1E2034" CornerRadius="6" Padding="10,8" Margin="6,0,0,0" BorderBrush="#F59E0B" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="DAVIS DİRENCİ (80 km/h)" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LblDavis80" Text="14.1 kN" FontSize="16" FontWeight="Bold" Foreground="#FACC15"/>
+                            <TextBlock Text="AW3 Dolu Ağırlıkta (236 t)" FontSize="9.5" Foreground="#64748B"/>
+                        </StackPanel>
+                    </Border>
+                </UniformGrid>
+
+                <!-- CHART CANVAS CONTAINER -->
+                <Border Grid.Row="1" Background="#131422" BorderBrush="#282B46" BorderThickness="1" CornerRadius="8" Padding="12">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Chart Header & Action Buttons -->
+                        <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="📈 Çekiş Gücü ve Tren Direnç Eğrisi (Tractive Effort vs Speed F-v, P-v)" FontWeight="Bold" FontSize="13" Foreground="#F8FAFC"/>
+                            </StackPanel>
+
+                            <!-- Legend & Save Button -->
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Background="#1E3A8A" CornerRadius="4" Padding="6,3" Margin="4,0">
+                                    <TextBlock Text="━ F_traction [kN]" Foreground="#60A5FA" FontSize="10.5" FontWeight="Bold"/>
+                                </Border>
+                                <Border Background="#581C87" CornerRadius="4" Padding="6,3" Margin="4,0">
+                                    <TextBlock Text="━ P_power [kW/10]" Foreground="#C084FC" FontSize="10.5" FontWeight="Bold"/>
+                                </Border>
+                                <Border Background="#78350F" CornerRadius="4" Padding="6,3" Margin="4,0">
+                                    <TextBlock Text="━ R_davis [kN]" Foreground="#F59E0B" FontSize="10.5" FontWeight="Bold"/>
+                                </Border>
+
+                                <Button Click="OnSaveChartAsPng" Background="#059669" Foreground="White" FontWeight="Bold" Padding="10,5" Margin="8,0,0,0" Cursor="Hand" BorderThickness="0">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                                <TextBlock Text="💾 Grafiği Kaydet (.PNG)" Foreground="White" FontWeight="Bold" FontSize="11.5"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <!-- Vector Drawing Canvas -->
+                        <Border Grid.Row="1" Background="#0B0C15" CornerRadius="6" ClipToBounds="True" x:Name="ChartExportContainer">
+                            <Canvas x:Name="TractionEffortCanvas" Background="#0B0C15" SizeChanged="TractionEffortCanvas_SizeChanged"/>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 ADIM 3: İŞLETME, SEFER ARALIĞI (HEADWAY) VE ÇOKLU TREN
+                 ═══════════════════════════════════════════════════════════════ -->
+            <ScrollViewer x:Name="Step3Panel" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Sol Kolon: Sefer, Headway & Tren Sayısı -->
+                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource BorderCol}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="⏱️ SEFER ARALIĞI (HEADWAY) &amp; FİLO DİZİLİMİ" FontWeight="Bold" FontSize="13" Foreground="#38BDF8" Margin="0,0,0,8"/>
+                                <TextBlock Text="İlk tren 0. metrede (Sahil İstasyonu) başlar, diğer trenler belirtilen saniye aralıklarıyla peş peşe hatta sefere girer." FontSize="11" Foreground="#94A3B8" Margin="0,0,0,12" TextWrapping="Wrap"/>
+
+                                <Grid Margin="0,5">
+                                    <TextBlock Text="Toplam Tren Sayısı (Filo):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtToplamTrenSayisi" Width="100" HorizontalAlignment="Right" Text="4"/>
+                                </Grid>
+                                <Grid Margin="0,5">
+                                    <TextBlock Text="Sefer Aralığı / Headway (Saniye):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtHeadwaySaniye" Width="100" HorizontalAlignment="Right" Text="90"/>
+                                </Grid>
+                                <Grid Margin="0,5">
+                                    <TextBlock Text="Trenler Arası Asgari Güvenli Mesafe (m):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtMinMesafe" Width="100" HorizontalAlignment="Right" Text="400"/>
+                                </Grid>
+                                <Grid Margin="0,5">
+                                    <TextBlock Text="İlk Tren Başlangıç Konumu (m):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtIlkTrenKonum" Width="100" HorizontalAlignment="Right" Text="0"/>
+                                </Grid>
+
+                                <Border Background="#101827" CornerRadius="6" Padding="10" Margin="0,10,0,0" BorderBrush="#1E3A8A" BorderThickness="1">
+                                    <TextBlock Text="ℹ️ Not: Trenler otomatik mesafe takip sinyalizasyonu ile birbirine en az belirlenen emniyet mesafesi kadar yaklaşabilir; mesafe altına inildiğinde otomatik frenleme devreye girer." FontSize="11" Foreground="#93C5FD" TextWrapping="Wrap"/>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Sağ Kolon: Hat, Katener & EN 50122-1 Standartları -->
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource BorderCol}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="⚡ KATENER, TRAFO &amp; EN 50122-1 STANDARDI" FontWeight="Bold" FontSize="13" Foreground="#C084FC" Margin="0,0,0,12"/>
+
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Hat Uzunluğu (m):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtHatUzunlugu" Width="100" HorizontalAlignment="Right" Text="15350"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Rijit Katener Km Direnci (mΩ/km):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtKatenerDirenci" Width="100" HorizontalAlignment="Right" Text="15"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Normal Ray Km Direnci (mΩ/km):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtRayDirenci" Width="100" HorizontalAlignment="Right" Text="21"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Cer Trafosu Gücü (kVA):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtTrafoGucu" Width="100" HorizontalAlignment="Right" Text="3300"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Doğrultucu Gücü (kW):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtDogrultucuGucu" Width="100" HorizontalAlignment="Right" Text="3000"/>
+                                </Grid>
+
+                                <Border Background="#1B172C" CornerRadius="6" Padding="10" Margin="0,10,0,0" BorderBrush="#4A1D96" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="🛡️ EN 50122-1 DC 1500V Elektriksel Güvenlik Limitleri:" FontSize="11" FontWeight="Bold" Foreground="#DDD6FE"/>
+                                        <TextBlock Text="• V_min1 (Kısa süreli min): 1000 V" FontSize="10.5" Foreground="#A78BFA" Margin="0,2,0,0"/>
+                                        <TextBlock Text="• V_min2 (Sürekli min): 1050 V" FontSize="10.5" Foreground="#A78BFA"/>
+                                        <TextBlock Text="• V_nom (Nominal): 1500 V | V_max (Maks sürekli): 1800 V" FontSize="10.5" Foreground="#A78BFA"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- FOOTER ACTION BUTTONS -->
+        <Border Grid.Row="2" Background="#141624" BorderBrush="#252840" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,14,0,0">
+            <DockPanel LastChildFill="False">
+                <Button x:Name="BtnBack" DockPanel.Dock="Left" Click="OnBackClicked" Content="◀ Geri" Style="{StaticResource SecondaryButtonStyle}" Visibility="Collapsed"/>
+                
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="BtnNext" Click="OnNextClicked" Content="⚡ Çekiş Gücü Grafiğini Çiz &amp; İncele ▶" Style="{StaticResource NavButtonStyle}"/>
+                    <Button x:Name="BtnFinish" Click="OnFinishClicked" Content="🚀 Simülasyonu Başlat &amp; Uygula" Style="{StaticResource NavButtonStyle}" Background="#059669" Visibility="Collapsed" Margin="6,0,0,0"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

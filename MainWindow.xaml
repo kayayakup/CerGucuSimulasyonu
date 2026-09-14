@@ -214,8 +214,9 @@
                     </StackPanel>
                 </WrapPanel>
 
-                <!-- SAĞ ALAN: TREN ÜRET DAHİL SAĞDA KALAN BUTONLAR -->
+                <!-- SAĞ ALAN: BUTONLAR -->
                 <WrapPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Click="OnOpenStartupWizard" Content="⚙️ Parametre Sihirbazı" Background="#3B82F6" Foreground="White" BorderThickness="0" Margin="2,0" Padding="8,4" FontWeight="Bold" Cursor="Hand"/>
                     <Button Command="{Binding GenerateRandomTrainsCommand}" Content="🎲 Tren Üret" Background="#7C4DFF" Foreground="White" BorderThickness="0" Margin="2,0" Padding="8,4" FontWeight="Bold" Cursor="Hand"/>
                     <Button Command="{Binding AddSingleTrainCommand}" Content="🚃 +1 Tren" Background="#24263D" Foreground="#38BDF8" BorderBrush="#38BDF8" Margin="2,0" Padding="6,4" Cursor="Hand"/>
                     <Button Command="{Binding ZoomInCommand}" Content="🔍+" ToolTip="Yakınlaştır" Margin="1,0" Padding="6,4" Cursor="Hand"/>
@@ -232,24 +233,57 @@
         </Border>
 
         <!-- ═══════════════════════════════════════════════════════════════
-             ANA İÇERİK ALANI (SOL CANLI PANEL + SAĞ CANVAS VE GRAFİKLER)
+             ANA İÇERİK ALANI (ÜST GENİŞ HAT CANVAS'I + ALT PANEL TABLARI)
              ═══════════════════════════════════════════════════════════════ -->
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <!-- Sol Panel (Canlı İzleme, Tablolar, Rapor & Parametreler) -->
-                <ColumnDefinition Width="430" MinWidth="350" MaxWidth="620"/>
+            <Grid.RowDefinitions>
+                <!-- Üst: Hat İnteraktif Geniş Görsel Canvas -->
+                <RowDefinition Height="11*" MinHeight="260"/>
                 <!-- Splitter -->
-                <ColumnDefinition Width="4"/>
-                <!-- Sağ Alan (İnteraktif Canvas + Canlı Grafikler) -->
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+                <RowDefinition Height="5"/>
+                <!-- Alt: Canlı Paneller, Grafikler, Tablolar ve Parametreler -->
+                <RowDefinition Height="9*" MinHeight="200"/>
+            </Grid.RowDefinitions>
 
-            <!-- SOL PANEL: CANLI İZLEME, METRİKLER, TABLOLAR VE PARAMETRELER -->
-            <Border Grid.Column="0" Background="#141524" BorderBrush="#25273D" BorderThickness="0,0,1,0">
+            <!-- 1. ÜST KISIM: 100% GENİŞLİKTE İNTERAKTİF ÇİZİM CANVAS'I -->
+            <Grid Grid.Row="0" Background="#0C0D17">
+                <ScrollViewer x:Name="CanvasScrollViewer" 
+                              HorizontalScrollBarVisibility="Auto" 
+                              VerticalScrollBarVisibility="Disabled"
+                              Focusable="True">
+                    <Canvas x:Name="TrackCanvas" 
+                            Background="#0C0D17" 
+                            Height="480" 
+                            VerticalAlignment="Center"
+                            ClipToBounds="True"
+                            MouseDown="TrackCanvas_MouseDown"
+                            MouseMove="TrackCanvas_MouseMove"
+                            MouseUp="TrackCanvas_MouseUp"
+                            MouseWheel="TrackCanvas_MouseWheel"/>
+                </ScrollViewer>
+
+                <!-- HAT BİLGİ ETİKETİ (Overlay) -->
+                <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="15" 
+                        Background="#DD141524" CornerRadius="6" Padding="12,6" BorderBrush="#2F314C" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="10" Height="10" Fill="#38BDF8" Margin="0,0,5,0"/>
+                        <TextBlock Text="H1 (Darıca → Depo)" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,0,15,0" FontSize="11"/>
+                        <Ellipse Width="10" Height="10" Fill="#FB923C" Margin="0,0,5,0"/>
+                        <TextBlock Text="H2 (Depo → Darıca)" Foreground="#FB923C" FontWeight="SemiBold" Margin="0,0,15,0" FontSize="11"/>
+                        <TextBlock Text="🚉 12 İstasyon | ⚡ 7 DC Trafo | 🛡️ EN 50122-1" Foreground="#C5C7D9" FontSize="11"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- YATAY SPLITTER -->
+            <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="#24263B" Cursor="SizeNS"/>
+
+            <!-- 2. ALT KISIM: CANLI BİLGİLER, GRAFİKLER, TABLOLAR VE PARAMETRELER -->
+            <Border Grid.Row="2" Background="#141524" BorderBrush="#25273D" BorderThickness="0,1,0,0">
                 <TabControl Background="Transparent" BorderThickness="0" Margin="4">
                     
                     <!-- 1. TAB: CANLI İZLEME & SEÇİLİ NESNE BİLGİSİ -->
-                    <TabItem Header="📊 Canlı İzleme" FontWeight="SemiBold">
+                    <TabItem Header="📊 Canlı İzleme &amp; Durum" FontWeight="SemiBold">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="8,10">
                             <StackPanel>
 
@@ -642,43 +676,6 @@
                                                         </Border>
                                                     </StackPanel>
                                                 </DataTemplate>
-
-                                                <!-- 9. MONTAJ ETABI ŞABLONU (EK-1 MONTAJ KARNESİ) -->
-                                                <DataTemplate DataType="{x:Type models:KatenerEtap}">
-                                                    <StackPanel>
-                                                        <Border Background="#0F2B38" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#06B6D4" BorderThickness="1">
-                                                            <DockPanel LastChildFill="True">
-                                                                <Border Background="#0891B2" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
-                                                                    <TextBlock Text="MONTAJ ETABI" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
-                                                                </Border>
-                                                                <TextBlock Text="{Binding Ad, StringFormat='🔩 {0} (Montaj Karnesi)'}" FontWeight="Bold" FontSize="13" Foreground="#67E8F9"/>
-                                                            </DockPanel>
-                                                        </Border>
-
-                                                        <UniformGrid Columns="2" Margin="0,2,0,6">
-                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
-                                                                <StackPanel>
-                                                                    <TextBlock Text="⚡ Etap Anlık Güç" Foreground="#94A3B8" FontSize="9.5"/>
-                                                                    <TextBlock Text="{Binding AnlikToplamGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
-                                                                </StackPanel>
-                                                            </Border>
-                                                            <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
-                                                                <StackPanel>
-                                                                    <TextBlock Text="🚆 Aktif Tren" Foreground="#94A3B8" FontSize="9.5"/>
-                                                                    <TextBlock Text="{Binding AktifTrenSayisi, StringFormat='{}{0} Tren'}" FontWeight="Bold" FontSize="13.5" Foreground="#10B981"/>
-                                                                </StackPanel>
-                                                            </Border>
-                                                        </UniformGrid>
-
-                                                        <Grid Margin="0,2"><TextBlock Text="Etap Konumu:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding KonumAraligi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Etap / Profil Uzunluğu:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Uzunluk, StringFormat='{}{0:N1} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#38BDF8" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Tünel / Yapı Tipi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding TunelTipi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Orta Nokta (Ankraj):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding OrtaNoktaKm, StringFormat='{}{0:N1} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#A78BFA" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Geçiş / Overlap Tipi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding OverlapTipi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Bağlı Seksiyon:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding SeksiyonNo, StringFormat='Seksiyon {0}'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#818CF8" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Besleyen Cer Trafosu:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding BesleyenTrafo}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#C084FC" FontSize="11"/></Grid>
-                                                    </StackPanel>
-                                                </DataTemplate>
                                             </ContentControl.Resources>
                                         </ContentControl>
                                     </StackPanel>
@@ -745,8 +742,8 @@
                                     </DataGrid.Columns>
                                 </DataGrid>
 
-                                <!-- KATENER SEKSİYONLARI TABLOSU (MONTAJ KARNESİ) -->
-                                <TextBlock Text="⚡ KATENER SEKSİYONLARI (MONTAJ KARNESİ)" FontWeight="Bold" FontSize="12" Foreground="#818CF8" Margin="4,4,4,6"/>
+                                <!-- KATENER SEKSİYONLARI TABLOSU -->
+                                <TextBlock Text="⚡ KATENER SEKSİYONLARI" FontWeight="Bold" FontSize="12" Foreground="#818CF8" Margin="4,4,4,6"/>
                                 <DataGrid ItemsSource="{Binding Data.KatenerSeksiyonlari}" SelectedItem="{Binding SelectedItem}"
                                           ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
                                           CellStyle="{StaticResource CustomDataGridCellStyle}"
@@ -760,56 +757,6 @@
                                         <DataGridTextColumn Header="Trafolar" Binding="{Binding BesleyenTrafolar}" Width="90"/>
                                         <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikToplamGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
                                         <DataGridTextColumn Header="Tren" Binding="{Binding AktifTrenSayisi, StringFormat='{}{0} Tren'}" Width="60"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </TabItem>
-
-                    <!-- 3. TAB: MONTAJ ETAPLARI VE SEKSİYONLAR (EK-1 DOKÜMANI) -->
-                    <TabItem Header="⚡ Etaplar (Montaj Karnesi)" FontWeight="SemiBold">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="6,8">
-                            <StackPanel>
-                                <Border Background="#1E1B4B" CornerRadius="6" Padding="8,6" Margin="0,0,0,10" BorderBrush="#4F46E5" BorderThickness="1">
-                                    <StackPanel>
-                                        <TextBlock Text="📋 EK-1 HAT-01 MONTAJ KARNESİ ETAPLARI" FontWeight="Bold" FontSize="12" Foreground="#A5B4FC"/>
-                                        <TextBlock Text="Her etap rijit katener profil uzunluğunu, ankraj orta noktasını ve overlap geçiş tipini temsil eder. Tıklayarak anlık cer yükünü inceleyebilirsiniz." Foreground="#94A3B8" FontSize="10" TextWrapping="Wrap" Margin="0,3,0,0"/>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- ETAPLAR LİSTESİ TABLOSU -->
-                                <TextBlock Text="🔩 MONTAJ ETAPLARI (42 ETAP)" FontWeight="Bold" FontSize="11.5" Foreground="#38BDF8" Margin="2,0,0,6"/>
-                                <DataGrid ItemsSource="{Binding Data.KatenerEtaplari}" SelectedItem="{Binding SelectedItem}"
-                                          ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
-                                          CellStyle="{StaticResource CustomDataGridCellStyle}"
-                                          AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
-                                          Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
-                                          BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
-                                          Margin="0,0,0,14" MaxHeight="280">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Etap" Binding="{Binding Ad}" Width="70"/>
-                                        <DataGridTextColumn Header="Aralık (m)" Binding="{Binding KonumAraligi}" Width="*"/>
-                                        <DataGridTextColumn Header="Boy (m)" Binding="{Binding Uzunluk, StringFormat='{}{0:N1}'}" Width="65"/>
-                                        <DataGridTextColumn Header="Tünel" Binding="{Binding TunelTipi}" Width="65"/>
-                                        <DataGridTextColumn Header="Orta Nokta" Binding="{Binding OrtaNoktaKm, StringFormat='{}{0:N0}m'}" Width="75"/>
-                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikToplamGucKw, StringFormat='{}{0:N0}'}" Width="65"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-
-                                <!-- 7 BESLEME SEKSİYONU TABLOSU -->
-                                <TextBlock Text="⚡ 7 BESLEME SEKSİYONU" FontWeight="Bold" FontSize="11.5" Foreground="#F59E0B" Margin="2,0,0,6"/>
-                                <DataGrid ItemsSource="{Binding Data.KatenerSeksiyonlari}" SelectedItem="{Binding SelectedItem}"
-                                          ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
-                                          CellStyle="{StaticResource CustomDataGridCellStyle}"
-                                          AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
-                                          Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
-                                          BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
-                                          MaxHeight="180">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Seksiyon" Binding="{Binding Ad}" Width="80"/>
-                                        <DataGridTextColumn Header="Konum (m)" Binding="{Binding KonumAraligi}" Width="*"/>
-                                        <DataGridTextColumn Header="Trafolar" Binding="{Binding BesleyenTrafolar}" Width="90"/>
-                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikToplamGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </StackPanel>
@@ -1060,102 +1007,55 @@
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
+
+                    <!-- CANLI CER GÜCÜ GRAFİKLERİ -->
+                    <TabItem Header="📈 Canlı Cer Grafikleri" FontWeight="SemiBold">
+                        <Grid Background="#111220" Margin="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Grafik 1: Toplam Sistem Çekilen ve Rejeneratif Cer Gücü (kW) -->
+                            <Border Grid.Column="0" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
+                                <vm:LiveChartsControl x:Name="ChartSistemGucu"
+                                                      Title="⚡ Toplam Çekilen &amp; Rejeneratif Güç"
+                                                      YAxisTitle="Güç (kW)"
+                                                      XAxisTitle="Zaman"
+                                                      PrimaryLegend="Cer Gücü (kW)"
+                                                      SecondaryLegend="Rejenerasyon (kW)"
+                                                      HasSecondarySeries="True"
+                                                      MinY="0" MaxY="4000"/>
+                            </Border>
+
+                            <!-- Grafik 2: Ortalama & Minimum Katener Gerilim Seviyesi (V) -->
+                            <Border Grid.Column="1" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
+                                <vm:LiveChartsControl x:Name="ChartGerilim"
+                                                      Title="🔋 Katener Gerilim Profili (EN 50163 / EN 50122)"
+                                                      YAxisTitle="Gerilim (V)"
+                                                      XAxisTitle="Zaman"
+                                                      PrimaryLegend="Ortalama (V)"
+                                                      SecondaryLegend="Kritik Min (V)"
+                                                      HasSecondarySeries="True"
+                                                      MinY="1000" MaxY="1800"/>
+                            </Border>
+
+                            <!-- Grafik 3: Seçili Tren Anlık Hız ve Çekilen Cer Gücü -->
+                            <Border Grid.Column="2" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
+                                <vm:LiveChartsControl x:Name="ChartSeciliTren"
+                                                      Title="🚀 Seçili Tren Hız &amp; Cer Gücü"
+                                                      YAxisTitle="Hız / Güç"
+                                                      XAxisTitle="Zaman"
+                                                      PrimaryLegend="Hız (km/h)"
+                                                      SecondaryLegend="Güç (kW)"
+                                                      HasSecondarySeries="True"
+                                                      MinY="0" MaxY="1200"/>
+                            </Border>
+                        </Grid>
+                    </TabItem>
                 </TabControl>
             </Border>
-
-            <!-- SPLITTER -->
-            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#24263B"/>
-
-            <!-- SAĞ ALAN: İNTERAKTİF ÇİZİM CANVAS'I + CANLI GRAFİKLER ALANI -->
-            <Grid Grid.Column="2" Background="#0C0D17">
-                <Grid.RowDefinitions>
-                    <!-- Üst: Hat İnteraktif Görsel Canvas -->
-                    <RowDefinition Height="3*" MinHeight="260"/>
-                    <!-- Splitter -->
-                    <RowDefinition Height="4"/>
-                    <!-- Alt: Canlı Çıktı Grafikleri (Cer Raporu Odaklı) -->
-                    <RowDefinition Height="2*" MinHeight="200"/>
-                </Grid.RowDefinitions>
-
-                <!-- 1. ÜST KISIM: İNTERAKTİF ÇİZİM CANVAS'I -->
-                <Grid Grid.Row="0" Background="#0C0D17">
-                    <ScrollViewer x:Name="CanvasScrollViewer" 
-                                  HorizontalScrollBarVisibility="Auto" 
-                                  VerticalScrollBarVisibility="Disabled"
-                                  Focusable="True">
-                        <Canvas x:Name="TrackCanvas" 
-                                Background="#0C0D17" 
-                                Height="480" 
-                                VerticalAlignment="Center"
-                                ClipToBounds="True"
-                                MouseDown="TrackCanvas_MouseDown"
-                                MouseMove="TrackCanvas_MouseMove"
-                                MouseUp="TrackCanvas_MouseUp"
-                                MouseWheel="TrackCanvas_MouseWheel"/>
-                    </ScrollViewer>
-
-                    <!-- HAT BİLGİ ETİKETİ (Overlay) -->
-                    <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="15" 
-                            Background="#DD141524" CornerRadius="6" Padding="12,6" BorderBrush="#2F314C" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="10" Height="10" Fill="#38BDF8" Margin="0,0,5,0"/>
-                            <TextBlock Text="H1 (Darıca → Depo)" Foreground="#38BDF8" FontWeight="SemiBold" Margin="0,0,15,0" FontSize="11"/>
-                            <Ellipse Width="10" Height="10" Fill="#FB923C" Margin="0,0,5,0"/>
-                            <TextBlock Text="H2 (Depo → Darıca)" Foreground="#FB923C" FontWeight="SemiBold" Margin="0,0,15,0" FontSize="11"/>
-                            <TextBlock Text="🚉 12 İstasyon | ⚡ 7 DC Trafo" Foreground="#C5C7D9" FontSize="11"/>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-
-                <!-- YATAY SPLITTER -->
-                <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" Background="#24263B"/>
-
-                <!-- 2. ALT KISIM: CANLI CER GÜCÜ GRAFİKLERİ PANELİ -->
-                <Grid Grid.Row="2" Background="#111220" Margin="4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Grafik 1: Toplam Sistem Çekilen ve Rejeneratif Cer Gücü (kW) -->
-                    <Border Grid.Column="0" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
-                        <vm:LiveChartsControl x:Name="ChartSistemGucu"
-                                              Title="⚡ Toplam Çekilen &amp; Rejeneratif Güç"
-                                              YAxisTitle="Güç (kW)"
-                                              XAxisTitle="Zaman"
-                                              PrimaryLegend="Cer Gücü (kW)"
-                                              SecondaryLegend="Rejenerasyon (kW)"
-                                              HasSecondarySeries="True"
-                                              MinY="0" MaxY="4000"/>
-                    </Border>
-
-                    <!-- Grafik 2: Ortalama & Minimum Katener Gerilim Seviyesi (V) -->
-                    <Border Grid.Column="1" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
-                        <vm:LiveChartsControl x:Name="ChartGerilim"
-                                              Title="🔋 Katener Gerilim Profili (EN 50163)"
-                                              YAxisTitle="Gerilim (V)"
-                                              XAxisTitle="Zaman"
-                                              PrimaryLegend="Ortalama (V)"
-                                              SecondaryLegend="Kritik Min (V)"
-                                              HasSecondarySeries="True"
-                                              MinY="1100" MaxY="1750"/>
-                    </Border>
-
-                    <!-- Grafik 3: Seçili Tren Anlık Hız ve Çekilen Cer Gücü -->
-                    <Border Grid.Column="2" Margin="4" Background="#161827" CornerRadius="6" BorderBrush="#2F314C" BorderThickness="1">
-                        <vm:LiveChartsControl x:Name="ChartSeciliTren"
-                                              Title="🚀 Seçili Tren Hız &amp; Cer Gücü"
-                                              YAxisTitle="Hız / Güç"
-                                              XAxisTitle="Zaman"
-                                              PrimaryLegend="Hız (km/h)"
-                                              SecondaryLegend="Güç (kW)"
-                                              HasSecondarySeries="True"
-                                              MinY="0" MaxY="1200"/>
-                    </Border>
-                </Grid>
-
-            </Grid>
         </Grid>
 
         <!-- ═══════════════════════════════════════════════════════════════

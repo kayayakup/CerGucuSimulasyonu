@@ -71,6 +71,17 @@ namespace CerGucuSimulasyonu.Models
         public string BagliHatlar => "Hat 1 (H1) ↔ Hat 2 (H2)";
     }
 
+    public partial class IsletmeParametreleri : ObservableObject
+    {
+        [ObservableProperty] private int _toplamTrenSayisi = 4;
+        [ObservableProperty] private double _seferAraligiHeadwaySaniye = 90.0;
+        [ObservableProperty] private double _minimumTrenMesafesiMetre = 400.0;
+        [ObservableProperty] private double _ilkTrenBaslangicKonumuMetre = 0.0;
+        [ObservableProperty] private double _en50122MinGerilim = 1000.0;
+        [ObservableProperty] private double _en50122NominalGerilim = 1500.0;
+        [ObservableProperty] private double _en50122MaksGerilim = 1800.0;
+    }
+
     public partial class TrenParametreleri : ObservableObject
     {
         [ObservableProperty] private double _maksTasarimHizi = 90;
@@ -86,7 +97,22 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _minGerilim = 1000;
         [ObservableProperty] private double _minIsletmeGerilimi = 1050;
         [ObservableProperty] private double _trenUzunlugu = 90;
-        [ObservableProperty] private double _trenVerimi = 85;
+        [ObservableProperty] private double _trenVerimi = 88;
+
+        // Çekiş Gücü (Traction Effort) & Davis Direnç Formülü Parametreleri
+        [ObservableProperty] private double _maksCekisKuvvetiKn = 240.0;
+        [ObservableProperty] private double _motorGucuKw = 1800.0;
+        [ObservableProperty] private double _davisA = 2.5;
+        [ObservableProperty] private double _davisB = 0.03;
+        [ObservableProperty] private double _davisC = 0.004;
+
+        /// <summary>
+        /// Sabit Çekme Kuvveti Bölgesinden Sabit Güç Bölgesine Geçiş Hızı (Base Speed / Temel Hız)
+        /// V_base = (P_max * eta) / F_max * 3.6 (km/h)
+        /// </summary>
+        public double TemelHizKmh => MaksCekisKuvvetiKn > 0 
+            ? Math.Round((MotorGucuKw * (TrenVerimi / 100.0)) / MaksCekisKuvvetiKn * 3.6, 1) 
+            : 30.0;
     }
 
     public partial class Istasyon : ObservableObject
@@ -116,10 +142,14 @@ namespace CerGucuSimulasyonu.Models
     {
         [ObservableProperty] private int _id;
         [ObservableProperty] private string _trenAdi = "Tren 01";
-        [ObservableProperty] private double _konum = 1000;
+        [ObservableProperty] private double _konum = 0;
         [ObservableProperty] private string _hatTipi = "H1"; // H1 veya H2
         [ObservableProperty] private string _yon = "ileri";  // ileri veya geri
-        [ObservableProperty] private double _anlikHiz = 60;
+        [ObservableProperty] private double _anlikHiz = 0;
+
+        // Sefer ve Headway Bilgileri
+        [ObservableProperty] private bool _isDispatched = true;
+        [ObservableProperty] private double _dispatchTimeSeconds = 0;
 
         // Canlı Simülasyon & Cer Gücü Dinamik Verileri
         [ObservableProperty] private string _durum = "HAREKET HALİNDE"; // HAREKET HALİNDE, İSTASYONDA, HIZLANIYOR, FRENLİYOR
@@ -168,24 +198,7 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private string _aciklama = "Katener Seksiyon Ayırıcı";
     }
 
-    public partial class KatenerEtap : ObservableObject
-    {
-        [ObservableProperty] private int _etapNo = 1;
-        [ObservableProperty] private string _ad = "Etap 01";
-        [ObservableProperty] private double _baslangicKm = 0;
-        [ObservableProperty] private double _bitisKm = 290.9;
-        [ObservableProperty] private double _uzunluk = 290.9;
-        [ObservableProperty] private string _tunelTipi = "Aç-Kapa";
-        [ObservableProperty] private double _ortaNoktaKm = 141.5;
-        [ObservableProperty] private string _overlapTipi = "İzolesiz Overlap";
-        [ObservableProperty] private int _seksiyonNo = 1;
-        [ObservableProperty] private string _besleyenTrafo = "TM-1 (Darıca Sahil)";
-        [ObservableProperty] private double _anlikToplamGucKw = 0;
-        [ObservableProperty] private double _anlikToplamAkimA = 0;
-        [ObservableProperty] private int _aktifTrenSayisi = 0;
-
-        public string KonumAraligi => $"{BaslangicKm:0.#} m – {BitisKm:0.#} m ({BaslangicKm/1000.0:0.000} – {BitisKm/1000.0:0.000} km)";
-    }
+// KatenerEtap class removed
 
     // Ana model container
     public partial class SimulationData : ObservableObject
@@ -193,12 +206,13 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _hatUzunlugu = 15350;
         [ObservableProperty] private CerKatenerParametreleri _cerKatener = new();
         [ObservableProperty] private TrenParametreleri _tren = new();
+        [ObservableProperty] private IsletmeParametreleri _isletme = new();
         [ObservableProperty] private ObservableCollection<HatEgimi> _hatEgimleri = new();
         [ObservableProperty] private ObservableCollection<HatKurbu> _hatKurplari = new();
         [ObservableProperty] private ObservableCollection<TrafoMerkezi> _trafoMerkezleri = new();
         [ObservableProperty] private ObservableCollection<RayParalellemesi> _rayParalellemeleri = new();
         [ObservableProperty] private ObservableCollection<KatenerSeksiyonu> _katenerSeksiyonlari = new();
-        [ObservableProperty] private ObservableCollection<KatenerEtap> _katenerEtaplari = new();
+// KatenerEtap collection removed
         [ObservableProperty] private ObservableCollection<SeksiyonAyirici> _seksiyonAyiricilar = new();
         [ObservableProperty] private ObservableCollection<Istasyon> _istasyonlar = new();
         [ObservableProperty] private ObservableCollection<HizLimiti> _hizLimitleri = new();
