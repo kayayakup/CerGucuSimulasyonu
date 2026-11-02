@@ -253,7 +253,7 @@
                               Focusable="True">
                     <Canvas x:Name="TrackCanvas" 
                             Background="#0C0D17" 
-                            Height="480" 
+                            Height="400" 
                             VerticalAlignment="Center"
                             ClipToBounds="True"
                             MouseDown="TrackCanvas_MouseDown"
