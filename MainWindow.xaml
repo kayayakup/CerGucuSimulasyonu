@@ -36,6 +36,14 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="#F8FAFC"/>
             <Style.Triggers>
+                <DataTrigger Binding="{Binding IsOutOfSpec}" Value="True">
+                    <Setter Property="Background" Value="#7F1D1D"/>
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NeedsLimitReview}" Value="True">
+                    <Setter Property="Background" Value="#78350F"/>
+                    <Setter Property="Foreground" Value="#FFFFFF"/>
+                </DataTrigger>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="#1E3A8A"/>
                     <Setter Property="Foreground" Value="#FFFFFF"/>
@@ -380,13 +388,13 @@
                                                         <UniformGrid Columns="2" Margin="0,2,0,6">
                                                             <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
                                                                 <StackPanel>
-                                                                    <TextBlock Text="⚡ Çekilen/Verilen Güç" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="⚡ Cer Motor Gücü (+ çekiş / - rejenerasyon)" Foreground="#94A3B8" FontSize="9.5"/>
                                                                     <TextBlock Text="{Binding CekilenGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
                                                                 </StackPanel>
                                                             </Border>
                                                             <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
                                                                 <StackPanel>
-                                                                    <TextBlock Text="⚡ Çekilen Akım" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="⚡ Cer motor I (+ çekiş / - rejenerasyon)" Foreground="#94A3B8" FontSize="9.5"/>
                                                                     <TextBlock Text="{Binding CekilenAkimA, StringFormat='{}{0:N1} A'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
                                                                 </StackPanel>
                                                             </Border>
@@ -403,10 +411,42 @@
                                                                 </StackPanel>
                                                             </Border>
                                                         </UniformGrid>
+                                                        <Grid Margin="2,0,2,4">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel>
+                                                                <TextBlock Text="Pantograf net gücü (yardımcılar dahil)" Foreground="#94A3B8" FontSize="9"/>
+                                                                <TextBlock Text="{Binding AnlikPantografGucuKw, StringFormat='{}{0:N1} kW'}" Foreground="#FBBF24" FontWeight="SemiBold" FontSize="11"/>
+                                                            </StackPanel>
+                                                            <StackPanel Grid.Column="1">
+                                                                <TextBlock Text="Pantograf net I (yardımcılar dahil)" Foreground="#94A3B8" FontSize="9"/>
+                                                                <TextBlock Text="{Binding AnlikPantografAkimiA, StringFormat='{}{0:N1} A'}" Foreground="#FBBF24" FontWeight="SemiBold" FontSize="11"/>
+                                                            </StackPanel>
+                                                        </Grid>
 
                                                         <Grid Margin="0,2"><TextBlock Text="Anlık Konum (Hat KM):" Foreground="#9CA3AF" FontSize="11"/><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"><TextBlock.Text><MultiBinding StringFormat="{}{0:N0} m ({1:N3} km)"><Binding Path="Konum"/><Binding Path="Konum" ConverterParameter="1000"/></MultiBinding></TextBlock.Text></TextBlock></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Hat &amp; Seyir Yönü:" Foreground="#9CA3AF" FontSize="11"/><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"><TextBlock.Text><MultiBinding StringFormat="{}{0} ({1})"><Binding Path="HatTipi"/><Binding Path="Yon"/></MultiBinding></TextBlock.Text></TextBlock></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="İvmelenme:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Ivme, StringFormat='{}{0:N2} m/s²'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2">
+                                                            <TextBlock Text="Limit Kontrolü:" Foreground="#9CA3AF" FontSize="11"/>
+                                                            <TextBlock Text="{Binding LimitStatus}" HorizontalAlignment="Right" FontWeight="Bold" FontSize="10">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="#34D399"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsOutOfSpec}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#F87171"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding NeedsLimitReview}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#FBBF24"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Yolcu Yükü:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding YolcuSayisi, StringFormat='{}{0} Yolcu'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#60A5FA" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Sonraki İstasyon:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding SonrakiIstasyon}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Kalan Mesafe:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding SonrakiIstasyonMesafe, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
@@ -436,7 +476,7 @@
                                                             </Border>
                                                             <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
                                                                 <StackPanel>
-                                                                    <TextBlock Text="⚡ Toplam Akım" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="⚡ Toplam I" Foreground="#94A3B8" FontSize="9.5"/>
                                                                     <TextBlock Text="{Binding AnlikAkimA, StringFormat='{}{0:N1} A'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
                                                                 </StackPanel>
                                                             </Border>
@@ -456,6 +496,24 @@
 
                                                         <Grid Margin="0,2"><TextBlock Text="Trafo Konumu (KM):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding DilasKonumuH1, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="İç Direnç (R_trafo):" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Direnc, StringFormat='{}{0:N1} mΩ'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2">
+                                                            <TextBlock Text="Limit Kontrolü:" Foreground="#9CA3AF" FontSize="11"/>
+                                                            <TextBlock Text="{Binding LimitStatus}" HorizontalAlignment="Right" FontWeight="Bold" FontSize="10">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="#34D399"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsOutOfSpec}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#F87171"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding NeedsLimitReview}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#FBBF24"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Fider Kablo Direnci:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding FiderKabloDirenci, StringFormat='{}{0:N1} mΩ'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Geri Dönüş Kablo Direnci:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding GeriDonusKabloDirenci, StringFormat='{}{0:N1} mΩ'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Beslenen Aktif Tren:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding BeslenenTrenSayisi, StringFormat='{}{0} Tren'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
@@ -611,7 +669,7 @@
                                                             </Border>
                                                             <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
                                                                 <StackPanel>
-                                                                    <TextBlock Text="⚡ Seksiyon Akımı" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="⚡ Seksiyon I" Foreground="#94A3B8" FontSize="9.5"/>
                                                                     <TextBlock Text="{Binding AnlikToplamAkimA, StringFormat='{}{0:N1} A'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
                                                                 </StackPanel>
                                                             </Border>
@@ -695,6 +753,7 @@
                                           ColumnHeaderStyle="{StaticResource CustomDataGridHeaderStyle}"
                                           CellStyle="{StaticResource CustomDataGridCellStyle}"
                                           AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                           Background="#161827" Foreground="White" RowBackground="#161827" AlternatingRowBackground="#1B1C2E"
                                           BorderBrush="#2F314C" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#2A2C44"
                                           Margin="0,0,0,14" MaxHeight="220">
@@ -703,7 +762,10 @@
                                         <DataGridTextColumn Header="Hat" Binding="{Binding HatTipi}" Width="45"/>
                                         <DataGridTextColumn Header="Konum (m)" Binding="{Binding Konum, StringFormat='{}{0:N0}'}" Width="80"/>
                                         <DataGridTextColumn Header="Hız (km/h)" Binding="{Binding AnlikHiz, StringFormat='{}{0:N0}'}" Width="75"/>
-                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding CekilenGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
+                                        <DataGridTextColumn Header="Cer motor (+/-) kW" Binding="{Binding CekilenGucKw, StringFormat='{}{0:N0}'}" Width="105"/>
+                                        <DataGridTextColumn Header="Cer motor I (+/-) [A]" Binding="{Binding CekilenAkimA, StringFormat='{}{0:N0}'}" Width="110"/>
+                                        <DataGridTextColumn Header="Pantograf net kW" Binding="{Binding AnlikPantografGucuKw, StringFormat='{}{0:N0}'}" Width="100"/>
+                                        <DataGridTextColumn Header="Pantograf net I [A]" Binding="{Binding AnlikPantografAkimiA, StringFormat='{}{0:N0}'}" Width="105"/>
                                         <DataGridTextColumn Header="Gerilim (V)" Binding="{Binding KatenerGerilimiV, StringFormat='{}{0:N0}'}" Width="75"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -721,7 +783,7 @@
                                         <DataGridTextColumn Header="Trafo Adı" Binding="{Binding Ad}" Width="*"/>
                                         <DataGridTextColumn Header="Konum (m)" Binding="{Binding DilasKonumuH1, StringFormat='{}{0:N0}'}" Width="80"/>
                                         <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
-                                        <DataGridTextColumn Header="Akım (A)" Binding="{Binding AnlikAkimA, StringFormat='{}{0:N0}'}" Width="70"/>
+                                        <DataGridTextColumn Header="I [A]" Binding="{Binding AnlikAkimA, StringFormat='{}{0:N0}'}" Width="70"/>
                                         <DataGridTextColumn Header="Yük %" Binding="{Binding YuklenmeYuzdesi, StringFormat='%{0:N0}'}" Width="60"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -770,13 +832,20 @@
                                 <Border Background="#1E293B" CornerRadius="6" Padding="10" Margin="0,0,0,10" BorderBrush="#38BDF8" BorderThickness="1">
                                     <StackPanel>
                                         <TextBlock Text="📑 RAPOR KOŞUSU VE ZAMAN İNCELEME" FontWeight="Bold" FontSize="12" Foreground="#38BDF8"/>
-                                        <TextBlock Text="Koşu durdurulduğunda kayıtlanan saniyeler arasında gezinin. Word ve Excel düğmeleri son tamamlanan koşuyu dışa aktarır." Foreground="#94A3B8" FontSize="10" TextWrapping="Wrap" Margin="0,3,0,8"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                            <TextBlock Text="Saniye" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                            <Slider Grid.Column="1" Minimum="0" Maximum="3600" Value="{Binding SelectedReportSecond, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
-                                            <TextBlock Grid.Column="2" Text="{Binding SelectedReportSecond, StringFormat='{}{0} s'}" Foreground="#FACC15" FontWeight="Bold" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                        </Grid>
+                                        <TextBlock Text="Simülasyon en fazla 1 hafta sürer. İlk saat saniyelik, sonrasında 10 saniyelik kayıt alınır; seçilen zaman en yakın kaydı gösterir. Word ve Excel düğmeleri son koşuyu dışa aktarır." Foreground="#94A3B8" FontSize="10" TextWrapping="Wrap" Margin="0,3,0,8"/>
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,6">
+                                                <TextBlock Text="Zaman (saat:dakika:saniye)" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                                <TextBox Text="{Binding ReportHoursText, UpdateSourceTrigger=PropertyChanged}" MaxLength="3" Width="48" Padding="4,2" TextAlignment="Center" ToolTip="Saat (0-168)" AutomationProperties.Name="Rapor saati"/>
+                                                <TextBlock Text=":" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="3,0"/>
+                                                <TextBox Text="{Binding ReportMinutesText, UpdateSourceTrigger=PropertyChanged}" MaxLength="2" Width="42" Padding="4,2" TextAlignment="Center" ToolTip="Dakika" AutomationProperties.Name="Rapor dakikası"/>
+                                                <TextBlock Text=":" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="3,0"/>
+                                                <TextBox Text="{Binding ReportSecondsText, UpdateSourceTrigger=PropertyChanged}" MaxLength="2" Width="42" Padding="4,2" TextAlignment="Center" ToolTip="Saniye" AutomationProperties.Name="Rapor saniyesi"/>
+                                                <TextBlock Text="{Binding SelectedReportTimeString}" Foreground="#FACC15" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                                <TextBlock Text="{Binding ReportTimeInputStatus}" Foreground="#FBBF24" FontSize="10" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                            </StackPanel>
+                                            <Slider Minimum="0" Maximum="{Binding MaximumReportSecond}" Value="{Binding SelectedReportSecond, UpdateSourceTrigger=PropertyChanged}" IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
 
@@ -813,8 +882,12 @@
                                         <DataGridTextColumn Header="Hat" Binding="{Binding Line}" Width="45"/>
                                         <DataGridTextColumn Header="Konum [m]" Binding="{Binding PositionM, StringFormat='{}{0:N0}'}" Width="75"/>
                                         <DataGridTextColumn Header="Hız [km/h]" Binding="{Binding SpeedKmh, StringFormat='{}{0:N1}'}" Width="75"/>
-                                        <DataGridTextColumn Header="Güç [kW]" Binding="{Binding PowerKw, StringFormat='{}{0:N1}'}" Width="70"/>
+                                        <DataGridTextColumn Header="Pantograf net [kW]" Binding="{Binding PowerKw, StringFormat='{}{0:N1}'}" Width="105"/>
+                                        <DataGridTextColumn Header="Pantograf net I [A]" Binding="{Binding CurrentA, StringFormat='{}{0:N1}'}" Width="115"/>
+                                        <DataGridTextColumn Header="Cer motor [kW]" Binding="{Binding TractionPowerKw, StringFormat='{}{0:N1}'}" Width="95"/>
+                                        <DataGridTextColumn Header="Cer motor I [A]" Binding="{Binding TractionCurrentA, StringFormat='{}{0:N1}'}" Width="100"/>
                                         <DataGridTextColumn Header="Gerilim [V]" Binding="{Binding VoltageV, StringFormat='{}{0:N1}'}" Width="75"/>
+                                        <DataGridTextColumn Header="Limit Durumu" Binding="{Binding LimitStatus}" Width="220"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
 
@@ -823,8 +896,9 @@
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Trafo" Binding="{Binding Name}" Width="*"/>
                                         <DataGridTextColumn Header="Güç [kW]" Binding="{Binding PowerKw, StringFormat='{}{0:N1}'}" Width="75"/>
-                                        <DataGridTextColumn Header="Akım [A]" Binding="{Binding CurrentA, StringFormat='{}{0:N1}'}" Width="75"/>
+                                        <DataGridTextColumn Header="I [A]" Binding="{Binding CurrentA, StringFormat='{}{0:N1}'}" Width="75"/>
                                         <DataGridTextColumn Header="Yük [%]" Binding="{Binding LoadPercent, StringFormat='%{0:N1}'}" Width="65"/>
+                                        <DataGridTextColumn Header="Limit Durumu" Binding="{Binding LimitStatus}" Width="260"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
 

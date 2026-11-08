@@ -13,13 +13,44 @@ namespace CerGucuSimulasyonu.Services
     /// </summary>
     public class RailwaySimulationEngine
     {
+        private const double SpeedControlHysteresisKmh = 0.5;
+        private const double MinimumBrakingAccelerationMps2 = 0.05;
+
+        private sealed record SubstationFeed(
+            TrafoMerkezi Substation,
+            double Weight,
+            double SourceResistanceOhm,
+            double LineResistanceOhm);
+
+        private sealed record TrainPowerDemand(
+            double TractionEffortKn,
+            double RegenerativeEffortKn,
+            double AuxiliaryPowerKw);
+
+        private sealed record TrainElectricalState(
+            TrenKonumu Train,
+            IReadOnlyList<SubstationFeed> Feeds,
+            TrainPowerDemand Demand);
+
+        private sealed record TrainPowerFlow(
+            double TractionPowerKw,
+            double RegenerativePowerKw,
+            double NetPowerKw);
+
         private readonly SimulationData _data;
         private readonly IReadOnlySet<string> _outOfServiceSubstations;
         private readonly Random _rand = new();
+        private readonly Dictionary<TrafoMerkezi, double> _over150PercentLoadSeconds = new();
+        private readonly Dictionary<TrafoMerkezi, double> _over300PercentLoadSeconds = new();
 
         private double _simTotalElapsed = 0;
 
-        public void ResetTime() => _simTotalElapsed = 0;
+        public void ResetTime()
+        {
+            _simTotalElapsed = 0;
+            _over150PercentLoadSeconds.Clear();
+            _over300PercentLoadSeconds.Clear();
+        }
 
         public RailwaySimulationEngine(
             SimulationData data,
@@ -38,6 +69,16 @@ namespace CerGucuSimulasyonu.Services
             _simTotalElapsed += dt;
             double maxLine = _data.HatUzunlugu > 0 ? _data.HatUzunlugu : 15350;
             double minSafeDistance = _data.Isletme?.MinimumTrenMesafesiMetre > 0 ? _data.Isletme.MinimumTrenMesafesiMetre : 400.0;
+            double trainWeightTon = _data.Tren.Aw3DoluAgirlik > 0 ? _data.Tren.Aw3DoluAgirlik : 236.0;
+            double rotatingMassTon = SimulationFormulas.RotatingMassTon(
+                _data.Tren.Aw0BosAgirlik,
+                _data.Tren.DonerKutle);
+            double effectiveTrainMassTon = SimulationFormulas.EffectiveTrainMassTon(
+                trainWeightTon,
+                rotatingMassTon);
+            double auxiliaryPowerKw = SimulationFormulas.AuxiliaryPowerKw(
+                _data.Tren.YardimciGuc > 0 ? _data.Tren.YardimciGuc : 300.0,
+                _data.Tren.YardimciGucKullanimOrani);
 
             // 1. Kinematic update for each train
             foreach (var tren in _data.Trenler)
@@ -57,7 +98,12 @@ namespace CerGucuSimulasyonu.Services
                         tren.Ivme = 0;
                         tren.CekilenGucKw = 0;
                         tren.CekilenAkimA = 0;
+                        tren.AnlikPantografGucuKw = 0;
+                        tren.AnlikPantografAkimiA = 0;
                         tren.Durum = $"SEFER BEKLİYOR (~{Math.Max(0, tren.DispatchTimeSeconds - _simTotalElapsed):0} sn)";
+                        tren.IsOutOfSpec = false;
+                        tren.NeedsLimitReview = false;
+                        tren.LimitStatus = "SEFER BEKLİYOR";
                         continue;
                     }
                 }
@@ -119,7 +165,9 @@ namespace CerGucuSimulasyonu.Services
                 double targetSpeed = _data.Tren.MaksIsletmeHizi;
                 if (distToNext < 400 && distToNext > 10)
                 {
-                    targetSpeed = Math.Max(15, (distToNext / 400.0) * _data.Tren.MaksIsletmeHizi);
+                    targetSpeed = SimulationFormulas.StationApproachSpeedKmh(
+                        distToNext,
+                        _data.Tren.MaksIsletmeHizi);
                 }
                 var applicableHizLimiti = _data.HizLimitleri
                     .FirstOrDefault(h => h.HatTipi == tren.HatTipi && tren.Konum >= h.Baslangic && tren.Konum <= h.Bitis);
@@ -154,7 +202,9 @@ namespace CerGucuSimulasyonu.Services
                     }
                     else if (gap < minSafeDistance)
                     {
-                        targetSpeed = Math.Min(targetSpeed, Math.Max(10, ((gap - minSafeDistance * 0.7) / (minSafeDistance * 0.3)) * 35));
+                        targetSpeed = Math.Min(
+                            targetSpeed,
+                            SimulationFormulas.FollowingTrainSpeedLimitKmh(gap, minSafeDistance));
                     }
                 }
 
@@ -162,20 +212,45 @@ namespace CerGucuSimulasyonu.Services
 
                 // Acceleration / braking dynamics
                 double speedDiff = targetSpeed - tren.AnlikHiz;
-                double maxAcc = _data.Tren.MaksIvmelenme * 3.6; // km/h per second
-                double maxDec = _data.Tren.MaksFrenlemeIvmesi * 3.6;
-                if (speedDiff > 0.5)
+                bool wasBraking = tren.Durum.StartsWith("FRENLİYOR", StringComparison.Ordinal);
+                double maxAcc = SimulationFormulas.SpeedRateKmhPerSecond(_data.Tren.MaksIvmelenme);
+                double maxDec = SimulationFormulas.SpeedRateKmhPerSecond(_data.Tren.MaksFrenlemeIvmesi);
+                if (speedDiff > SpeedControlHysteresisKmh)
                 {
-                    double dV = Math.Min(speedDiff, maxAcc * dt);
+                    double availableEffortKn = _data.Tren.MaximumTractionForceKn(
+                        tren.AnlikHiz,
+                        tren.KatenerGerilimiV,
+                        auxiliaryPowerKw);
+                    double resistanceKn = CalculateResistanceKn(tren, trainWeightTon, tren.AnlikHiz);
+                    double forceLimitedAcceleration = SimulationFormulas.AccelerationMps2(
+                        availableEffortKn,
+                        resistanceKn,
+                        effectiveTrainMassTon);
+                    maxAcc = Math.Min(
+                        maxAcc,
+                        SimulationFormulas.SpeedRateKmhPerSecond(forceLimitedAcceleration));
+                    double dV = SimulationFormulas.SpeedChangeKmh(speedDiff, maxAcc, dt);
                     tren.AnlikHiz += dV;
-                    tren.Ivme = Math.Round(dV / (dt * 3.6), 2);
+                    tren.Ivme = Math.Round(
+                        SimulationFormulas.AccelerationFromSpeedChangeMps2(dV, dt),
+                        2);
                     tren.Durum = "HIZLANIYOR (CER GÜCÜ ÇEKİYOR)";
                 }
-                else if (speedDiff < -0.5)
+                else if (speedDiff < -SpeedControlHysteresisKmh ||
+                         (wasBraking && speedDiff <= SpeedControlHysteresisKmh))
                 {
-                    double dV = Math.Min(Math.Abs(speedDiff), maxDec * dt);
+                    double requestedDeltaV = SimulationFormulas.RequestedBrakingSpeedChangeKmh(
+                        speedDiff,
+                        SpeedControlHysteresisKmh,
+                        MinimumBrakingAccelerationMps2,
+                        dt);
+                    double dV = Math.Min(
+                        tren.AnlikHiz,
+                        SimulationFormulas.SpeedChangeKmh(requestedDeltaV, maxDec, dt));
                     tren.AnlikHiz -= dV;
-                    tren.Ivme = -Math.Round(dV / (dt * 3.6), 2);
+                    tren.Ivme = -Math.Round(
+                        SimulationFormulas.AccelerationFromSpeedChangeMps2(dV, dt),
+                        2);
                     tren.Durum = "FRENLİYOR (REJENERATİF FREN)";
                 }
                 else
@@ -185,9 +260,8 @@ namespace CerGucuSimulasyonu.Services
                 }
 
                 // Position update
-                double vMs = tren.AnlikHiz / 3.6;
-                double deltaDistance = vMs * dt;
-                tren.KatEdilenMesafeKm += deltaDistance / 1000.0;
+                double deltaDistance = SimulationFormulas.DistanceMeters(tren.AnlikHiz, dt);
+                tren.KatEdilenMesafeKm += SimulationFormulas.MetersToKilometers(deltaDistance);
                 if (tren.Yon == "ileri")
                 {
                     tren.Konum += deltaDistance;
@@ -214,151 +288,507 @@ namespace CerGucuSimulasyonu.Services
                 }
             }
 
-            // 2. Power calculation – EN 50122-1 1500 V DC
-            double vNominal = _data.CerKatener.YuksuzDcBaraGerilimi > 0 ? _data.CerKatener.YuksuzDcBaraGerilimi : 1500; // V
-            double auxPowerKw = _data.Tren.YardimciGuc > 0 ? _data.Tren.YardimciGuc : 150.0;
-            double maxTrainTractionKw = _data.Tren.MotorGucuKw > 0 ? _data.Tren.MotorGucuKw : 1800.0;
-            double maxTrainRegenKw = maxTrainTractionKw * 0.8;
-            double trainWeightTon = _data.Tren.Aw3DoluAgirlik > 0 ? _data.Tren.Aw3DoluAgirlik : 236.0;
-            double rotMassRatio = 1.0 + (_data.Tren.DonerKutle / 100.0);
-            double dA = _data.Tren.DavisA > 0 ? _data.Tren.DavisA : 2.5;
-            double dB = _data.Tren.DavisB > 0 ? _data.Tren.DavisB : 0.03;
-            double dC = _data.Tren.DavisC > 0 ? _data.Tren.DavisC : 0.004;
-            double eta = _data.Tren.TrenVerimi > 0 ? _data.Tren.TrenVerimi / 100.0 : 0.88;
+            // 2. Solve train power and the shared DC supply voltages together.
+            double nominalVoltage = _data.CerKatener.YuksuzDcBaraGerilimi > 0
+                ? _data.CerKatener.YuksuzDcBaraGerilimi
+                : 1620.0;
+            double maximumOperatingVoltage = _data.Tren.MaksGerilim > 0
+                ? _data.Tren.MaksGerilim
+                : 1800.0;
+            double minimumOperatingVoltage = _data.Tren.MinIsletmeGerilimi > 0
+                ? _data.Tren.MinIsletmeGerilimi
+                : (_data.Tren.MinGerilim > 0 ? _data.Tren.MinGerilim : 1000.0);
+            double maximumElectricalVoltage = _data.Tren.RegenerativeVoltageCutoffV(maximumOperatingVoltage);
+            double efficiency = _data.Tren.TrenVerimi > 0
+                ? SimulationFormulas.PercentToRatio(_data.Tren.TrenVerimi)
+                : 0.85;
+            var electricalStates = _data.Trenler
+                .Where(train => train.IsDispatched)
+                .Select(train => new TrainElectricalState(
+                    train,
+                    GetSubstationFeeds(train),
+                    CreatePowerDemand(train, trainWeightTon, effectiveTrainMassTon, auxiliaryPowerKw)))
+                .ToArray();
+            var trainVoltages = electricalStates.ToDictionary(
+                state => state.Train,
+                state => state.Feeds.Count == 0 ? 0 : nominalVoltage);
 
-            double totalTractionKw = 0;
-            double totalRegenKw = 0;
+            Dictionary<TrenKonumu, TrainPowerFlow> powerFlows = new();
+            Dictionary<TrafoMerkezi, double> substationCurrents = new();
+            Dictionary<TrafoMerkezi, double> substationVoltages = new();
 
-            foreach (var tren in _data.Trenler.Where(t => t.IsDispatched))
+            for (int iteration = 0; iteration < 30; iteration++)
             {
-                double vMs = tren.AnlikHiz / 3.6;
-                double vKmh = tren.AnlikHiz;
-                double cerPowerKw = 0;
+                powerFlows = electricalStates.ToDictionary(
+                    state => state.Train,
+                    state => CalculatePowerFlow(state, trainVoltages[state.Train], efficiency));
+                CalculateSubstationState(
+                    electricalStates,
+                    powerFlows,
+                    trainVoltages,
+                    nominalVoltage,
+                    maximumElectricalVoltage,
+                    out substationCurrents,
+                    out substationVoltages);
 
-                // Davis running resistance
-                double davisKn = (dA * trainWeightTon + dB * trainWeightTon * vKmh + dC * Math.Pow(vKmh, 2)) / 1000.0;
-
-                // Gradient resistance / assistance
-                var localEgim = _data.HatEgimleri.FirstOrDefault(e => e.HatTipi == tren.HatTipi && tren.Konum >= e.Baslangic && tren.Konum <= e.Bitis);
-                double gradeKn = 0;
-                if (localEgim != null)
+                double maximumVoltageChange = 0;
+                foreach (var state in electricalStates)
                 {
-                    gradeKn = trainWeightTon * 9.81 * (localEgim.EgimYuzdesi / 100.0);
-                    if (tren.Yon == "geri") gradeKn = -gradeKn;
-                }
-
-                // Curve resistance (Rockl formula)
-                var localKurp = _data.HatKurplari.FirstOrDefault(k => k.HatTipi == tren.HatTipi && tren.Konum >= k.Baslangic && tren.Konum <= k.Bitis);
-                double curveKn = 0;
-                if (localKurp != null && localKurp.Yaricap > 55)
-                {
-                    curveKn = trainWeightTon * 9.81 * (650.0 / (localKurp.Yaricap - 55.0)) / 1000.0;
-                }
-
-                if (tren.Durum.StartsWith("HIZLANIYOR") || (tren.Ivme > 0.05 && vKmh > 1))
-                {
-                    double fAccKn = trainWeightTon * rotMassRatio * Math.Max(0.05, tren.Ivme);
-                    double fTotalKn = Math.Max(0, fAccKn + davisKn + gradeKn + curveKn);
-                    double pMechKw = (fTotalKn * vMs) / eta;
-                    pMechKw = Math.Min(maxTrainTractionKw, pMechKw);
-                    cerPowerKw = pMechKw + auxPowerKw;
-                    totalTractionKw += cerPowerKw;
-                    tren.ToplamTuketilenEnerjiKwh += (cerPowerKw * (dt / 3600.0));
-                }
-                else if (tren.Durum.StartsWith("FRENLİYOR") || (tren.Ivme < -0.05 && vKmh > 2))
-                {
-                    double fDecKn = trainWeightTon * Math.Abs(tren.Ivme);
-                    double pBrakeMechKw = fDecKn * vMs * 0.75;
-                    double pRegenKw = Math.Min(maxTrainRegenKw, pBrakeMechKw);
-                    cerPowerKw = -pRegenKw + auxPowerKw;
-                    totalRegenKw += pRegenKw;
-                    tren.ToplamRejeneratifEnerjiKwh += (pRegenKw * (dt / 3600.0));
-                }
-                else if (vKmh > 0)
-                {
-                    double fCruisKn = Math.Max(0, davisKn + gradeKn + curveKn);
-                    double pCruisKw = (fCruisKn * vMs) / eta;
-                    pCruisKw = Math.Min(650.0, pCruisKw);
-                    cerPowerKw = pCruisKw + auxPowerKw;
-                    totalTractionKw += cerPowerKw;
-                    tren.ToplamTuketilenEnerjiKwh += (cerPowerKw * (dt / 3600.0));
-                }
-                else
-                {
-                    cerPowerKw = auxPowerKw;
-                    totalTractionKw += auxPowerKw;
-                    tren.ToplamTuketilenEnerjiKwh += (auxPowerKw * (dt / 3600.0));
+                    double nextVoltage = CalculateTrainVoltage(
+                        state,
+                        powerFlows[state.Train],
+                        trainVoltages[state.Train],
+                        substationVoltages,
+                        maximumElectricalVoltage);
+                    double relaxedVoltage = SimulationFormulas.RelaxedVoltageV(
+                        trainVoltages[state.Train],
+                        nextVoltage,
+                        0.5);
+                    maximumVoltageChange = Math.Max(
+                        maximumVoltageChange,
+                        Math.Abs(relaxedVoltage - trainVoltages[state.Train]));
+                    trainVoltages[state.Train] = relaxedVoltage;
                 }
 
-                tren.CekilenGucKw = Math.Round(cerPowerKw, 1);
-                tren.CekilenAkimA = Math.Round((cerPowerKw * 1000.0) / vNominal, 1);
-                tren.KatenerGerilimiV = vNominal; // EN 50122-1 1500 V DC
+                if (maximumVoltageChange < 0.05)
+                {
+                    break;
+                }
             }
 
-            // 3. Transformer loading – EN 50122-1 1500 V
-            double rLineM = ((
-                _data.CerKatener.RijitKatenerKmDirenci +
-                _data.CerKatener.NormalRayKmDirenci) / 1000.0) / 1000.0;
-            if (rLineM <= 0) rLineM = 0.000036;
+            powerFlows = electricalStates.ToDictionary(
+                state => state.Train,
+                state => CalculatePowerFlow(state, trainVoltages[state.Train], efficiency));
+            CalculateSubstationState(
+                electricalStates,
+                powerFlows,
+                trainVoltages,
+                nominalVoltage,
+                maximumElectricalVoltage,
+                out substationCurrents,
+                out substationVoltages);
 
-            foreach (var tm in _data.TrafoMerkezleri)
+            foreach (var state in electricalStates)
             {
-                if (_outOfServiceSubstations.Contains(tm.Ad))
+                var train = state.Train;
+                var flow = powerFlows[train];
+                double voltage = CalculateTrainVoltage(
+                    state,
+                    flow,
+                    trainVoltages[train],
+                    substationVoltages,
+                    maximumElectricalVoltage);
+                double pantographCurrent = SimulationFormulas.CurrentA(flow.NetPowerKw, voltage);
+                double signedTractionPower = SimulationFormulas.SignedTractionPowerKw(
+                    flow.TractionPowerKw,
+                    flow.RegenerativePowerKw);
+                double signedTractionCurrent = SimulationFormulas.CurrentA(signedTractionPower, voltage);
+
+                train.KatenerGerilimiV = Math.Round(voltage, 1);
+                train.CekilenGucKw = Math.Round(signedTractionPower, 1);
+                train.CekilenAkimA = Math.Round(signedTractionCurrent, 1);
+                train.AnlikPantografGucuKw = Math.Round(flow.NetPowerKw, 1);
+                train.AnlikPantografAkimiA = Math.Round(pantographCurrent, 1);
+                train.ToplamTuketilenEnerjiKwh += SimulationFormulas.EnergyKwh(
+                    Math.Max(0, flow.NetPowerKw),
+                    dt);
+                train.ToplamRejeneratifEnerjiKwh += SimulationFormulas.EnergyKwh(
+                    flow.RegenerativePowerKw,
+                    dt);
+                UpdateTrainLimitStatus(train, minimumOperatingVoltage, maximumOperatingVoltage);
+            }
+
+            // 3. Publish transformer output using the solved current and voltage.
+            foreach (var substation in _data.TrafoMerkezleri)
+            {
+                if (_outOfServiceSubstations.Contains(substation.Ad))
                 {
-                    tm.AnlikGucKw = 0;
-                    tm.BeslenenTrenSayisi = 0;
-                    tm.AnlikAkimA = 0;
-                    tm.YuklenmeYuzdesi = 0;
-                    tm.AnlikGerilimV = 0;
-                    tm.Durum = "DEVRE DIŞI";
+                    substation.AnlikGucKw = 0;
+                    substation.BeslenenTrenSayisi = 0;
+                    substation.AnlikAkimA = 0;
+                    substation.YuklenmeYuzdesi = 0;
+                    substation.AnlikGerilimV = 0;
+                    substation.Durum = "DEVRE DIŞI";
+                    substation.IsOutOfSpec = false;
+                    substation.NeedsLimitReview = false;
+                    substation.LimitStatus = "DEVRE DIŞI";
+                    _over150PercentLoadSeconds[substation] = 0;
+                    _over300PercentLoadSeconds[substation] = 0;
                     continue;
                 }
 
-                double tmTotalKw = 0;
-                int fedCount = 0;
-                foreach (var tren in _data.Trenler)
-                {
-                    if (tren.CekilenGucKw <= 0) continue;
-                    double distM = Math.Abs(tm.DilasKonumuH1 - tren.Konum);
-                    if (distM < 3800)
-                    {
-                        double gTm = 1.0 / (Math.Max(5.0, tm.Direnc) + (distM * rLineM * 1000.0));
-                        double sumG = 0;
-                        foreach (var otherTm in _data.TrafoMerkezleri)
-                        {
-                            if (_outOfServiceSubstations.Contains(otherTm.Ad))
-                            {
-                                continue;
-                            }
+                double current = substationCurrents.GetValueOrDefault(substation);
+                double voltage = substationVoltages.GetValueOrDefault(substation, nominalVoltage);
+                double powerKw = SimulationFormulas.DcPowerKw(current, voltage);
+                int fedCount = electricalStates.Count(state =>
+                    Math.Abs(powerFlows[state.Train].NetPowerKw) > 1 &&
+                    state.Feeds.Any(feed =>
+                        feed.Substation == substation && feed.Weight > 0.15));
+                double rectifierPowerKw = _data.CerKatener.DogrultucuGucu > 0
+                    ? _data.CerKatener.DogrultucuGucu
+                    : 3000.0;
 
-                            double otherDist = Math.Abs(otherTm.DilasKonumuH1 - tren.Konum);
-                            if (otherDist < 3800)
-                            {
-                                sumG += 1.0 / (Math.Max(5.0, otherTm.Direnc) + (otherDist * rLineM * 1000.0));
-                            }
-                        }
-                        if (sumG > 0)
-                        {
-                            double weight = gTm / sumG;
-                            tmTotalKw += tren.CekilenGucKw * weight;
-                            if (weight > 0.15) fedCount++;
-                        }
-                    }
-                }
-                tm.AnlikGucKw = Math.Round(tmTotalKw, 1);
-                tm.BeslenenTrenSayisi = fedCount;
-                tm.AnlikAkimA = Math.Round((tmTotalKw * 1000.0) / vNominal, 1);
-                double trafoMaxKw = _data.CerKatener.DogrultucuGucu > 0 ? _data.CerKatener.DogrultucuGucu : 3000;
-                tm.YuklenmeYuzdesi = Math.Round((tmTotalKw / trafoMaxKw) * 100.0, 1);
-                tm.AnlikGerilimV = 1500; // constant voltage
-                tm.Durum = tm.YuklenmeYuzdesi switch
+                substation.AnlikGucKw = Math.Round(powerKw, 1);
+                substation.BeslenenTrenSayisi = fedCount;
+                substation.AnlikAkimA = Math.Round(current, 1);
+                substation.AnlikGerilimV = Math.Round(voltage, 1);
+                substation.YuklenmeYuzdesi = Math.Round(
+                    SimulationFormulas.LoadPercent(Math.Max(0, powerKw), rectifierPowerKw),
+                    1);
+                UpdateSubstationLimitStatus(
+                    substation,
+                    voltage,
+                    SimulationFormulas.LoadPercent(Math.Max(0, powerKw), rectifierPowerKw),
+                    dt,
+                    minimumOperatingVoltage,
+                    maximumOperatingVoltage);
+                substation.Durum = powerKw switch
                 {
-                    > 100 => "AŞIRI YÜK (% KAPASİTE AŞILDI)",
-                    > 75 => "YÜKSEK YÜK",
-                    > 5 => "NORMAL",
+                    < -5 => "REJENERATİF",
+                    _ when substation.YuklenmeYuzdesi > 300 => "AŞIRI YÜK",
+                    _ when substation.YuklenmeYuzdesi > 150 => "YÜKSEK YÜK (DUTY SINIRI)",
+                    _ when substation.YuklenmeYuzdesi > 100 => "ANMA GÜCÜ ÜSTÜ",
+                    _ when substation.YuklenmeYuzdesi > 5 => "NORMAL",
                     _ => "BOŞTA"
                 };
             }
+        }
+
+        private void UpdateTrainLimitStatus(
+            TrenKonumu train,
+            double minimumOperatingVoltage,
+            double maximumOperatingVoltage)
+        {
+            if (!train.IsDispatched)
+            {
+                train.IsOutOfSpec = false;
+                train.NeedsLimitReview = false;
+                train.LimitStatus = "SEFER BEKLİYOR";
+                return;
+            }
+
+            var violations = new List<string>();
+            double minimumAcceleration = _data.Tren.MaksIvmelenme > 0 ? _data.Tren.MaksIvmelenme : 1.1;
+            double maximumDeceleration = _data.Tren.MaksFrenlemeIvmesi > 0 ? _data.Tren.MaksFrenlemeIvmesi : 1.1;
+            double maximumOperatingSpeed = _data.Tren.MaksIsletmeHizi > 0 ? _data.Tren.MaksIsletmeHizi : 80.0;
+
+            if (train.KatenerGerilimiV < minimumOperatingVoltage)
+            {
+                violations.Add("İŞLETME GERİLİMİ DÜŞÜK");
+            }
+            if (train.KatenerGerilimiV > maximumOperatingVoltage)
+            {
+                violations.Add("AZAMİ GERİLİM AŞILDI");
+            }
+            if (train.AnlikHiz > maximumOperatingSpeed)
+            {
+                violations.Add("İŞLETME HIZI AŞILDI");
+            }
+            if (train.Ivme > minimumAcceleration || train.Ivme < -maximumDeceleration)
+            {
+                violations.Add("İVME SINIRI AŞILDI");
+            }
+
+            train.IsOutOfSpec = violations.Count > 0;
+            train.NeedsLimitReview = false;
+            train.LimitStatus = train.IsOutOfSpec
+                ? string.Join("; ", violations)
+                : "UYGUN";
+        }
+
+        private void UpdateSubstationLimitStatus(
+            TrafoMerkezi substation,
+            double voltage,
+            double loadPercent,
+            double dt,
+            double minimumOperatingVoltage,
+            double maximumOperatingVoltage)
+        {
+            double elapsed = Math.Max(0, dt);
+            double over150Seconds = loadPercent > 150
+                ? _over150PercentLoadSeconds.GetValueOrDefault(substation) + elapsed
+                : 0;
+            double over300Seconds = loadPercent > 300
+                ? _over300PercentLoadSeconds.GetValueOrDefault(substation) + elapsed
+                : 0;
+            _over150PercentLoadSeconds[substation] = over150Seconds;
+            _over300PercentLoadSeconds[substation] = over300Seconds;
+
+            var violations = new List<string>();
+            if (voltage < minimumOperatingVoltage)
+            {
+                violations.Add("BARA GERİLİMİ DÜŞÜK");
+            }
+            if (voltage > maximumOperatingVoltage)
+            {
+                violations.Add("AZAMİ BARA GERİLİMİ AŞILDI");
+            }
+            if (over300Seconds > 60)
+            {
+                violations.Add("DOĞRULTUCU %300 YÜK SINIRI 1 DAKİKADAN UZUN AŞILDI");
+            }
+            if (over150Seconds > 7200)
+            {
+                violations.Add("TRAFO/DOĞRULTUCU %150 YÜK SINIRI 2 SAATTEN UZUN AŞILDI");
+            }
+
+            substation.IsOutOfSpec = violations.Count > 0;
+            substation.NeedsLimitReview = !substation.IsOutOfSpec &&
+                (loadPercent > 100 || over150Seconds > 0 || over300Seconds > 0);
+
+            if (substation.IsOutOfSpec)
+            {
+                substation.LimitStatus = string.Join("; ", violations);
+            }
+            else if (over300Seconds > 0)
+            {
+                substation.LimitStatus = "DUTY SINIRI: %300 YÜKTE 1 DAKİKA";
+            }
+            else if (over150Seconds > 0)
+            {
+                substation.LimitStatus = "DUTY SINIRI: %150 YÜKTE 2 SAAT";
+            }
+            else if (loadPercent > 100)
+            {
+                substation.LimitStatus = "ANMA GÜCÜ ÜSTÜ; RMS/DUTY KONTROLÜ";
+            }
+            else
+            {
+                substation.LimitStatus = "UYGUN";
+            }
+        }
+
+        private double CalculateResistanceKn(TrenKonumu train, double trainWeightTon, double speedKmh)
+        {
+            // double davisA = _data.Tren.DavisA > 0 ? _data.Tren.DavisA : 2.5;
+            // double davisB = _data.Tren.DavisB > 0 ? _data.Tren.DavisB : 0.03;
+            // double davisC = _data.Tren.DavisC > 0 ? _data.Tren.DavisC : 0.004;
+            double davisA = _data.Tren.DavisA > 0 ? _data.Tren.DavisA : 0.0;
+            double davisB = _data.Tren.DavisB > 0 ? _data.Tren.DavisB : 0.0;
+            double davisC = _data.Tren.DavisC > 0 ? _data.Tren.DavisC : 0.0;
+            double davisKn = SimulationFormulas.DavisResistanceKn(
+                trainWeightTon,
+                speedKmh,
+                davisA,
+                davisB,
+                davisC);
+
+            var localGradient = _data.HatEgimleri.FirstOrDefault(gradient =>
+                gradient.HatTipi == train.HatTipi &&
+                train.Konum >= gradient.Baslangic &&
+                train.Konum <= gradient.Bitis);
+            double gradientKn = localGradient is null
+                ? 0
+                : SimulationFormulas.GradeForceKn(
+                    trainWeightTon,
+                    localGradient.EgimYuzdesi,
+                    train.Yon);
+
+            var localCurve = _data.HatKurplari.FirstOrDefault(curve =>
+                curve.HatTipi == train.HatTipi &&
+                train.Konum >= curve.Baslangic &&
+                train.Konum <= curve.Bitis);
+            double curveKn = localCurve is not null && localCurve.Yaricap > 55
+                ? SimulationFormulas.CurveResistanceKn(trainWeightTon, localCurve.RocklDirenci)
+                : 0;
+
+            return SimulationFormulas.TotalResistanceKn(davisKn, gradientKn, curveKn);
+        }
+
+        private TrainPowerDemand CreatePowerDemand(
+            TrenKonumu train,
+            double trainWeightTon,
+            double effectiveTrainMassTon,
+            double auxiliaryPowerKw)
+        {
+            double speedMs = SimulationFormulas.SpeedMetersPerSecond(train.AnlikHiz);
+            double resistanceKn = CalculateResistanceKn(train, trainWeightTon, train.AnlikHiz);
+
+            if (train.Durum.StartsWith("FRENLİYOR", StringComparison.Ordinal) ||
+                train.Ivme < -0.05)
+            {
+                return new TrainPowerDemand(
+                    0,
+                    SimulationFormulas.BrakingEffortKn(effectiveTrainMassTon, train.Ivme),
+                    auxiliaryPowerKw);
+            }
+
+            if (train.Durum.StartsWith("HIZLANIYOR", StringComparison.Ordinal) ||
+                train.Ivme > 0.05)
+            {
+                double accelerationEffortKn = SimulationFormulas.InertialForceKn(
+                    effectiveTrainMassTon,
+                    Math.Max(0, train.Ivme));
+                return new TrainPowerDemand(
+                    SimulationFormulas.RequiredTractionEffortKn(accelerationEffortKn, resistanceKn),
+                    0,
+                    auxiliaryPowerKw);
+            }
+
+            return new TrainPowerDemand(
+                speedMs > 0 ? Math.Max(0, resistanceKn) : 0,
+                0,
+                auxiliaryPowerKw);
+        }
+
+        private TrainPowerFlow CalculatePowerFlow(
+            TrainElectricalState state,
+            double voltageV,
+            double efficiency)
+        {
+            if (state.Feeds.Count == 0 || voltageV <= 0)
+            {
+                return new TrainPowerFlow(0, 0, 0);
+            }
+
+            double speedMs = SimulationFormulas.SpeedMetersPerSecond(state.Train.AnlikHiz);
+            double tractionForceKn = SimulationFormulas.LimitedEffortKn(
+                state.Demand.TractionEffortKn,
+                _data.Tren.MaximumTractionForceKn(
+                    state.Train.AnlikHiz,
+                    voltageV,
+                    state.Demand.AuxiliaryPowerKw));
+            double regenerativeForceKn = SimulationFormulas.LimitedEffortKn(
+                state.Demand.RegenerativeEffortKn,
+                _data.Tren.MaximumRegenerativeBrakeForceKn(state.Train.AnlikHiz, voltageV));
+
+            double tractionPowerKw = speedMs > 0
+                ? SimulationFormulas.MechanicalPowerKw(tractionForceKn, state.Train.AnlikHiz) / efficiency
+                : 0;
+            double regenerativePowerKw =
+                SimulationFormulas.MechanicalPowerKw(regenerativeForceKn, state.Train.AnlikHiz) * efficiency;
+            double netPowerKw = SimulationFormulas.NetPantographPowerKw(
+                tractionPowerKw,
+                state.Demand.AuxiliaryPowerKw,
+                regenerativePowerKw);
+            return new TrainPowerFlow(tractionPowerKw, regenerativePowerKw, netPowerKw);
+        }
+
+        private IReadOnlyList<SubstationFeed> GetSubstationFeeds(TrenKonumu train)
+        {
+            double lineResistanceOhmPerMeter = SimulationFormulas.LineResistanceOhmPerMeter(
+                _data.CerKatener.RijitKatenerKmDirenci,
+                _data.CerKatener.NormalRayKmDirenci);
+            var candidates = new List<(TrafoMerkezi Substation, double SourceResistance, double LineResistance, double Conductance)>();
+
+            foreach (var substation in _data.TrafoMerkezleri)
+            {
+                if (_outOfServiceSubstations.Contains(substation.Ad))
+                {
+                    continue;
+                }
+
+                double substationPosition = train.HatTipi == "H2"
+                    ? substation.DilasKonumuH2
+                    : substation.DilasKonumuH1;
+                double distanceM = Math.Abs(substationPosition - train.Konum);
+                if (distanceM >= 3800)
+                {
+                    continue;
+                }
+
+                double transformerResistanceMilliOhm = substation.Direnc > 0
+                    ? substation.Direnc
+                    : _data.CerKatener.TrafoIcDirenci;
+                double sourceResistanceOhm = SimulationFormulas.SourceResistanceOhm(
+                    transformerResistanceMilliOhm,
+                    substation.FiderKabloDirenci,
+                    substation.GeriDonusKabloDirenci);
+                double lineResistanceOhm = SimulationFormulas.LineResistanceOhm(
+                    lineResistanceOhmPerMeter,
+                    distanceM);
+                candidates.Add((
+                    substation,
+                    sourceResistanceOhm,
+                    lineResistanceOhm,
+                    SimulationFormulas.BranchConductance(sourceResistanceOhm, lineResistanceOhm)));
+            }
+
+            double totalConductance = candidates.Sum(candidate => candidate.Conductance);
+            return totalConductance <= 0
+                ? Array.Empty<SubstationFeed>()
+                : candidates.Select(candidate => new SubstationFeed(
+                    candidate.Substation,
+                    SimulationFormulas.FeedWeight(candidate.Conductance, totalConductance),
+                    candidate.SourceResistance,
+                    candidate.LineResistance)).ToArray();
+        }
+
+        private void CalculateSubstationState(
+            IReadOnlyList<TrainElectricalState> states,
+            IReadOnlyDictionary<TrenKonumu, TrainPowerFlow> powerFlows,
+            IReadOnlyDictionary<TrenKonumu, double> trainVoltages,
+            double nominalVoltage,
+            double maximumVoltage,
+            out Dictionary<TrafoMerkezi, double> substationCurrents,
+            out Dictionary<TrafoMerkezi, double> substationVoltages)
+        {
+            substationCurrents = _data.TrafoMerkezleri
+                .Where(substation => !_outOfServiceSubstations.Contains(substation.Ad))
+                .ToDictionary(substation => substation, _ => 0.0);
+
+            foreach (var state in states)
+            {
+                double voltage = trainVoltages[state.Train];
+                if (voltage <= 0)
+                {
+                    continue;
+                }
+
+                double trainCurrent = SimulationFormulas.CurrentA(
+                    powerFlows[state.Train].NetPowerKw,
+                    voltage);
+                foreach (var feed in state.Feeds)
+                {
+                    substationCurrents[feed.Substation] += trainCurrent * feed.Weight;
+                }
+            }
+
+            substationVoltages = new Dictionary<TrafoMerkezi, double>();
+            foreach (var substation in _data.TrafoMerkezleri)
+            {
+                if (_outOfServiceSubstations.Contains(substation.Ad))
+                {
+                    continue;
+                }
+
+                double transformerResistanceMilliOhm = substation.Direnc > 0
+                    ? substation.Direnc
+                    : _data.CerKatener.TrafoIcDirenci;
+                double sourceResistanceOhm = SimulationFormulas.SourceResistanceOhm(
+                    transformerResistanceMilliOhm,
+                    substation.FiderKabloDirenci,
+                    substation.GeriDonusKabloDirenci);
+                substationVoltages[substation] = SimulationFormulas.SubstationVoltageV(
+                    nominalVoltage,
+                    substationCurrents.GetValueOrDefault(substation),
+                    sourceResistanceOhm,
+                    maximumVoltage);
+            }
+        }
+
+        private static double CalculateTrainVoltage(
+            TrainElectricalState state,
+            TrainPowerFlow powerFlow,
+            double previousVoltage,
+            IReadOnlyDictionary<TrafoMerkezi, double> substationVoltages,
+            double maximumVoltage)
+        {
+            if (state.Feeds.Count == 0)
+            {
+                return 0;
+            }
+
+            double trainCurrent = SimulationFormulas.CurrentA(powerFlow.NetPowerKw, previousVoltage);
+            return SimulationFormulas.TrainVoltageV(
+                state.Feeds
+                    .Select(feed => (
+                        feed.Weight,
+                        substationVoltages.GetValueOrDefault(feed.Substation),
+                        feed.LineResistanceOhm))
+                    .ToArray(),
+                trainCurrent,
+                maximumVoltage);
         }
     }
 }

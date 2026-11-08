@@ -68,6 +68,135 @@ public sealed class WordReportExporter
                     $"{snapshot.MaximumSubstationLoadPercent:0.0}"
                 }).ToArray());
 
+        AddParagraph(body, "Limit Dışı Trenler", "Heading1");
+        var trainLimitRows = result.Snapshots
+            .SelectMany(snapshot => snapshot.Trains
+                .Where(train => train.IsOutOfSpec)
+                .Select(train => (Second: snapshot.Second, Train: train)))
+            .GroupBy(entry => entry.Train.TrainName)
+            .Select(group =>
+            {
+                var entries = group.ToArray();
+                return new[]
+                {
+                    group.Key,
+                    entries.Min(entry => entry.Second).ToString(),
+                    entries.Max(entry => entry.Second).ToString(),
+                    string.Join(", ", entries.Select(entry => entry.Train.LimitStatus).Distinct()),
+                    entries.Min(entry => entry.Train.VoltageV).ToString("0.0"),
+                    entries.Max(entry => entry.Train.VoltageV).ToString("0.0"),
+                    entries.Max(entry => entry.Train.SpeedKmh).ToString("0.0")
+                };
+            }).ToArray();
+        if (trainLimitRows.Length == 0)
+        {
+            AddParagraph(body, "Koşu boyunca limit dışına çıkan tren kaydedilmedi.");
+        }
+        else
+        {
+            AddHighlightedTable(body,
+                new[] { "Tren", "İlk saniye", "Son saniye", "Limit durumu", "Min. gerilim [V]", "Maks. gerilim [V]", "Maks. hız [km/h]" },
+                trainLimitRows,
+                "FECACA",
+                "7F1D1D");
+        }
+
+        AddParagraph(body, "İnceleme Gerektiren Trenler", "Heading1");
+        var trainReviewRows = result.Snapshots
+            .SelectMany(snapshot => snapshot.Trains
+                .Where(train => train.NeedsLimitReview && !train.IsOutOfSpec)
+                .Select(train => (Second: snapshot.Second, Train: train)))
+            .GroupBy(entry => entry.Train.TrainName)
+            .Select(group =>
+            {
+                var entries = group.ToArray();
+                return new[]
+                {
+                    group.Key,
+                    entries.Min(entry => entry.Second).ToString(),
+                    entries.Max(entry => entry.Second).ToString(),
+                    string.Join(", ", entries.Select(entry => entry.Train.LimitStatus).Distinct()),
+                    entries.Min(entry => entry.Train.VoltageV).ToString("0.0"),
+                    entries.Max(entry => entry.Train.VoltageV).ToString("0.0"),
+                    entries.Max(entry => entry.Train.SpeedKmh).ToString("0.0")
+                };
+            }).ToArray();
+        if (trainReviewRows.Length > 0)
+        {
+            AddHighlightedTable(body,
+                new[] { "Tren", "İlk saniye", "Son saniye", "İnceleme durumu", "Min. gerilim [V]", "Maks. gerilim [V]", "Maks. hız [km/h]" },
+                trainReviewRows,
+                "FEF3C7",
+                "78350F");
+        }
+        else
+        {
+            AddParagraph(body, "Ek inceleme gerektiren tren kaydedilmedi.");
+        }
+
+        AddParagraph(body, "Limit / Duty İncelemesi Gerektiren Trafolar", "Heading1");
+        var substationLimitRows = result.Snapshots
+            .SelectMany(snapshot => snapshot.Substations
+                .Where(substation => substation.IsOutOfSpec)
+                .Select(substation => (Second: snapshot.Second, Substation: substation)))
+            .GroupBy(entry => entry.Substation.Name)
+            .Select(group =>
+            {
+                var entries = group.ToArray();
+                return new[]
+                {
+                    group.Key,
+                    entries.Min(entry => entry.Second).ToString(),
+                    entries.Max(entry => entry.Second).ToString(),
+                    string.Join(", ", entries.Select(entry => entry.Substation.LimitStatus).Distinct()),
+                    entries.Max(entry => entry.Substation.LoadPercent).ToString("0.0"),
+                    entries.Max(entry => entry.Substation.PowerKw).ToString("0.0"),
+                    entries.Min(entry => entry.Substation.VoltageV).ToString("0.0")
+                };
+            }).ToArray();
+        if (substationLimitRows.Length == 0)
+        {
+            AddParagraph(body, "Koşu boyunca limit dışına çıkan trafo kaydedilmedi.");
+        }
+        else
+        {
+            AddHighlightedTable(body,
+                new[] { "Trafo", "İlk saniye", "Son saniye", "Limit durumu", "Maks. yük [%]", "Maks. güç [kW]", "Min. gerilim [V]" },
+                substationLimitRows,
+                "FECACA",
+                "7F1D1D");
+        }
+
+        var substationReviewRows = result.Snapshots
+            .SelectMany(snapshot => snapshot.Substations
+                .Where(substation => substation.NeedsLimitReview && !substation.IsOutOfSpec)
+                .Select(substation => (Second: snapshot.Second, Substation: substation)))
+            .GroupBy(entry => entry.Substation.Name)
+            .Select(group =>
+            {
+                var entries = group.ToArray();
+                return new[]
+                {
+                    group.Key,
+                    entries.Min(entry => entry.Second).ToString(),
+                    entries.Max(entry => entry.Second).ToString(),
+                    string.Join(", ", entries.Select(entry => entry.Substation.LimitStatus).Distinct()),
+                    entries.Max(entry => entry.Substation.LoadPercent).ToString("0.0")
+                };
+            }).ToArray();
+        if (substationReviewRows.Length > 0)
+        {
+            AddHighlightedTable(body,
+                new[] { "Trafo", "İlk saniye", "Son saniye", "İnceleme durumu", "Maks. yük [%]" },
+                substationReviewRows,
+                "FEF3C7",
+                "78350F");
+        }
+        else
+        {
+            AddParagraph(body, "Duty/RMS incelemesi gerektiren trafo kaydedilmedi.");
+        }
+
         mainPart.Document.Save();
     }
 
@@ -102,17 +231,60 @@ public sealed class WordReportExporter
         body.Append(table);
     }
 
-    private static TableRow CreateRow(IReadOnlyList<string> cells, bool header)
+    private static void AddHighlightedTable(
+        Body body,
+        IReadOnlyList<string> headers,
+        IReadOnlyList<string[]> rows,
+        string fill,
+        string fontColor)
+    {
+        var table = new Table(new TableProperties(new TableBorders(
+            new TopBorder { Val = BorderValues.Single, Size = 4 },
+            new BottomBorder { Val = BorderValues.Single, Size = 4 },
+            new InsideHorizontalBorder { Val = BorderValues.Single, Size = 4 },
+            new InsideVerticalBorder { Val = BorderValues.Single, Size = 4 },
+            new LeftBorder { Val = BorderValues.Single, Size = 4 },
+            new RightBorder { Val = BorderValues.Single, Size = 4 })));
+
+        table.Append(CreateRow(headers, true));
+        foreach (var row in rows)
+        {
+            table.Append(CreateRow(row, false, fill, fontColor));
+        }
+
+        body.Append(table);
+    }
+
+    private static TableRow CreateRow(
+        IReadOnlyList<string> cells,
+        bool header,
+        string? fill = null,
+        string? fontColor = null)
     {
         var row = new TableRow();
         foreach (var cellText in cells)
         {
             var run = new Run(new Text(cellText));
-            if (header)
+            if (header || fontColor is not null)
             {
-                run.RunProperties = new RunProperties(new Bold());
+                var properties = new RunProperties();
+                if (header)
+                {
+                    properties.Append(new Bold());
+                }
+                if (fontColor is not null)
+                {
+                    properties.Append(new Color { Val = fontColor });
+                }
+                run.RunProperties = properties;
             }
-            row.Append(new TableCell(new Paragraph(run)));
+            var tableCell = new TableCell(new Paragraph(run));
+            if (fill is not null)
+            {
+                tableCell.TableCellProperties = new TableCellProperties(
+                    new Shading { Val = ShadingPatternValues.Clear, Fill = fill });
+            }
+            row.Append(tableCell);
         }
         return row;
     }

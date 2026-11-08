@@ -7,10 +7,17 @@ namespace CerGucuSimulasyonu.Services;
 
 public sealed class SimulationRecorder
 {
+    public const int MaximumDurationSeconds = 7 * 24 * 60 * 60;
+    private const int DetailedSamplingDurationSeconds = 60 * 60;
+    private const int LongRunSamplingIntervalSeconds = 10;
+
     private readonly int _maximumDurationSeconds;
     private int _lastRecordedSecond = -1;
+    private double _consumedEnergyKwh;
+    private double _recoveredEnergyKwh;
+    private bool _isComplete;
 
-    public SimulationRecorder(int maximumDurationSeconds = 3600)
+    public SimulationRecorder(int maximumDurationSeconds = MaximumDurationSeconds)
     {
         if (maximumDurationSeconds <= 0)
         {
@@ -22,8 +29,7 @@ public sealed class SimulationRecorder
 
     public SimulationRunResult? CurrentRun { get; private set; }
 
-    public bool IsComplete => CurrentRun is not null &&
-                              CurrentRun.DurationSeconds >= _maximumDurationSeconds;
+    public bool IsComplete => _isComplete;
 
     public void Start(ScenarioDefinition scenario)
     {
@@ -33,29 +39,71 @@ public sealed class SimulationRecorder
             StartedAtUtc = DateTime.UtcNow
         };
         _lastRecordedSecond = -1;
+        _consumedEnergyKwh = 0;
+        _recoveredEnergyKwh = 0;
+        _isComplete = false;
     }
 
-    public bool CaptureIfDue(SimulationData data, double simulationTimeSeconds)
+    public bool CaptureIfDue(
+        SimulationData data,
+        double simulationTimeSeconds,
+        double elapsedStepSeconds = 0)
     {
         if (CurrentRun is null)
         {
             throw new InvalidOperationException("Start must be called before capturing simulation data.");
         }
 
-        int second = Math.Min(_maximumDurationSeconds, (int)Math.Floor(simulationTimeSeconds));
+        double elapsedStep = Math.Max(0, elapsedStepSeconds);
+        _consumedEnergyKwh += data.Trenler.Sum(train =>
+            SimulationFormulas.EnergyKwh(
+                Math.Max(0, train.AnlikPantografGucuKw),
+                elapsedStep));
+        _recoveredEnergyKwh += data.Trenler.Sum(train =>
+            SimulationFormulas.EnergyKwh(
+                Math.Max(0, -train.CekilenGucKw),
+                elapsedStep));
+
+        int elapsedSecond = (int)Math.Min(
+            _maximumDurationSeconds,
+            Math.Floor(Math.Max(0, simulationTimeSeconds)));
+        _isComplete = simulationTimeSeconds >= _maximumDurationSeconds;
+        int second = GetSnapshotSecond(elapsedSecond);
+        if (_isComplete)
+        {
+            second = _maximumDurationSeconds;
+        }
+
         if (second <= _lastRecordedSecond)
         {
             return false;
         }
 
-        CurrentRun.Snapshots.Add(CreateSnapshot(data, second));
+        CurrentRun.Snapshots.Add(CreateSnapshot(
+            data,
+            second,
+            _consumedEnergyKwh,
+            _recoveredEnergyKwh));
         _lastRecordedSecond = second;
-        if (second >= _maximumDurationSeconds)
+        if (_isComplete)
         {
             CurrentRun.CompletedAtUtc = DateTime.UtcNow;
         }
 
         return true;
+    }
+
+    private static int GetSnapshotSecond(int elapsedSecond)
+    {
+        if (elapsedSecond <= DetailedSamplingDurationSeconds)
+        {
+            return elapsedSecond;
+        }
+
+        return DetailedSamplingDurationSeconds +
+               (elapsedSecond - DetailedSamplingDurationSeconds) /
+               LongRunSamplingIntervalSeconds *
+               LongRunSamplingIntervalSeconds;
     }
 
     public SimulationRunResult Complete()
@@ -69,7 +117,11 @@ public sealed class SimulationRecorder
         return CurrentRun;
     }
 
-    private static SimulationSnapshot CreateSnapshot(SimulationData data, int second)
+    private static SimulationSnapshot CreateSnapshot(
+        SimulationData data,
+        int second,
+        double consumedEnergyKwh,
+        double recoveredEnergyKwh)
     {
         var trains = data.Trenler.Select(train => new TrainSnapshot(
             train.TrenAdi,
@@ -78,12 +130,17 @@ public sealed class SimulationRecorder
             train.Konum,
             train.AnlikHiz,
             train.Ivme,
+            train.AnlikPantografGucuKw,
+            train.AnlikPantografAkimiA,
+            train.KatenerGerilimiV,
             train.CekilenGucKw,
             train.CekilenAkimA,
-            train.KatenerGerilimiV,
             train.YolcuSayisi,
             train.Durum,
-            train.EnYakinTrafo)).ToArray();
+            train.EnYakinTrafo,
+            train.IsOutOfSpec,
+            train.NeedsLimitReview,
+            train.LimitStatus)).ToArray();
 
         var substations = data.TrafoMerkezleri.Select(substation => new SubstationSnapshot(
             substation.Ad,
@@ -92,7 +149,10 @@ public sealed class SimulationRecorder
             substation.AnlikGerilimV,
             substation.YuklenmeYuzdesi,
             substation.BeslenenTrenSayisi,
-            substation.Durum)).ToArray();
+            substation.Durum,
+            substation.IsOutOfSpec,
+            substation.NeedsLimitReview,
+            substation.LimitStatus)).ToArray();
 
         var sections = data.KatenerSeksiyonlari.Select(section => new SectionSnapshot(
             section.Ad,
@@ -103,21 +163,21 @@ public sealed class SimulationRecorder
             section.AktifTrenSayisi)).ToArray();
 
         double tractionPower = trains.Where(train => train.PowerKw > 0).Sum(train => train.PowerKw);
-        double regenerativePower = trains.Where(train => train.PowerKw < 0).Sum(train => -train.PowerKw);
+        double regenerativePower = trains
+            .Where(train => train.TractionPowerKw < 0)
+            .Sum(train => -train.TractionPowerKw);
+        double netPower = trains.Sum(train => train.PowerKw);
         double minimumVoltage = trains.Length == 0 ? 0 : trains.Min(train => train.VoltageV);
         double averageVoltage = trains.Length == 0 ? 0 : trains.Average(train => train.VoltageV);
         double averageSpeed = trains.Length == 0 ? 0 : trains.Average(train => train.SpeedKmh);
         double maximumLoad = substations.Length == 0 ? 0 : substations.Max(substation => substation.LoadPercent);
-        double consumedEnergy = trains.Sum(train => train.PowerKw > 0 ? train.PowerKw : 0) / 3600.0 * (second + 1);
-        double recoveredEnergy = trains.Sum(train => train.PowerKw < 0 ? -train.PowerKw : 0) / 3600.0 * (second + 1);
-
         return new SimulationSnapshot(
             second,
             tractionPower,
             regenerativePower,
-            tractionPower - regenerativePower,
-            consumedEnergy,
-            recoveredEnergy,
+            netPower,
+            consumedEnergyKwh,
+            recoveredEnergyKwh,
             minimumVoltage,
             averageVoltage,
             maximumLoad,

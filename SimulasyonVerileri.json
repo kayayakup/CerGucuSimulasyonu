@@ -26,11 +26,11 @@
     "MinIsletmeGerilimi": 1050,
     "TrenUzunlugu": 88,
     "TrenVerimi": 85,
-    "MaksCekisKuvvetiKn": 240,
+    "MaksCekisKuvvetiKn": 290,
     "MotorGucuKw": 1800,
-    "DavisA": 2.5,
-    "DavisB": 0.03,
-    "DavisC": 0.004
+    "DavisA": 0.0,
+    "DavisB": 0.0,
+    "DavisC": 0.0
   },
   "Isletme": {
     "ToplamTrenSayisi": 6,

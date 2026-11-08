@@ -166,24 +166,20 @@
                                 <TextBlock Text="⚡ CER MOTORU &amp; GÜÇ DEĞERLERİ" FontWeight="Bold" FontSize="13" Foreground="#C084FC" Margin="0,0,0,12"/>
 
                                 <Grid Margin="0,4">
-                                    <TextBlock Text="Maksimum Çekme Kuvveti F_max (kN):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                    <TextBox x:Name="TxtMaksCekisKuvveti" Width="100" HorizontalAlignment="Right" Text="240"/>
+                                    <TextBlock Text="Maksimum Tren Seti Çekiş Kuvveti (kN):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtMaksCekisKuvveti" Width="100" HorizontalAlignment="Right" Text="290"/>
                                 </Grid>
                                 <Grid Margin="0,4">
-                                    <TextBlock Text="Cer Motor Mekanik Gücü P_mech (kW):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                    <TextBox x:Name="TxtMotorGucu" Width="100" HorizontalAlignment="Right" Text="1800"/>
-                                </Grid>
-                                <Grid Margin="0,4">
-                                    <TextBlock Text="Yardımcı Tüketim Gücü P_aux (kW):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBlock Text="Yardımcı Güç (kW, %50 kullanım):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
                                     <TextBox x:Name="TxtYardimciGuc" Width="100" HorizontalAlignment="Right" Text="300"/>
                                 </Grid>
                                 <Grid Margin="0,4">
                                     <TextBlock Text="Tren Toplam Cer Verimi η (%):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                    <TextBox x:Name="TxtTrenVerimi" Width="100" HorizontalAlignment="Right" Text="88"/>
+                                    <TextBox x:Name="TxtTrenVerimi" Width="100" HorizontalAlignment="Right" Text="85"/>
                                 </Grid>
                                 <Grid Margin="0,4">
                                     <TextBlock Text="Nominal Katener Gerilimi (V):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                    <TextBox x:Name="TxtNominalGerilim" Width="100" HorizontalAlignment="Right" Text="1500"/>
+                                    <TextBox x:Name="TxtNominalGerilim" Width="100" HorizontalAlignment="Right" Text="1620"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -191,19 +187,19 @@
                         <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource BorderCol}" BorderThickness="1" CornerRadius="8" Padding="16">
                             <StackPanel>
                                 <TextBlock Text="📐 DAVIS TREN İLERLEME DİRENCİ (R = A + B·v + C·v²)" FontWeight="Bold" FontSize="13" Foreground="#34D399" Margin="0,0,0,8"/>
-                                <TextBlock Text="Davis formülü trenin mekanik sürtünme ve aerodinamik hava direncini hesaplar." FontSize="11" Foreground="#94A3B8" Margin="0,0,0,10"/>
+                                <TextBlock Text="A/B/C değerleri raporlarda verilmediğinden düzenlenebilir varsayılan tahminlerdir; araç/hat ölçüm veriniz varsa güncelleyin." FontSize="11" Foreground="#FBBF24" TextWrapping="Wrap" Margin="0,0,0,10"/>
 
                                 <Grid Margin="0,4">
                                     <TextBlock Text="A (Rulman &amp; Mekanik Sürtünme - N/ton):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                    <TextBox x:Name="TxtDavisA" Width="100" HorizontalAlignment="Right" Text="2.5"/>
+                                    <TextBox x:Name="TxtDavisA" Width="100" HorizontalAlignment="Right" Text="0"/>
                                 </Grid>
                                 <Grid Margin="0,4">
                                     <TextBlock Text="B (Flanş &amp; Ray Temas Direnci - N/(ton·km/h)):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                    <TextBox x:Name="TxtDavisB" Width="100" HorizontalAlignment="Right" Text="0.03"/>
+                                    <TextBox x:Name="TxtDavisB" Width="100" HorizontalAlignment="Right" Text="0"/>
                                 </Grid>
                                 <Grid Margin="0,4">
                                     <TextBlock Text="C (Aerodinamik Hava Direnci - N/(km/h)²):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                    <TextBox x:Name="TxtDavisC" Width="100" HorizontalAlignment="Right" Text="0.004"/>
+                                    <TextBox x:Name="TxtDavisC" Width="100" HorizontalAlignment="Right" Text="0"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -226,30 +222,30 @@
                 <UniformGrid Grid.Row="0" Columns="4" Margin="0,0,0,12">
                     <Border Background="#1E2034" CornerRadius="6" Padding="10,8" Margin="0,0,6,0" BorderBrush="#3B82F6" BorderThickness="1">
                         <StackPanel>
-                            <TextBlock Text="TEMEL HIZ (V_base)" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="LblVBase" Text="33.0 km/h" FontSize="16" FontWeight="Bold" Foreground="#38BDF8"/>
-                            <TextBlock Text="Sabit Kuvvet ➔ Sabit Güç" FontSize="9.5" Foreground="#64748B"/>
+                            <TextBlock Text="ÇEKİŞ EĞRİSİ KIRILMA HIZI" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LblVBase" Text="35.0 km/h" FontSize="16" FontWeight="Bold" Foreground="#38BDF8"/>
+                            <TextBlock Text="Araç verisi eğrisine göre" FontSize="9.5" Foreground="#64748B"/>
                         </StackPanel>
                     </Border>
                     <Border Background="#1E2034" CornerRadius="6" Padding="10,8" Margin="3,0,3,0" BorderBrush="#10B981" BorderThickness="1">
                         <StackPanel>
-                            <TextBlock Text="MAKS. ÇEKME KUVVETİ" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="LblFMax" Text="240.0 kN" FontSize="16" FontWeight="Bold" Foreground="#34D399"/>
-                            <TextBlock Text="0 - V_base aralığında sabit" FontSize="9.5" Foreground="#64748B"/>
+                            <TextBlock Text="MAKS. TREN SETİ ÇEKİŞİ" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LblFMax" Text="290.0 kN" FontSize="16" FontWeight="Bold" Foreground="#34D399"/>
+                            <TextBlock Text="Belgede verilen değer" FontSize="9.5" Foreground="#64748B"/>
                         </StackPanel>
                     </Border>
                     <Border Background="#1E2034" CornerRadius="6" Padding="10,8" Margin="3,0,3,0" BorderBrush="#8B5CF6" BorderThickness="1">
                         <StackPanel>
-                            <TextBlock Text="CER MOTOR GÜCÜ (P_max)" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="LblPMax" Text="1800.0 kW" FontSize="16" FontWeight="Bold" Foreground="#C084FC"/>
-                            <TextBlock Text="V_base sonrası sabit güç" FontSize="9.5" Foreground="#64748B"/>
+                            <TextBlock Text="MAKS. ELEKTRİKLİ FREN" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LblPMax" Text="280.0 kN" FontSize="16" FontWeight="Bold" Foreground="#C084FC"/>
+                            <TextBlock Text="Belgede verilen değer" FontSize="9.5" Foreground="#64748B"/>
                         </StackPanel>
                     </Border>
                     <Border Background="#1E2034" CornerRadius="6" Padding="10,8" Margin="6,0,0,0" BorderBrush="#F59E0B" BorderThickness="1">
                         <StackPanel>
-                            <TextBlock Text="DAVIS DİRENCİ (80 km/h)" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="LblDavis80" Text="14.1 kN" FontSize="16" FontWeight="Bold" Foreground="#FACC15"/>
-                            <TextBlock Text="AW3 Dolu Ağırlıkta (236 t)" FontSize="9.5" Foreground="#64748B"/>
+                            <TextBlock Text="80 km/h ÇEKİŞ KUVVETİ" FontSize="10" Foreground="#94A3B8" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="LblDavis80" Text="75.0 kN" FontSize="16" FontWeight="Bold" Foreground="#FACC15"/>
+                            <TextBlock Text="Araç verisi eğrisinden" FontSize="9.5" Foreground="#64748B"/>
                         </StackPanel>
                     </Border>
                 </UniformGrid>
@@ -265,19 +261,16 @@
                         <!-- Chart Header & Action Buttons -->
                         <DockPanel Grid.Row="0" Margin="0,0,0,8" LastChildFill="True">
                             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock Text="📈 Çekiş Gücü ve Tren Direnç Eğrisi (Tractive Effort vs Speed F-v, P-v)" FontWeight="Bold" FontSize="13" Foreground="#F8FAFC"/>
+                                <TextBlock Text="📈 Çekiş ve Elektrikli Fren Kuvveti – Hız Eğrisi" FontWeight="Bold" FontSize="13" Foreground="#F8FAFC"/>
                             </StackPanel>
 
                             <!-- Legend & Save Button -->
                             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                                 <Border Background="#1E3A8A" CornerRadius="4" Padding="6,3" Margin="4,0">
-                                    <TextBlock Text="━ F_traction [kN]" Foreground="#60A5FA" FontSize="10.5" FontWeight="Bold"/>
-                                </Border>
-                                <Border Background="#581C87" CornerRadius="4" Padding="6,3" Margin="4,0">
-                                    <TextBlock Text="━ P_power [kW/10]" Foreground="#C084FC" FontSize="10.5" FontWeight="Bold"/>
+                                    <TextBlock Text="━ Çekiş kuvveti [kN]" Foreground="#60A5FA" FontSize="10.5" FontWeight="Bold"/>
                                 </Border>
                                 <Border Background="#78350F" CornerRadius="4" Padding="6,3" Margin="4,0">
-                                    <TextBlock Text="━ R_davis [kN]" Foreground="#F59E0B" FontSize="10.5" FontWeight="Bold"/>
+                                    <TextBlock Text="━ Elektrikli fren [kN]" Foreground="#F59E0B" FontSize="10.5" FontWeight="Bold"/>
                                 </Border>
 
                                 <Button Click="OnSaveChartAsPng" Background="#059669" Foreground="White" FontWeight="Bold" Padding="10,5" Margin="8,0,0,0" Cursor="Hand" BorderThickness="0">
@@ -373,7 +366,7 @@
                                         <TextBlock Text="🛡️ EN 50122-1 DC 1500V Elektriksel Güvenlik Limitleri:" FontSize="11" FontWeight="Bold" Foreground="#DDD6FE"/>
                                         <TextBlock Text="• V_min1 (Kısa süreli min): 1000 V" FontSize="10.5" Foreground="#A78BFA" Margin="0,2,0,0"/>
                                         <TextBlock Text="• V_min2 (Sürekli min): 1050 V" FontSize="10.5" Foreground="#A78BFA"/>
-                                        <TextBlock Text="• V_nom (Nominal): 1500 V | V_max (Maks sürekli): 1800 V" FontSize="10.5" Foreground="#A78BFA"/>
+                                        <TextBlock Text="• V_nom (Sistem): 1500 V | Yüksüz DC bara: 1620 V | V_max: 1800 V" FontSize="10.5" Foreground="#A78BFA"/>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

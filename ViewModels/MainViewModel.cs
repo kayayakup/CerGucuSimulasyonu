@@ -19,7 +19,7 @@ namespace CerGucuSimulasyonu.ViewModels
     {
         [ObservableProperty]
         private SimulationData _data = new();
-        private readonly RailwaySimulationEngine _engine;
+        private RailwaySimulationEngine _engine;
 
         [ObservableProperty]
         private string _activeToolMode = "SELECT";
@@ -38,6 +38,9 @@ namespace CerGucuSimulasyonu.ViewModels
         private bool _isSimulationRunning = false;
 
         [ObservableProperty]
+        private bool _isResetting;
+
+        [ObservableProperty]
         private SimulationRunResult? _lastRunResult;
 
         [ObservableProperty]
@@ -45,6 +48,18 @@ namespace CerGucuSimulasyonu.ViewModels
 
         [ObservableProperty]
         private int _selectedReportSecond;
+
+        [ObservableProperty]
+        private string _reportHoursText = "00";
+
+        [ObservableProperty]
+        private string _reportMinutesText = "00";
+
+        [ObservableProperty]
+        private string _reportSecondsText = "00";
+
+        [ObservableProperty]
+        private string _reportTimeInputStatus = "";
 
         [ObservableProperty]
         private SimulationSnapshot? _selectedSnapshot;
@@ -81,7 +96,7 @@ namespace CerGucuSimulasyonu.ViewModels
         private string _enCokYuklenenTrafoAdi = "-";
 
         [ObservableProperty]
-        private double _ortalamaKatenerGerilimiV = 1500;
+        private double _ortalamaKatenerGerilimiV = 1620;
 
         [ObservableProperty]
         private double _minHatGerilimiV = 1620;
@@ -100,6 +115,7 @@ namespace CerGucuSimulasyonu.ViewModels
 
         private DispatcherTimer? _simTimer;
         private TimeSpan _elapsedSimTime = TimeSpan.Zero;
+        private bool _isUpdatingReportTime;
         private readonly Random _rand = new();
         private readonly SimulationRecorder _simulationRecorder = new();
         private readonly ScenarioDefinition _activeScenario = new(
@@ -119,23 +135,121 @@ namespace CerGucuSimulasyonu.ViewModels
 
         public SimulationRecorder SimulationRecorder => _simulationRecorder;
 
+        public int MaximumReportSecond => LastRunResult?.DurationSeconds ??
+                                          SimulationRecorder.MaximumDurationSeconds;
+        public string SelectedReportTimeString =>
+            FormatSimulationTime(TimeSpan.FromSeconds(SelectedReportSecond));
+
         partial void OnLastRunResultChanged(SimulationRunResult? value)
         {
+            OnPropertyChanged(nameof(MaximumReportSecond));
+            ReportTimeInputStatus = "";
             SelectedReportSecond = 0;
+            UpdateReportTimeInputs(0);
             SelectedSnapshot = value?.Snapshots.FirstOrDefault();
         }
 
         partial void OnSelectedReportSecondChanged(int value)
         {
+            OnPropertyChanged(nameof(SelectedReportTimeString));
+            UpdateReportTimeInputs(value);
             if (LastRunResult is null || LastRunResult.Snapshots.Count == 0)
             {
                 SelectedSnapshot = null;
                 return;
             }
 
-            SelectedSnapshot = LastRunResult.Snapshots
-                .OrderBy(snapshot => Math.Abs(snapshot.Second - value))
-                .First();
+            SelectedSnapshot = FindNearestSnapshot(LastRunResult.Snapshots, value);
+        }
+
+        private static SimulationSnapshot FindNearestSnapshot(
+            IReadOnlyList<SimulationSnapshot> snapshots,
+            int second)
+        {
+            int low = 0;
+            int high = snapshots.Count - 1;
+            while (low <= high)
+            {
+                int middle = low + (high - low) / 2;
+                int snapshotSecond = snapshots[middle].Second;
+                if (snapshotSecond == second)
+                {
+                    return snapshots[middle];
+                }
+
+                if (snapshotSecond < second)
+                {
+                    low = middle + 1;
+                }
+                else
+                {
+                    high = middle - 1;
+                }
+            }
+
+            if (low >= snapshots.Count)
+            {
+                return snapshots[^1];
+            }
+            if (high < 0)
+            {
+                return snapshots[0];
+            }
+
+            return second - snapshots[high].Second <= snapshots[low].Second - second
+                ? snapshots[high]
+                : snapshots[low];
+        }
+
+        partial void OnReportHoursTextChanged(string value) => UpdateReportTimeFromInputs();
+
+        partial void OnReportMinutesTextChanged(string value) => UpdateReportTimeFromInputs();
+
+        partial void OnReportSecondsTextChanged(string value) => UpdateReportTimeFromInputs();
+
+        private void UpdateReportTimeFromInputs()
+        {
+            if (_isUpdatingReportTime)
+            {
+                return;
+            }
+
+            if (!int.TryParse(ReportHoursText, out int hours) ||
+                !int.TryParse(ReportMinutesText, out int minutes) ||
+                !int.TryParse(ReportSecondsText, out int seconds) ||
+                hours < 0 ||
+                minutes is < 0 or > 59 ||
+                seconds is < 0 or > 59)
+            {
+                ReportTimeInputStatus = "Saat, dakika ve saniye için geçerli tam sayılar girin.";
+                return;
+            }
+
+            long requestedSeconds = (long)hours * 3600 + minutes * 60 + seconds;
+            int boundedSeconds = (int)Math.Min(requestedSeconds, MaximumReportSecond);
+            ReportTimeInputStatus = requestedSeconds > MaximumReportSecond
+                ? $"Koşu süresi {FormatSimulationTime(TimeSpan.FromSeconds(MaximumReportSecond))} ile sınırlı."
+                : "";
+            SelectedReportSecond = boundedSeconds;
+        }
+
+        private static string FormatSimulationTime(TimeSpan time) =>
+            $"{(int)time.TotalHours:00}:{time.Minutes:00}:{time.Seconds:00}";
+
+        private void UpdateReportTimeInputs(int totalSeconds)
+        {
+            TimeSpan time = TimeSpan.FromSeconds(Math.Max(0, totalSeconds));
+            _isUpdatingReportTime = true;
+            try
+            {
+                ReportHoursText = ((int)time.TotalHours).ToString("00");
+                ReportMinutesText = time.Minutes.ToString("00");
+                ReportSecondsText = time.Seconds.ToString("00");
+            }
+            finally
+            {
+                _isUpdatingReportTime = false;
+            }
         }
 
         private void BeginRecording()
@@ -291,6 +405,11 @@ namespace CerGucuSimulasyonu.ViewModels
         [RelayCommand]
         public void ToggleSimulation()
         {
+            if (IsResetting)
+            {
+                return;
+            }
+
             if (IsSimulationRunning)
             {
                 StopSimulation();
@@ -304,6 +423,11 @@ namespace CerGucuSimulasyonu.ViewModels
         [RelayCommand]
         public void StartSimulation()
         {
+            if (IsResetting)
+            {
+                return;
+            }
+
             if (LastRunResult is not null)
             {
                 BeginRecording();
@@ -394,26 +518,54 @@ namespace CerGucuSimulasyonu.ViewModels
         }
 
         [RelayCommand]
-        public void ResetSimulation()
+        public async Task ResetSimulation()
         {
-            bool wasRunning = IsSimulationRunning;
-            StopSimulation();
-            _elapsedSimTime = TimeSpan.Zero;
-            SimulationTimeString = "00:00:00";
-
-            // Grafikleri temizle
-            PowerChart?.Clear();
-            VoltageChart?.Clear();
-            SelectedTrainSpeedChart?.Clear();
-            TrafoLoadChart?.Clear();
-
-            LoadInitialMockData();
-            BeginRecording();
-            if (wasRunning)
+            if (IsResetting)
             {
-                StartSimulation();
+                return;
             }
-            StatusText = "🔄 Simülasyon sıfırlandı.";
+
+            bool wasRunning = IsSimulationRunning;
+            _simTimer?.Stop();
+            IsSimulationRunning = false;
+            IsResetting = true;
+            StatusText = "🔄 Simülasyon sıfırlanıyor...";
+            await Task.Yield();
+
+            try
+            {
+                _elapsedSimTime = TimeSpan.Zero;
+                SimulationTimeString = "00:00:00";
+
+                PowerChart?.Clear();
+                VoltageChart?.Clear();
+                SelectedTrainSpeedChart?.Clear();
+                TrafoLoadChart?.Clear();
+
+                LastRunResult = null;
+                ComplianceResults = Array.Empty<ComplianceResult>();
+                ScenarioResults = Array.Empty<SimulationRunResult>();
+                SelectedSnapshot = null;
+                SelectedReportSecond = 0;
+
+                LoadInitialMockData();
+                _engine = new RailwaySimulationEngine(Data);
+                BeginRecording();
+                if (wasRunning)
+                {
+                    IsResetting = false;
+                    StartSimulation();
+                    StatusText = "🔄 Simülasyon sıfırlandı ve yeniden başlatıldı.";
+                }
+                else
+                {
+                    StatusText = "🔄 Simülasyon sıfırlandı.";
+                }
+            }
+            finally
+            {
+                IsResetting = false;
+            }
         }
 
         [RelayCommand]
@@ -430,29 +582,35 @@ namespace CerGucuSimulasyonu.ViewModels
         {
             double dt = 0.2 * SimulationSpeed; // saniye
             _elapsedSimTime = _elapsedSimTime.Add(TimeSpan.FromSeconds(dt));
-            SimulationTimeString = _elapsedSimTime.ToString(@"hh\:mm\:ss");
+            SimulationTimeString = FormatSimulationTime(_elapsedSimTime);
 
             _engine.AdvanceOneStep(dt);
             UpdateUiMetricsAndCharts();
 
-            _simulationRecorder.CaptureIfDue(Data, _elapsedSimTime.TotalSeconds);
+            _simulationRecorder.CaptureIfDue(Data, _elapsedSimTime.TotalSeconds, dt);
             if (_simulationRecorder.IsComplete)
             {
                 LastRunResult = _simulationRecorder.Complete();
                 ComplianceResults = EvaluateCompliance(LastRunResult);
                 StopSimulation();
-                StatusText = "Simülasyon 1 saatlik kayıt sınırına ulaştı.";
+                StatusText = "Simülasyon 1 haftalık kayıt sınırına ulaştı.";
             }
         }
 
         private void UpdateUiMetricsAndCharts()
         {
-            double totalTractionKw = Data.Trenler.Where(t => t.CekilenGucKw > 0).Sum(t => t.CekilenGucKw);
-            double totalRegenKw = Data.Trenler.Where(t => t.CekilenGucKw < 0).Sum(t => Math.Abs(t.CekilenGucKw));
+            double totalTractionKw = Data.Trenler
+                .Where(t => t.AnlikPantografGucuKw > 0)
+                .Sum(t => t.AnlikPantografGucuKw);
+            double totalRegenKw = Data.Trenler
+                .Where(t => t.CekilenGucKw < 0)
+                .Sum(t => Math.Abs(t.CekilenGucKw));
 
             ToplamCekilenGucKw = Math.Round(totalTractionKw, 1);
             ToplamRejeneratifGucKw = Math.Round(totalRegenKw, 1);
-            NetSistemGucuKw = Math.Round(totalTractionKw - totalRegenKw, 1);
+            NetSistemGucuKw = Math.Round(
+                Data.Trenler.Sum(t => t.AnlikPantografGucuKw),
+                1);
 
             ToplamTuketilenEnerjiKwh = Math.Round(Data.Trenler.Sum(t => t.ToplamTuketilenEnerjiKwh), 3);
             ToplamGeriKazanilanEnerjiKwh = Math.Round(Data.Trenler.Sum(t => t.ToplamRejeneratifEnerjiKwh), 3);
@@ -629,6 +787,13 @@ namespace CerGucuSimulasyonu.ViewModels
                     if (loadedData != null)
                     {
                         Data = loadedData;
+                        foreach (var train in Data.Trenler)
+                        {
+                            train.CekilenGucKw = 0;
+                            train.CekilenAkimA = 0;
+                            train.AnlikPantografGucuKw = 0;
+                            train.AnlikPantografAkimiA = 0;
+                        }
                         if (Data.Trenler.Any())
                         {
                             SelectedItem = Data.Trenler.First();

@@ -36,7 +36,6 @@ namespace CerGucuSimulasyonu.Views
             TxtAw3.Text = _data.Tren.Aw3DoluAgirlik.ToString("0.#");
             TxtDonerKutle.Text = _data.Tren.DonerKutle.ToString("0.##");
             TxtMaksCekisKuvveti.Text = _data.Tren.MaksCekisKuvvetiKn.ToString("0.#");
-            TxtMotorGucu.Text = _data.Tren.MotorGucuKw.ToString("0.#");
             TxtYardimciGuc.Text = _data.Tren.YardimciGuc.ToString("0.#");
             TxtTrenVerimi.Text = _data.Tren.TrenVerimi.ToString("0.#");
             TxtNominalGerilim.Text = _data.CerKatener.YuksuzDcBaraGerilimi.ToString("0.#");
@@ -69,7 +68,6 @@ namespace CerGucuSimulasyonu.Views
             if (double.TryParse(TxtAw3.Text, out var aw3)) _data.Tren.Aw3DoluAgirlik = aw3;
             if (double.TryParse(TxtDonerKutle.Text, out var rot)) _data.Tren.DonerKutle = rot;
             if (double.TryParse(TxtMaksCekisKuvveti.Text, out var fMax)) _data.Tren.MaksCekisKuvvetiKn = fMax;
-            if (double.TryParse(TxtMotorGucu.Text, out var pMot)) _data.Tren.MotorGucuKw = pMot;
             if (double.TryParse(TxtYardimciGuc.Text, out var pAux)) _data.Tren.YardimciGuc = pAux;
             if (double.TryParse(TxtTrenVerimi.Text, out var eta)) _data.Tren.TrenVerimi = eta;
             if (double.TryParse(TxtDavisA.Text, out var dA)) _data.Tren.DavisA = dA;
@@ -212,51 +210,47 @@ namespace CerGucuSimulasyonu.Views
             double pLeft = 65, pRight = 50, pTop = 30, pBottom = 45;
             double plotW = Math.Max(100, width - pLeft - pRight);
             double plotH = Math.Max(100, height - pTop - pBottom);
-
-            double maxV = 100.0; // km/h
-            double maxF = Math.Max(280.0, _data.Tren.MaksCekisKuvvetiKn * 1.25); // kN
-            double maxP = Math.Max(2200.0, _data.Tren.MotorGucuKw * 1.2); // kW
-
-            // Calculate Base Speed (Temel Hız)
-            double eta = _data.Tren.TrenVerimi > 0 ? _data.Tren.TrenVerimi / 100.0 : 0.88;
-            double fMax = _data.Tren.MaksCekisKuvvetiKn > 0 ? _data.Tren.MaksCekisKuvvetiKn : 240.0;
-            double pMaxMech = _data.Tren.MotorGucuKw > 0 ? _data.Tren.MotorGucuKw * eta : 1800.0 * 0.88;
-            double vBaseKmh = Math.Min(80.0, Math.Max(15.0, (pMaxMech / fMax) * 3.6));
-
-            // Summary Card Text updates
-            LblVBase.Text = $"{vBaseKmh:0.1} km/h";
-            LblFMax.Text = $"{fMax:0.1} kN";
-            LblPMax.Text = $"{_data.Tren.MotorGucuKw:0.1} kW";
-
-            double weightAw3 = _data.Tren.Aw3DoluAgirlik > 0 ? _data.Tren.Aw3DoluAgirlik : 236.0;
-            double dA = _data.Tren.DavisA;
-            double dB = _data.Tren.DavisB;
-            double dC = _data.Tren.DavisC;
-            double r80Kn = (dA * weightAw3 + dB * weightAw3 * 80.0 + dC * Math.Pow(80.0, 2)) / 1000.0;
-            LblDavis80.Text = $"{r80Kn:0.1} kN";
-
-            // Functions for coordinate mapping
-            double MapX(double v) => pLeft + (v / maxV) * plotW;
-            double MapYForce(double f) => pTop + plotH - (f / maxF) * plotH;
-            double MapYPower(double p) => pTop + plotH - (p / maxP) * plotH;
-
-            // 1. Grid Lines & Axis
-            // Horizontal Force Grids
-            for (double f = 0; f <= maxF; f += 50)
+            const double maxV = 80.0;
+            const double maxForceKn = 300.0;
+            double fMax = _data.Tren.TractionEffortAtSpeedKn(0);
+            double maxBrakeForce = _data.Tren.RegenerativeBrakeEffortAtSpeedKn(0);
+            double forceAt80Kmh = _data.Tren.TractionEffortAtSpeedKn(maxV);
+            double forceDropSpeedKmh = maxV;
+            if (_data.Tren.TractionEffortCurve.Count > 1)
             {
-                double y = MapYForce(f);
+                double initialForce = _data.Tren.TractionEffortAtSpeedKn(0);
+                for (int i = 1; i < _data.Tren.TractionEffortCurve.Count; i++)
+                {
+                    if (_data.Tren.TractionEffortAtSpeedKn(_data.Tren.TractionEffortCurve[i].SpeedKmh) < initialForce)
+                    {
+                        forceDropSpeedKmh = _data.Tren.TractionEffortCurve[i].SpeedKmh;
+                        break;
+                    }
+                }
+            }
+
+            LblVBase.Text = $"{forceDropSpeedKmh:0.0} km/h";
+            LblFMax.Text = $"{fMax:0.0} kN";
+            LblPMax.Text = $"{maxBrakeForce:0.0} kN";
+            LblDavis80.Text = $"{forceAt80Kmh:0.0} kN";
+
+            double MapX(double v) => pLeft + (v / maxV) * plotW;
+            double MapYForce(double f) => pTop + ((maxForceKn - f) / (2 * maxForceKn)) * plotH;
+
+            for (double force = -maxForceKn; force <= maxForceKn; force += 50)
+            {
+                double y = MapYForce(force);
                 var gridLine = new Line
                 {
                     X1 = pLeft, Y1 = y, X2 = pLeft + plotW, Y2 = y,
-                    Stroke = new SolidColorBrush(Color.FromArgb(35, 255, 255, 255)),
-                    StrokeThickness = 1,
-                    StrokeDashArray = new DoubleCollection { 2, 2 }
+                    Stroke = new SolidColorBrush(Color.FromArgb(55, 255, 255, 255)),
+                    StrokeThickness = force == 0 ? 1.5 : 1
                 };
                 TractionEffortCanvas.Children.Add(gridLine);
 
                 var txtF = new TextBlock
                 {
-                    Text = $"{f:0} kN",
+                    Text = $"{force:0}",
                     Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
                     FontSize = 10,
                     FontWeight = FontWeights.SemiBold
@@ -266,16 +260,14 @@ namespace CerGucuSimulasyonu.Views
                 TractionEffortCanvas.Children.Add(txtF);
             }
 
-            // Vertical Speed Grids
             for (double v = 0; v <= maxV; v += 10)
             {
                 double x = MapX(v);
                 var gridLine = new Line
                 {
                     X1 = x, Y1 = pTop, X2 = x, Y2 = pTop + plotH,
-                    Stroke = new SolidColorBrush(Color.FromArgb(35, 255, 255, 255)),
-                    StrokeThickness = 1,
-                    StrokeDashArray = new DoubleCollection { 2, 2 }
+                    Stroke = new SolidColorBrush(Color.FromArgb(55, 255, 255, 255)),
+                    StrokeThickness = 1
                 };
                 TractionEffortCanvas.Children.Add(gridLine);
 
@@ -291,41 +283,6 @@ namespace CerGucuSimulasyonu.Views
                 TractionEffortCanvas.Children.Add(txtV);
             }
 
-            // Base Speed (V_base) Vertical Marker Line
-            double xBase = MapX(vBaseKmh);
-            var vBaseLine = new Line
-            {
-                X1 = xBase, Y1 = pTop, X2 = xBase, Y2 = pTop + plotH,
-                Stroke = new SolidColorBrush(Color.FromArgb(180, 56, 189, 248)),
-                StrokeThickness = 1.5,
-                StrokeDashArray = new DoubleCollection { 4, 3 }
-            };
-            TractionEffortCanvas.Children.Add(vBaseLine);
-
-            var txtBaseLabel = new TextBlock
-            {
-                Text = $"V_base\n{vBaseKmh:0.1} km/h",
-                Foreground = new SolidColorBrush(Color.FromRgb(56, 189, 248)),
-                FontSize = 9.5,
-                FontWeight = FontWeights.Bold,
-                TextAlignment = TextAlignment.Center
-            };
-            Canvas.SetLeft(txtBaseLabel, xBase - 25);
-            Canvas.SetTop(txtBaseLabel, pTop - 25);
-            TractionEffortCanvas.Children.Add(txtBaseLabel);
-
-            // 80 km/h Operating Speed Marker
-            double xOper = MapX(_data.Tren.MaksIsletmeHizi);
-            var vOperLine = new Line
-            {
-                X1 = xOper, Y1 = pTop, X2 = xOper, Y2 = pTop + plotH,
-                Stroke = new SolidColorBrush(Color.FromArgb(160, 245, 158, 11)),
-                StrokeThickness = 1.5,
-                StrokeDashArray = new DoubleCollection { 3, 3 }
-            };
-            TractionEffortCanvas.Children.Add(vOperLine);
-
-            // Axis Title Labels
             var xTitle = new TextBlock
             {
                 Text = "Tren Hızı v [km/h] ➔",
@@ -339,7 +296,7 @@ namespace CerGucuSimulasyonu.Views
 
             var yTitle = new TextBlock
             {
-                Text = "▲ Çekiş Kuvveti F [kN] / Güç P [kW/10]",
+                Text = "Çekiş / Elektrikli Fren Kuvveti [kN]",
                 Foreground = Brushes.White,
                 FontSize = 10.5,
                 FontWeight = FontWeights.Bold
@@ -348,63 +305,30 @@ namespace CerGucuSimulasyonu.Views
             Canvas.SetTop(yTitle, pTop - 22);
             TractionEffortCanvas.Children.Add(yTitle);
 
-            // 2. Draw Curves
             var forcePoly = new Polyline
             {
                 Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)),
                 StrokeThickness = 3
             };
 
-            var powerPoly = new Polyline
-            {
-                Stroke = new SolidColorBrush(Color.FromRgb(192, 132, 252)),
-                StrokeThickness = 2.5
-            };
-
-            var davisPoly = new Polyline
+            var brakePoly = new Polyline
             {
                 Stroke = new SolidColorBrush(Color.FromRgb(245, 158, 11)),
-                StrokeThickness = 2
+                StrokeThickness = 3
             };
 
-            for (double v = 0; v <= maxV; v += 0.5)
+            for (double v = 0; v <= maxV; v += 0.25)
             {
                 double px = MapX(v);
-
-                // Tractive Force Calculation F(v)
-                double fKn;
-                if (v <= vBaseKmh)
-                {
-                    fKn = fMax;
-                }
-                else
-                {
-                    double vMs = Math.Max(0.1, v / 3.6);
-                    fKn = pMaxMech / vMs; // Hyperbolic drop
-                }
+                double fKn = _data.Tren.TractionEffortAtSpeedKn(v);
                 forcePoly.Points.Add(new Point(px, MapYForce(fKn)));
 
-                // Power Calculation P(v)
-                double pKw;
-                if (v <= vBaseKmh)
-                {
-                    double vMs = v / 3.6;
-                    pKw = (fMax * vMs) / eta;
-                }
-                else
-                {
-                    pKw = _data.Tren.MotorGucuKw;
-                }
-                powerPoly.Points.Add(new Point(px, MapYPower(pKw)));
-
-                // Davis Resistance R(v)
-                double rKn = (dA * weightAw3 + dB * weightAw3 * v + dC * Math.Pow(v, 2)) / 1000.0;
-                davisPoly.Points.Add(new Point(px, MapYForce(rKn)));
+                double brakeKn = _data.Tren.RegenerativeBrakeEffortAtSpeedKn(v);
+                brakePoly.Points.Add(new Point(px, MapYForce(-brakeKn)));
             }
 
-            TractionEffortCanvas.Children.Add(davisPoly);
-            TractionEffortCanvas.Children.Add(powerPoly);
             TractionEffortCanvas.Children.Add(forcePoly);
+            TractionEffortCanvas.Children.Add(brakePoly);
         }
 
         private void OnSaveChartAsPng(object sender, RoutedEventArgs e)

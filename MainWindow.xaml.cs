@@ -33,6 +33,8 @@ namespace CerGucuSimulasyonu
         private Rectangle? _previewRect = null;
 
         private DispatcherTimer? _uiAnimationTimer;
+        private SimulationData? _hookedData;
+        private bool _redrawQueued;
 
         public MainWindow()
         {
@@ -80,35 +82,84 @@ namespace CerGucuSimulasyonu
 
             ViewModel.PropertyChanged += (s, e) =>
             {
-                if (e.PropertyName is nameof(MainViewModel.ZoomLevel) or nameof(MainViewModel.Data) or nameof(MainViewModel.SelectedItem))
+                if (e.PropertyName == nameof(MainViewModel.Data))
+                {
+                    HookDataEvents(ViewModel.Data);
+                    QueueRedraw();
+                }
+                else if (e.PropertyName is nameof(MainViewModel.ZoomLevel) or nameof(MainViewModel.SelectedItem))
                 {
                     Redraw();
                 }
             };
 
-            ViewModel.Data.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(SimulationData.HatUzunlugu))
-                {
-                    Redraw();
-                }
-            };
+            HookDataEvents(ViewModel.Data);
+        }
 
-            void HookCollection(INotifyCollectionChanged col)
+        private void HookDataEvents(SimulationData data)
+        {
+            if (_hookedData is not null)
             {
-                col.CollectionChanged += (s, e) => Redraw();
+                _hookedData.PropertyChanged -= Data_PropertyChanged;
+                HookCollections(_hookedData, false);
             }
 
-            HookCollection(ViewModel.Data.HatEgimleri);
-            HookCollection(ViewModel.Data.HatKurplari);
-            HookCollection(ViewModel.Data.TrafoMerkezleri);
-            HookCollection(ViewModel.Data.RayParalellemeleri);
-            HookCollection(ViewModel.Data.Istasyonlar);
-            HookCollection(ViewModel.Data.HizLimitleri);
-            HookCollection(ViewModel.Data.KatenerSeksiyonlari);
-// HookCollection for KatenerEtap removed
-            HookCollection(ViewModel.Data.SeksiyonAyiricilar);
-            HookCollection(ViewModel.Data.Trenler);
+            _hookedData = data;
+            _hookedData.PropertyChanged += Data_PropertyChanged;
+            HookCollections(_hookedData, true);
+        }
+
+        private void Data_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(SimulationData.HatUzunlugu))
+            {
+                Redraw();
+            }
+        }
+
+        private void HookCollections(SimulationData data, bool subscribe)
+        {
+            INotifyCollectionChanged[] collections =
+            {
+                data.HatEgimleri,
+                data.HatKurplari,
+                data.TrafoMerkezleri,
+                data.RayParalellemeleri,
+                data.Istasyonlar,
+                data.HizLimitleri,
+                data.KatenerSeksiyonlari,
+                data.SeksiyonAyiricilar,
+                data.Trenler
+            };
+            foreach (var collection in collections)
+            {
+                if (subscribe)
+                {
+                    collection.CollectionChanged += DataCollection_CollectionChanged;
+                }
+                else
+                {
+                    collection.CollectionChanged -= DataCollection_CollectionChanged;
+                }
+            }
+        }
+
+        private void DataCollection_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+            QueueRedraw();
+
+        private void QueueRedraw()
+        {
+            if (_redrawQueued)
+            {
+                return;
+            }
+
+            _redrawQueued = true;
+            Dispatcher.BeginInvoke(DispatcherPriority.Render, new Action(() =>
+            {
+                _redrawQueued = false;
+                Redraw();
+            }));
         }
 
         #region Coordinate Helpers
@@ -673,7 +724,16 @@ namespace CerGucuSimulasyonu
                 double x = KmToX(tm.DilasKonumuH1);
                 bool isSelected = ViewModel.SelectedItem == tm;
 
-                Color borderColor = tm.YuklenmeYuzdesi > 80 ? Color.FromRgb(239, 68, 68) : Color.FromRgb(192, 132, 252);
+                Color borderColor = tm.IsOutOfSpec
+                    ? Color.FromRgb(239, 68, 68)
+                    : tm.NeedsLimitReview
+                        ? Color.FromRgb(245, 158, 11)
+                        : Color.FromRgb(192, 132, 252);
+                Color backgroundColor = tm.IsOutOfSpec
+                    ? Color.FromRgb(95, 25, 30)
+                    : tm.NeedsLimitReview
+                        ? Color.FromRgb(92, 54, 18)
+                        : Color.FromRgb(28, 20, 45);
 
                 // Trafoyu ray hattına bağlayan besleme çizgisi
                 var feederLine = new Line
@@ -692,7 +752,7 @@ namespace CerGucuSimulasyonu
                 {
                     Width = 64,
                     Height = 42,
-                    Background = new SolidColorBrush(isSelected ? Color.FromArgb(240, 88, 28, 135) : Color.FromArgb(230, 28, 20, 45)),
+                    Background = new SolidColorBrush(isSelected ? Color.FromArgb(240, 88, 28, 135) : Color.FromArgb(230, backgroundColor.R, backgroundColor.G, backgroundColor.B)),
                     BorderBrush = new SolidColorBrush(isSelected ? Colors.White : borderColor),
                     BorderThickness = new Thickness(isSelected ? 2.5 : 1.5),
                     CornerRadius = new CornerRadius(6),
@@ -702,9 +762,10 @@ namespace CerGucuSimulasyonu
                              $"📍 Konum: {tm.DilasKonumuH1:0} m ({tm.DilasKonumuH1 / 1000.0:0.00} km)\n" +
                              $"🏗 Bağlı İstasyon: {tm.Istasyon}\n" +
                              $"⚡ Anlık Güç: {tm.AnlikGucKw:0.0} kW\n" +
-                             $"🔌 Anlık Akım: {tm.AnlikAkimA:0.0} A\n" +
+                             $"🔌 I: {tm.AnlikAkimA:0.0} A\n" +
                              $"🔋 Bara Gerilimi: {tm.AnlikGerilimV:0.0} V\n" +
                              $"📊 Yüklenme: %{tm.YuklenmeYuzdesi:0.0}\n" +
+                             $"🚦 Limit Kontrolü: {tm.LimitStatus}\n" +
                              $"🚃 Beslenen Tren: {tm.BeslenenTrenSayisi}\n" +
                              $"Ω İç Direnç: {tm.Direnc:0.0} mΩ\n" +
                              $"🔗 Fider Kablo: {tm.FiderKabloDirenci:0.0} mΩ\n" +
@@ -733,14 +794,26 @@ namespace CerGucuSimulasyonu
                 bool isH1 = tren.HatTipi == "H1";
                 bool isSelected = ViewModel.SelectedItem == tren;
 
-                Color bodyColor = isH1 ? Color.FromRgb(250, 204, 21) : Color.FromRgb(251, 146, 60);
+                Color bodyColor = tren.IsOutOfSpec
+                    ? Color.FromRgb(220, 38, 38)
+                    : tren.NeedsLimitReview
+                        ? Color.FromRgb(245, 158, 11)
+                        : isH1
+                            ? Color.FromRgb(250, 204, 21)
+                            : Color.FromRgb(251, 146, 60);
 
                 var trainBox = new Border
                 {
                     Width = 68,
                     Height = 26,
                     Background = new SolidColorBrush(bodyColor),
-                    BorderBrush = isSelected ? Brushes.White : Brushes.Black,
+                    BorderBrush = isSelected
+                        ? Brushes.White
+                        : tren.IsOutOfSpec
+                            ? Brushes.Red
+                            : tren.NeedsLimitReview
+                                ? Brushes.Orange
+                                : Brushes.Black,
                     BorderThickness = new Thickness(isSelected ? 2.5 : 1),
                     CornerRadius = new CornerRadius(4),
                     Tag = tren,
@@ -749,9 +822,12 @@ namespace CerGucuSimulasyonu
                              $"📍 Konum: {tren.Konum:0} m ({tren.Konum / 1000.0:0.00} km)\n" +
                              $"🛤 Hat: {tren.HatTipi} | Yön: {(tren.Yon == "ileri" ? "➔ İleri" : "⬅ Geri")}\n" +
                              $"⏱ Hız: {tren.AnlikHiz:0.0} km/h (Hedef: {tren.HedefHiz:0} km/h)\n" +
-                             $"⚡ Çekilen Güç: {tren.CekilenGucKw:0.0} kW\n" +
-                             $"🔌 Çekilen Akım: {tren.CekilenAkimA:0.0} A\n" +
+                             $"⚡ Cer motor gücü (+ çekiş / - rejenerasyon): {tren.CekilenGucKw:0.0} kW\n" +
+                             $"🔌 Cer motor I (+ çekiş / - rejenerasyon): {tren.CekilenAkimA:0.0} A\n" +
+                             $"🔋 Pantograf net güç (yardımcılar dahil): {tren.AnlikPantografGucuKw:0.0} kW\n" +
+                             $"🔌 Pantograf net I (yardımcılar dahil): {tren.AnlikPantografAkimiA:0.0} A\n" +
                              $"🔋 Katener Gerilimi: {tren.KatenerGerilimiV:0.0} V\n" +
+                             $"🚦 Limit Kontrolü: {tren.LimitStatus}\n" +
                              $"📊 İvme: {tren.Ivme:0.00} m/s²\n" +
                              $"👥 Yolcu: {tren.YolcuSayisi}\n" +
                              $"🏁 Sonraki İstasyon: {tren.SonrakiIstasyon} ({tren.SonrakiIstasyonMesafe:0} m)\n" +
@@ -796,7 +872,7 @@ namespace CerGucuSimulasyonu
 
                     string info = itemData switch
                     {
-                        TrenKonumu tr => $"🚃 {tr.TrenAdi} seçildi | Hız: {tr.AnlikHiz:0} km/h, Güç: {tr.CekilenGucKw:0} kW, Gerilim: {tr.KatenerGerilimiV:0} V",
+                        TrenKonumu tr => $"🚃 {tr.TrenAdi} seçildi | Hız: {tr.AnlikHiz:0} km/h, Cer motor gücü: {tr.CekilenGucKw:0} kW, Pantograf neti: {tr.AnlikPantografGucuKw:0} kW, Gerilim: {tr.KatenerGerilimiV:0} V",
                         TrafoMerkezi tm => $"⚡ Trafo {tm.Ad} seçildi | Çekilen Güç: {tm.AnlikGucKw:0} kW (%{tm.YuklenmeYuzdesi:0} Yük)",
                         Istasyon ist => $"🚉 İstasyon {ist.Ad} seçildi | Konum: {ist.H1OrtaNokta:0} m",
                         KatenerSeksiyonu sek => $"⚡ {sek.Ad} seçildi | Aralık: {sek.KonumAraligi}, Güç: {sek.AnlikToplamGucKw:0} kW, Aktif Tren: {sek.AktifTrenSayisi}",

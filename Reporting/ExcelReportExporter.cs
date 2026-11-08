@@ -71,32 +71,65 @@ public sealed class ExcelReportExporter
     private static void AddTrainSheet(XLWorkbook workbook, SimulationRunResult result)
     {
         var sheet = workbook.Worksheets.Add("Trains");
-        var rows = result.Snapshots.SelectMany(snapshot => snapshot.Trains.Select(train => new[]
+        var entries = result.Snapshots.SelectMany(snapshot => snapshot.Trains.Select(train =>
+            (Second: snapshot.Second, Train: train))).ToArray();
+        var rows = entries.Select(entry => new[]
         {
-            snapshot.Second.ToString(), train.TrainName, train.Line, train.Direction,
-            train.PositionM.ToString("0.0"), train.SpeedKmh.ToString("0.0"),
-            train.AccelerationMps2.ToString("0.00"), train.PowerKw.ToString("0.0"),
-            train.CurrentA.ToString("0.0"), train.VoltageV.ToString("0.0"),
-            train.PassengerCount.ToString(), train.State, train.NearestSubstation
-        })).ToArray();
+            entry.Second.ToString(), entry.Train.TrainName, entry.Train.Line, entry.Train.Direction,
+            entry.Train.PositionM.ToString("0.0"), entry.Train.SpeedKmh.ToString("0.0"),
+            entry.Train.AccelerationMps2.ToString("0.00"), entry.Train.PowerKw.ToString("0.0"),
+            entry.Train.CurrentA.ToString("0.0"), entry.Train.VoltageV.ToString("0.0"),
+            entry.Train.TractionPowerKw.ToString("0.0"), entry.Train.TractionCurrentA.ToString("0.0"),
+            entry.Train.PassengerCount.ToString(), entry.Train.State, entry.Train.NearestSubstation,
+            entry.Train.LimitStatus
+        }).ToArray();
         WriteTable(sheet, 1, 1,
-            new[] { "Saniye", "Tren", "Hat", "Yön", "Konum [m]", "Hız [km/h]", "İvme [m/s²]", "Güç [kW]", "Akım [A]", "Gerilim [V]", "Yolcu", "Durum", "En yakın TM" },
+            new[] { "Saniye", "Tren", "Hat", "Yön", "Konum [m]", "Hız [km/h]", "İvme [m/s²]", "Pantograf net güç [kW]", "Pantograf net I [A]", "Gerilim [V]", "Cer motor gücü (+/-) [kW]", "Cer motor I (+/-) [A]", "Yolcu", "Durum", "En yakın TM", "Limit Durumu" },
             rows);
+        for (int index = 0; index < entries.Length; index++)
+        {
+            if (entries[index].Train.IsOutOfSpec)
+            {
+                sheet.Row(index + 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#FECACA");
+                sheet.Row(index + 2).Style.Font.FontColor = XLColor.FromHtml("#7F1D1D");
+            }
+            else if (entries[index].Train.NeedsLimitReview)
+            {
+                sheet.Row(index + 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#FEF3C7");
+                sheet.Row(index + 2).Style.Font.FontColor = XLColor.FromHtml("#78350F");
+            }
+        }
         FormatSheet(sheet);
     }
 
     private static void AddSubstationSheet(XLWorkbook workbook, SimulationRunResult result)
     {
         var sheet = workbook.Worksheets.Add("Substations");
-        var rows = result.Snapshots.SelectMany(snapshot => snapshot.Substations.Select(substation => new[]
+        var entries = result.Snapshots.SelectMany(snapshot => snapshot.Substations.Select(substation =>
+            (Second: snapshot.Second, Substation: substation))).ToArray();
+        var rows = entries.Select(entry => new[]
         {
-            snapshot.Second.ToString(), substation.Name, substation.PowerKw.ToString("0.0"),
-            substation.CurrentA.ToString("0.0"), substation.VoltageV.ToString("0.0"),
-            substation.LoadPercent.ToString("0.0"), substation.FedTrainCount.ToString(), substation.State
-        })).ToArray();
+            entry.Second.ToString(), entry.Substation.Name, entry.Substation.PowerKw.ToString("0.0"),
+            entry.Substation.CurrentA.ToString("0.0"), entry.Substation.VoltageV.ToString("0.0"),
+            entry.Substation.LoadPercent.ToString("0.0"), entry.Substation.FedTrainCount.ToString(),
+            entry.Substation.State, entry.Substation.LimitStatus
+        }).ToArray();
         WriteTable(sheet, 1, 1,
-            new[] { "Saniye", "TM", "Güç [kW]", "Akım [A]", "Gerilim [V]", "Yük [%]", "Beslenen tren", "Durum" },
+            new[] { "Saniye", "TM", "Güç [kW]", "I [A]", "Gerilim [V]", "Yük [%]", "Beslenen tren", "Durum", "Limit Durumu" },
             rows);
+        for (int index = 0; index < entries.Length; index++)
+        {
+            if (entries[index].Substation.IsOutOfSpec)
+            {
+                sheet.Row(index + 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#FECACA");
+                sheet.Row(index + 2).Style.Font.FontColor = XLColor.FromHtml("#7F1D1D");
+            }
+            else if (entries[index].Substation.NeedsLimitReview)
+            {
+                sheet.Row(index + 2).Style.Fill.BackgroundColor = XLColor.FromHtml("#FEF3C7");
+                sheet.Row(index + 2).Style.Font.FontColor = XLColor.FromHtml("#78350F");
+            }
+        }
         FormatSheet(sheet);
     }
 

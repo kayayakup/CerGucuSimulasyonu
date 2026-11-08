@@ -13,9 +13,14 @@ public sealed record TrainSnapshot(
     double PowerKw,
     double CurrentA,
     double VoltageV,
+    double TractionPowerKw,
+    double TractionCurrentA,
     int PassengerCount,
     string State,
-    string NearestSubstation);
+    string NearestSubstation,
+    bool IsOutOfSpec,
+    bool NeedsLimitReview,
+    string LimitStatus);
 
 public sealed record SubstationSnapshot(
     string Name,
@@ -24,7 +29,10 @@ public sealed record SubstationSnapshot(
     double VoltageV,
     double LoadPercent,
     int FedTrainCount,
-    string State);
+    string State,
+    bool IsOutOfSpec,
+    bool NeedsLimitReview,
+    string LimitStatus);
 
 public sealed record SectionSnapshot(
     string Name,

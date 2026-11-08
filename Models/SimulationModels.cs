@@ -1,9 +1,18 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CerGucuSimulasyonu.Models
 {
+    public sealed record TrainForceCurvePoint(double SpeedKmh, double ForceKn);
+
+    public sealed record TrainCurrentCurvePoint(
+        double VoltageV,
+        double TractionCurrentA,
+        double RegenerativeCurrentA);
+
     public partial class HatEgimi : ObservableObject
     {
         [ObservableProperty] private double _baslangic;
@@ -11,10 +20,10 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _egimYuzdesi;
         [ObservableProperty] private string _hatTipi = "H1";
 
-        public double Uzunluk => Math.Max(0, Bitis - Baslangic);
+        public double Uzunluk => SimulationFormulas.Length(Baslangic, Bitis);
         public string EgimTipi => EgimYuzdesi > 0 ? "Tırmanış / Çıkış (+)" : (EgimYuzdesi < 0 ? "İniş / Eğim (-)" : "Düz Hat");
-        public double EgimBinde => Math.Abs(Math.Round(EgimYuzdesi * 10, 1));
-        public double EkEgitimKuvvetiKn => Math.Round(236.0 * 9.81 * (EgimYuzdesi / 100.0), 1);
+        public double EgimBinde => SimulationFormulas.GradePermille(EgimYuzdesi);
+        public double EkEgitimKuvvetiKn => SimulationFormulas.ReferenceGradeForceKn(EgimYuzdesi);
     }
 
     public partial class HatKurbu : ObservableObject
@@ -24,9 +33,9 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _yaricap = 300;
         [ObservableProperty] private string _hatTipi = "H1";
 
-        public double Uzunluk => Math.Max(0, Bitis - Baslangic);
-        public double RocklDirenci => Yaricap > 55 ? Math.Round(650.0 / (Yaricap - 55.0), 2) : 0;
-        public double MaksHiz => Math.Round(Math.Sqrt(Math.Max(10, Yaricap) * 11.8 * 0.15) * 3.6, 0);
+        public double Uzunluk => SimulationFormulas.Length(Baslangic, Bitis);
+        public double RocklDirenci => SimulationFormulas.CurveResistanceCoefficient(Yaricap);
+        public double MaksHiz => SimulationFormulas.CurveSpeedLimitKmh(Yaricap);
     }
 
     public partial class CerKatenerParametreleri : ObservableObject
@@ -35,7 +44,7 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _normalRayKmDirenci = 21;
         [ObservableProperty] private double _sertlestirilmisRayKmDirenci = 24;
         [ObservableProperty] private double _trafoIcDirenci = 15;
-        [ObservableProperty] private double _yuksuzDcBaraGerilimi = 1500;  // Fixed catenary voltage (V) DC
+        [ObservableProperty] private double _yuksuzDcBaraGerilimi = 1620;
         [ObservableProperty] private double _trafoGucu = 3300;
         [ObservableProperty] private double _dogrultucuGucu = 3000;
         [ObservableProperty] private double _rayToprakArasiDirenc = 150;
@@ -54,8 +63,11 @@ namespace CerGucuSimulasyonu.Models
         // Canlı Simülasyon Verileri
         [ObservableProperty] private double _anlikGucKw = 0;
         [ObservableProperty] private double _anlikAkimA = 0;
-        [ObservableProperty] private double _anlikGerilimV = 1500; // Fixed catenary voltage (V)
+        [ObservableProperty] private double _anlikGerilimV = 1620;
         [ObservableProperty] private double _yuklenmeYuzdesi = 0;
+        [JsonIgnore] public bool IsOutOfSpec { get; set; }
+        [JsonIgnore] public bool NeedsLimitReview { get; set; }
+        [JsonIgnore] public string LimitStatus { get; set; } = "KONTROL BEKLİYOR";
         [ObservableProperty] private string _durum = "NORMAL";
         [ObservableProperty] private int _beslenenTrenSayisi = 0;
     }
@@ -97,22 +109,101 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _minGerilim = 1000;
         [ObservableProperty] private double _minIsletmeGerilimi = 1050;
         [ObservableProperty] private double _trenUzunlugu = 90;
-        [ObservableProperty] private double _trenVerimi = 88;
+        [ObservableProperty] private double _trenVerimi = 85;
+        [ObservableProperty] private int _aracSayisi = 4;
+        [ObservableProperty] private double _yardimciGucKullanimOrani = 0.5;
 
-        // Çekiş Gücü (Traction Effort) & Davis Direnç Formülü Parametreleri
-        [ObservableProperty] private double _maksCekisKuvvetiKn = 240.0;
+        // Davis values are configurable estimates; they are not taken from the supplied reports.
+        [ObservableProperty] private double _maksCekisKuvvetiKn = 290.0;
         [ObservableProperty] private double _motorGucuKw = 1800.0;
         [ObservableProperty] private double _davisA = 2.5;
         [ObservableProperty] private double _davisB = 0.03;
         [ObservableProperty] private double _davisC = 0.004;
+        // Force curves and current limits describe the complete four-car train set.
+        [ObservableProperty] private ObservableCollection<TrainForceCurvePoint> _tractionEffortCurve = new()
+        {
+            new(0, 290), new(35, 290), new(40, 250), new(45, 225), new(50, 200),
+            new(55, 165), new(60, 138), new(65, 115), new(70, 100), new(75, 85),
+            new(80, 75)
+        };
+        [ObservableProperty] private ObservableCollection<TrainForceCurvePoint> _regenerativeBrakeEffortCurve = new()
+        {
+            new(0, 280), new(68, 280), new(80, 230)
+        };
+        [ObservableProperty] private ObservableCollection<TrainCurrentCurvePoint> _currentLimitCurve = new()
+        {
+            new(1000, 0, -2750),
+            new(1350, 2300, -2750),
+            new(1500, 2300, -2750),
+            new(1700, 2030, -2750),
+            new(1800, 1900, -2350),
+            new(1920, 0, 0),
+            new(2000, 0, 0)
+        };
+
+        public double MaximumTractionCurrentA(double voltageV) =>
+            SimulationFormulas.InterpolateCurrent(
+                CurrentLimitCurve,
+                voltageV,
+                point => point.TractionCurrentA);
+
+        public double MaximumRegenerativeCurrentA(double voltageV) =>
+            Math.Abs(SimulationFormulas.InterpolateCurrent(
+                CurrentLimitCurve,
+                voltageV,
+                point => point.RegenerativeCurrentA));
+
+        public double RegenerativeVoltageCutoffV(double maximumOperatingVoltageV)
+            => SimulationFormulas.RegenerativeVoltageCutoffV(CurrentLimitCurve, maximumOperatingVoltageV);
+
+        public double TractionEffortAtSpeedKn(double speedKmh)
+            => SimulationFormulas.TractionEffortAtSpeedKn(
+                TractionEffortCurve,
+                MaksCekisKuvvetiKn,
+                speedKmh);
+
+        public double RegenerativeBrakeEffortAtSpeedKn(double speedKmh) =>
+            SimulationFormulas.InterpolateForce(RegenerativeBrakeEffortCurve, speedKmh);
+
+        public double MaximumTractionForceKn(
+            double speedKmh,
+            double voltageV,
+            double auxiliaryPowerKw = 0)
+        {
+            double efficiency = TrenVerimi > 0
+                ? SimulationFormulas.PercentToRatio(TrenVerimi)
+                : 0.85;
+            return SimulationFormulas.MaximumTractionForceKn(
+                TractionEffortCurve,
+                CurrentLimitCurve,
+                MaksCekisKuvvetiKn,
+                speedKmh,
+                voltageV,
+                efficiency,
+                auxiliaryPowerKw);
+        }
+
+        public double MaximumRegenerativeBrakeForceKn(double speedKmh, double voltageV)
+        {
+            double efficiency = TrenVerimi > 0
+                ? SimulationFormulas.PercentToRatio(TrenVerimi)
+                : 0.85;
+            return SimulationFormulas.MaximumRegenerativeBrakeForceKn(
+                RegenerativeBrakeEffortCurve,
+                CurrentLimitCurve,
+                speedKmh,
+                voltageV,
+                efficiency);
+        }
 
         /// <summary>
-        /// Sabit Çekme Kuvveti Bölgesinden Sabit Güç Bölgesine Geçiş Hızı (Base Speed / Temel Hız)
-        /// V_base = (P_max * eta) / F_max * 3.6 (km/h)
+        /// Sabit çekme kuvvetinden sabit güç bölgesine geçiş hızını merkezi formülden alır.
         /// </summary>
-        public double TemelHizKmh => MaksCekisKuvvetiKn > 0 
-            ? Math.Round((MotorGucuKw * (TrenVerimi / 100.0)) / MaksCekisKuvvetiKn * 3.6, 1) 
-            : 30.0;
+        public double TemelHizKmh =>
+            SimulationFormulas.BaseSpeedKmh(
+                MotorGucuKw,
+                SimulationFormulas.PercentToRatio(TrenVerimi),
+                MaksCekisKuvvetiKn);
     }
 
     public partial class Istasyon : ObservableObject
@@ -157,7 +248,12 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _ivme = 0; // m/s²
         [ObservableProperty] private double _cekilenGucKw = 0;
         [ObservableProperty] private double _cekilenAkimA = 0;
-        [ObservableProperty] private double _katenerGerilimiV = 1500; // Fixed catenary voltage (V)
+        [ObservableProperty] private double _anlikPantografGucuKw = 0;
+        [ObservableProperty] private double _anlikPantografAkimiA = 0;
+        [ObservableProperty] private double _katenerGerilimiV = 1620;
+        [JsonIgnore] public bool IsOutOfSpec { get; set; }
+        [JsonIgnore] public bool NeedsLimitReview { get; set; }
+        [JsonIgnore] public string LimitStatus { get; set; } = "KONTROL BEKLİYOR";
         [ObservableProperty] private int _yolcuSayisi = 120;
         [ObservableProperty] private string _sonrakiIstasyon = "";
         [ObservableProperty] private double _sonrakiIstasyonMesafe = 0;
@@ -184,7 +280,7 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _ortalamaGerilimV = 1620;
         [ObservableProperty] private int _aktifTrenSayisi = 0;
 
-        public double Uzunluk => Math.Max(0, BitisKm - BaslangicKm);
+        public double Uzunluk => SimulationFormulas.Length(BaslangicKm, BitisKm);
         public string KonumAraligi => $"{BaslangicKm:0} m – {BitisKm:0} m ({BaslangicKm/1000.0:0.000} – {BitisKm/1000.0:0.000} km)";
     }
 
@@ -219,4 +315,3 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private ObservableCollection<TrenKonumu> _trenler = new();
     }
 }
-
