@@ -303,7 +303,12 @@ namespace CerGucuSimulasyonu
                     BorderThickness = new Thickness(isSelected ? 2 : 1),
                     CornerRadius = new CornerRadius(3),
                     Tag = sek,
-                    ToolTip = $"⚡ Katener Seksiyonu: {sek.Ad}\nKonum: {sek.BaslangicKm:0}m – {sek.BitisKm:0}m ({sek.Uzunluk:0} m)\nBesleyen Trafolar: {sek.BesleyenTrafolar}\nAnlık Güç: {sek.AnlikToplamGucKw:0.#} kW\nAktif Tren: {sek.AktifTrenSayisi}"
+                    ToolTip = CreateCalculationToolTip(BuildTrackElectricalTooltip(
+                        sek.HatTipi,
+                        sek.BaslangicKm,
+                        sek.BitisKm,
+                        $"Katener seksiyonu: {sek.Ad}",
+                        sek.BesleyenTrafolar))
                 };
 
                 var sp = new StackPanel
@@ -534,6 +539,288 @@ namespace CerGucuSimulasyonu
             }
         }
 
+        private string BuildTrainElectricalTooltip(TrenKonumu train)
+        {
+            double voltageV = train.KatenerGerilimiV;
+            double pantographPowerKw = train.AnlikPantografGucuKw;
+            double tractionPowerKw = train.CekilenGucKw;
+            double pantographCalculatedCurrentA = SimulationFormulas.CurrentA(
+                pantographPowerKw,
+                voltageV);
+            double tractionCalculatedCurrentA = SimulationFormulas.CurrentA(
+                tractionPowerKw,
+                voltageV);
+            double auxiliaryPowerKw = SimulationFormulas.AuxiliaryPowerKw(
+                ViewModel.Data.Tren.YardimciGuc > 0
+                    ? ViewModel.Data.Tren.YardimciGuc
+                    : 300.0,
+                ViewModel.Data.Tren.YardimciGucKullanimOrani);
+            double auxiliaryUtilizationRatio = Math.Clamp(
+                ViewModel.Data.Tren.YardimciGucKullanimOrani,
+                0,
+                1);
+            double efficiency = ViewModel.Data.Tren.TrenVerimi > 0
+                ? SimulationFormulas.PercentToRatio(ViewModel.Data.Tren.TrenVerimi)
+                : 0.85;
+            double tractionPowerFromEffortKw = SimulationFormulas.TractionElectricalPowerKw(
+                train.AnlikCekisKuvvetiKn,
+                train.AnlikHiz,
+                efficiency);
+            double regenerativePowerFromEffortKw = SimulationFormulas.RegenerativeElectricalPowerKw(
+                train.AnlikRejeneratifFrenKuvvetiKn,
+                train.AnlikHiz,
+                efficiency);
+            double netPantographPowerFromEffortKw = SimulationFormulas.NetPantographPowerKw(
+                tractionPowerFromEffortKw,
+                auxiliaryPowerKw,
+                regenerativePowerFromEffortKw);
+            double maximumTractionCurrentA = ViewModel.Data.Tren.MaximumTractionCurrentA(voltageV);
+            double maximumRegenerativeCurrentA = ViewModel.Data.Tren.MaximumRegenerativeCurrentA(voltageV);
+            double tractionCurveForceKn = ViewModel.Data.Tren.TractionEffortAtSpeedKn(train.AnlikHiz);
+            double regenerativeCurveForceKn =
+                ViewModel.Data.Tren.RegenerativeBrakeEffortAtSpeedKn(train.AnlikHiz);
+            double currentLimitedTractionForceKn = ViewModel.Data.Tren.MaximumTractionForceKn(
+                train.AnlikHiz,
+                voltageV,
+                auxiliaryPowerKw);
+            double currentLimitedRegenerativeForceKn =
+                ViewModel.Data.Tren.MaximumRegenerativeBrakeForceKn(train.AnlikHiz, voltageV);
+            double calculatedVoltageV = CalculatePantographVoltageForTooltip(train);
+
+            return string.Join(Environment.NewLine, new[]
+            {
+                $"🚃 {train.TrenAdi} (#{train.Id}) — canlı elektrik hesabı",
+                $"Konum: {train.Konum:0.0} m | Hat: {train.HatTipi} | Hız: {train.AnlikHiz:0.0} km/h | Durum: {train.Durum}",
+                "",
+                "PANTOGRAF (yardımcılar dahil net değer)",
+                $"U_pant: {voltageV:0.0} V (besleme merkezleri + hat düşümü çözümünden)",
+                $"P_pant: {pantographPowerKw:0.0} kW = {tractionPowerFromEffortKw:0.0} + {auxiliaryPowerKw:0.0} − {regenerativePowerFromEffortKw:0.0} kW (hesap kontrolü: {netPantographPowerFromEffortKw:0.0} kW)",
+                $"I_pant hesabı: P×1000/U = {pantographPowerKw:0.0}×1000/{voltageV:0.0} = {pantographCalculatedCurrentA:0.0} A",
+                $"Simülasyonda kayıtlı I_pant: {train.AnlikPantografAkimiA:0.0} A",
+                "",
+                "CER MOTORU (rejenerasyonda işaret eksi)",
+                $"P_motor,net: {tractionPowerKw:0.0} kW = {tractionPowerFromEffortKw:0.0} − {regenerativePowerFromEffortKw:0.0} kW",
+                $"I_motor hesabı: P×1000/U = {tractionPowerKw:0.0}×1000/{voltageV:0.0} = {tractionCalculatedCurrentA:0.0} A",
+                $"Simülasyonda kayıtlı I_motor: {train.CekilenAkimA:0.0} A",
+                $"Gerçek kuvvetler: F_çekiş={train.AnlikCekisKuvvetiKn:0.0} kN, F_fren={train.AnlikRejeneratifFrenKuvvetiKn:0.0} kN",
+                $"Güç hesabı: P_çekiş=F×v/η, P_rejenerasyon=F_fren×v×η; v={SimulationFormulas.SpeedMetersPerSecond(train.AnlikHiz):0.000} m/s, η={efficiency:P0}",
+                "",
+                "BU HIZ VE GERİLİMDE EĞRİ SINIRLARI (dört araçlı set)",
+                $"Çekiş eğrisi: F≤{tractionCurveForceKn:0.0} kN; akım sınırı {maximumTractionCurrentA:0} A; akım/güç sınırlı F≤{currentLimitedTractionForceKn:0.0} kN",
+                $"Rejeneratif fren eğrisi: F≤{regenerativeCurveForceKn:0.0} kN; akım sınırı {maximumRegenerativeCurrentA:0} A; akım/güç sınırlı F≤{currentLimitedRegenerativeForceKn:0.0} kN",
+                $"Yardımcı güç: {auxiliaryPowerKw:0.0} kW (anma {ViewModel.Data.Tren.YardimciGuc:0.0} kW × {auxiliaryUtilizationRatio:P0} kullanım)",
+                "",
+                "PANTOGRAF GERİLİMİ",
+                $"Çözüm: U_tren = Σ[wᵢ×(U_TM,i − I_tren×wᵢ×R_hat,i)]; mevcut parametrelerle kontrol hesabı ≈ {calculatedVoltageV:0.0} V",
+                BuildPantographFeedDetails(train),
+                $"Hat direnci: (katener {ViewModel.Data.CerKatener.RijitKatenerKmDirenci:0.###} + ray {ViewModel.Data.CerKatener.NormalRayKmDirenci:0.###}) mΩ/km; pantograf akımı çözüm boyunca güncellenir.",
+                $"Limit: {train.LimitStatus} | İvme: {train.Ivme:0.00} m/s² | Yolcu: {train.YolcuSayisi} | Sonraki istasyon: {train.SonrakiIstasyon} ({train.SonrakiIstasyonMesafe:0} m)"
+            });
+        }
+
+        private string BuildSubstationElectricalTooltip(TrafoMerkezi substation)
+        {
+            double transformerResistanceMilliOhm = substation.Direnc > 0
+                ? substation.Direnc
+                : ViewModel.Data.CerKatener.TrafoIcDirenci;
+            double sourceResistanceOhm = SimulationFormulas.SourceResistanceOhm(
+                transformerResistanceMilliOhm,
+                substation.FiderKabloDirenci,
+                substation.GeriDonusKabloDirenci);
+            double nominalVoltageV = ViewModel.Data.CerKatener.YuksuzDcBaraGerilimi > 0
+                ? ViewModel.Data.CerKatener.YuksuzDcBaraGerilimi
+                : 1620;
+            double maximumVoltageV = ViewModel.Data.Tren.RegenerativeVoltageCutoffV(
+                ViewModel.Data.Tren.MaksGerilim);
+            double calculatedVoltageV = SimulationFormulas.SubstationVoltageV(
+                nominalVoltageV,
+                substation.AnlikAkimA,
+                sourceResistanceOhm,
+                maximumVoltageV);
+            double powerFromReadingsKw = SimulationFormulas.DcPowerKw(
+                substation.AnlikAkimA,
+                substation.AnlikGerilimV);
+            double ratedRectifierPowerKw = ViewModel.Data.CerKatener.DogrultucuGucu > 0
+                ? ViewModel.Data.CerKatener.DogrultucuGucu
+                : 3000;
+            double calculatedLoadPercent = SimulationFormulas.LoadPercent(
+                Math.Max(0, substation.AnlikGucKw),
+                ratedRectifierPowerKw);
+
+            return string.Join(Environment.NewLine, new[]
+            {
+                $"⚡ Trafo Merkezi: {substation.Ad}",
+                $"Konum: H1 {substation.DilasKonumuH1:0.0} m | H2 {substation.DilasKonumuH2:0.0} m | İstasyon: {substation.Istasyon}",
+                "",
+                "ANLIK ÖLÇÜLEN / ÇÖZÜLEN DEĞERLER",
+                $"Bara gerilimi U_TM: {substation.AnlikGerilimV:0.0} V",
+                $"Çıkış akımı I_TM: {substation.AnlikAkimA:0.0} A (pozitif besleme, negatif geri besleme)",
+                $"Güç P_TM: {substation.AnlikGucKw:0.0} kW; U×I/1000 kontrolü: {powerFromReadingsKw:0.0} kW",
+                $"Yüklenme: %{substation.YuklenmeYuzdesi:0.0}; P/P_doğrultucu×100 kontrolü: %{calculatedLoadPercent:0.0}",
+                "",
+                "KULLANILAN HESAPLAR VE GİRDİLER",
+                $"U_TM = clamp(U₀ − I_TM×R_kaynak, 0, U_max) = clamp({nominalVoltageV:0.0} − {substation.AnlikAkimA:0.0}×{sourceResistanceOhm:0.000000} Ω, 0, {maximumVoltageV:0.0}) ≈ {calculatedVoltageV:0.0} V",
+                $"R_kaynak = (R_trafo + R_fider + R_dönüş)/1000 = ({transformerResistanceMilliOhm:0.0} + {substation.FiderKabloDirenci:0.0} + {substation.GeriDonusKabloDirenci:0.0}) mΩ = {sourceResistanceOhm:0.000000} Ω",
+                $"P_TM = U_TM×I_TM/1000; anma doğrultucu gücü = {ratedRectifierPowerKw:0.0} kW",
+                $"I_TM,hesap = Σ(I_tren×w_TM); w_TM,tren = G_TM/ΣG, G=1/(R_kaynak+R_hat). Tren besleme payları mesafe ve direnç ağırlıklı çözülür.",
+                $"Beslenen tren: {substation.BeslenenTrenSayisi} | Durum: {substation.Durum} | Limit: {substation.LimitStatus}"
+            });
+        }
+
+        private string BuildTrackElectricalTooltip(
+            string line,
+            double? startPositionM,
+            double? endPositionM,
+            string title,
+            string? feedingSubstations = null)
+        {
+            TrenKonumu[] trains = ViewModel.Data.Trenler
+                .Where(train =>
+                    train.HatTipi == line &&
+                    (!startPositionM.HasValue || train.Konum >= startPositionM.Value) &&
+                    (!endPositionM.HasValue || train.Konum <= endPositionM.Value))
+                .ToArray();
+            double totalPowerKw = SimulationFormulas.TotalPantographPowerKw(trains);
+            double totalCurrentA = SimulationFormulas.TotalPantographCurrentA(trains);
+            double averageVoltageV = SimulationFormulas.AveragePantographVoltageV(trains);
+            string trainDetails = trains.Length == 0
+                ? "Bu ray aralığında aktif tren yok."
+                : string.Join(Environment.NewLine, trains.Select(train =>
+                    $"• {train.TrenAdi}: U={train.KatenerGerilimiV:0.0} V, " +
+                    $"P_pant={train.AnlikPantografGucuKw:0.0} kW, " +
+                    $"I_pant={train.AnlikPantografAkimiA:0.0} A"));
+
+            return string.Join(Environment.NewLine, new[]
+            {
+                $"🛤 {title} ({line})",
+                startPositionM.HasValue && endPositionM.HasValue
+                    ? $"Aralık: {startPositionM.Value:0.0}–{endPositionM.Value:0.0} m | Besleme merkezleri: {feedingSubstations}"
+                    : "Aralık: hattın tamamı",
+                "",
+                "BU ARALIKTAKİ TREN PANTOGRAF TOPLAMI",
+                $"ΣP_pant = ΣP_i = {totalPowerKw:0.0} kW (her tren için çekiş + yardımcı − rejenerasyon)",
+                $"ΣI_pant = Σ(P_i×1000/U_i) ≈ {totalCurrentA:0.0} A",
+                $"U_ortalama = ΣU_i/N = {averageVoltageV:0.0} V | Tren sayısı: {trains.Length}",
+                "",
+                trainDetails,
+                "",
+                "Not: Bu değerler aralıkta bulunan trenlerin pantograf ölçümlerinin toplam/ortalamasıdır; ray kesitinde bağımsız akım ölçümü değildir."
+            });
+        }
+
+        private double CalculatePantographVoltageForTooltip(TrenKonumu train)
+        {
+            var feeds = GetPantographFeedsForTooltip(train);
+            if (feeds.Length == 0)
+            {
+                return 0;
+            }
+
+            double maximumVoltageV = ViewModel.Data.Tren.RegenerativeVoltageCutoffV(
+                ViewModel.Data.Tren.MaksGerilim);
+            return SimulationFormulas.TrainVoltageV(
+                feeds.Select(feed => (
+                    feed.Weight,
+                    feed.Substation.AnlikGerilimV,
+                    feed.LineResistanceOhm)).ToArray(),
+                train.AnlikPantografAkimiA,
+                maximumVoltageV);
+        }
+
+        private string BuildPantographFeedDetails(TrenKonumu train)
+        {
+            var feeds = GetPantographFeedsForTooltip(train);
+            return feeds.Length == 0
+                ? "Aktif ve 3.8 km erişim sınırında besleyen trafo bulunmuyor."
+                : "Besleme kolları: " + string.Join(
+                    "; ",
+                    feeds.Select(feed =>
+                        $"{feed.Substation.Ad}: w={feed.Weight:0.000}, " +
+                        $"U_TM={feed.Substation.AnlikGerilimV:0.0} V, " +
+                        $"d={feed.DistanceM:0} m, R_kaynak={feed.SourceResistanceOhm:0.000000} Ω, " +
+                        $"R_hat={feed.LineResistanceOhm:0.000000} Ω"));
+        }
+
+        private (TrafoMerkezi Substation, double Weight, double DistanceM,
+            double SourceResistanceOhm, double LineResistanceOhm)[]
+            GetPantographFeedsForTooltip(TrenKonumu train)
+        {
+            double lineResistanceOhmPerMeter = SimulationFormulas.LineResistanceOhmPerMeter(
+                ViewModel.Data.CerKatener.RijitKatenerKmDirenci,
+                ViewModel.Data.CerKatener.NormalRayKmDirenci);
+            var candidates = ViewModel.Data.TrafoMerkezleri
+                .Where(substation => substation.Durum != "DEVRE DIŞI")
+                .Select(substation =>
+                {
+                    double position = train.HatTipi == "H2"
+                        ? substation.DilasKonumuH2
+                        : substation.DilasKonumuH1;
+                    double distanceM = Math.Abs(position - train.Konum);
+                    double transformerResistanceMilliOhm = substation.Direnc > 0
+                        ? substation.Direnc
+                        : ViewModel.Data.CerKatener.TrafoIcDirenci;
+                    double sourceResistanceOhm = SimulationFormulas.SourceResistanceOhm(
+                        transformerResistanceMilliOhm,
+                        substation.FiderKabloDirenci,
+                        substation.GeriDonusKabloDirenci);
+                    double lineResistanceOhm = SimulationFormulas.LineResistanceOhm(
+                        lineResistanceOhmPerMeter,
+                        distanceM);
+                    return (
+                        Substation: substation,
+                        DistanceM: distanceM,
+                        SourceResistanceOhm: sourceResistanceOhm,
+                        LineResistanceOhm: lineResistanceOhm,
+                        Conductance: SimulationFormulas.BranchConductance(
+                            sourceResistanceOhm,
+                            lineResistanceOhm));
+                })
+                .Where(feed => feed.DistanceM < 3800)
+                .ToArray();
+            double totalConductance = candidates.Sum(feed => feed.Conductance);
+            if (totalConductance <= 0)
+            {
+                return Array.Empty<(TrafoMerkezi, double, double, double, double)>();
+            }
+
+            return candidates.Select(feed => (
+                feed.Substation,
+                SimulationFormulas.FeedWeight(feed.Conductance, totalConductance),
+                feed.DistanceM,
+                feed.SourceResistanceOhm,
+                feed.LineResistanceOhm)).ToArray();
+        }
+
+        private static ToolTip CreateCalculationToolTip(string content)
+        {
+            var tooltip = new ToolTip
+            {
+                Content = new ScrollViewer
+                {
+                    MaxWidth = 560,
+                    MaxHeight = 440,
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                    Content = new TextBlock
+                    {
+                        Text = content,
+                        TextWrapping = TextWrapping.Wrap,
+                        FontFamily = new FontFamily("Consolas"),
+                        FontSize = 12,
+                        Foreground = Brushes.White,
+                        MaxWidth = 530
+                    }
+                },
+                Background = new SolidColorBrush(Color.FromRgb(20, 24, 39)),
+                Foreground = Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(71, 85, 105)),
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(10),
+                Placement = System.Windows.Controls.Primitives.PlacementMode.Mouse
+            };
+            return tooltip;
+        }
+
         private void DrawTrackLines(double xs, double xe)
         {
             // H1 Rayı (Üst Hat - Darıca -> Depo)
@@ -546,8 +833,15 @@ namespace CerGucuSimulasyonu
                 Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)),
                 StrokeThickness = 6,
                 StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round
+                StrokeEndLineCap = PenLineCap.Round,
+                ToolTip = CreateCalculationToolTip(BuildTrackElectricalTooltip(
+                    "H1",
+                    null,
+                    null,
+                    "H1 ray / katener"))
             };
+            ToolTipService.SetInitialShowDelay(h1Line, 350);
+            ToolTipService.SetShowDuration(h1Line, 60000);
             TrackCanvas.Children.Add(h1Line);
 
             var lblH1 = new TextBlock
@@ -571,8 +865,15 @@ namespace CerGucuSimulasyonu
                 Stroke = new SolidColorBrush(Color.FromRgb(251, 146, 60)),
                 StrokeThickness = 6,
                 StrokeStartLineCap = PenLineCap.Round,
-                StrokeEndLineCap = PenLineCap.Round
+                StrokeEndLineCap = PenLineCap.Round,
+                ToolTip = CreateCalculationToolTip(BuildTrackElectricalTooltip(
+                    "H2",
+                    null,
+                    null,
+                    "H2 ray / katener"))
             };
+            ToolTipService.SetInitialShowDelay(h2Line, 350);
+            ToolTipService.SetShowDuration(h2Line, 60000);
             TrackCanvas.Children.Add(h2Line);
 
             var lblH2 = new TextBlock
@@ -757,19 +1058,7 @@ namespace CerGucuSimulasyonu
                     BorderThickness = new Thickness(isSelected ? 2.5 : 1.5),
                     CornerRadius = new CornerRadius(6),
                     Tag = tm,
-                    ToolTip = $"⚡ Trafo Merkezi: {tm.Ad}\n" +
-                             $"─────────────────────\n" +
-                             $"📍 Konum: {tm.DilasKonumuH1:0} m ({tm.DilasKonumuH1 / 1000.0:0.00} km)\n" +
-                             $"🏗 Bağlı İstasyon: {tm.Istasyon}\n" +
-                             $"⚡ Anlık Güç: {tm.AnlikGucKw:0.0} kW\n" +
-                             $"🔌 I: {tm.AnlikAkimA:0.0} A\n" +
-                             $"🔋 Bara Gerilimi: {tm.AnlikGerilimV:0.0} V\n" +
-                             $"📊 Yüklenme: %{tm.YuklenmeYuzdesi:0.0}\n" +
-                             $"🚦 Limit Kontrolü: {tm.LimitStatus}\n" +
-                             $"🚃 Beslenen Tren: {tm.BeslenenTrenSayisi}\n" +
-                             $"Ω İç Direnç: {tm.Direnc:0.0} mΩ\n" +
-                             $"🔗 Fider Kablo: {tm.FiderKabloDirenci:0.0} mΩ\n" +
-                             $"⚙ Durum: {tm.Durum}"
+                    ToolTip = CreateCalculationToolTip(BuildSubstationElectricalTooltip(tm))
                 };
 
                 var sp = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
@@ -817,22 +1106,7 @@ namespace CerGucuSimulasyonu
                     BorderThickness = new Thickness(isSelected ? 2.5 : 1),
                     CornerRadius = new CornerRadius(4),
                     Tag = tren,
-                    ToolTip = $"🚃 {tren.TrenAdi} (#{tren.Id})\n" +
-                             $"─────────────────────\n" +
-                             $"📍 Konum: {tren.Konum:0} m ({tren.Konum / 1000.0:0.00} km)\n" +
-                             $"🛤 Hat: {tren.HatTipi} | Yön: {(tren.Yon == "ileri" ? "➔ İleri" : "⬅ Geri")}\n" +
-                             $"⏱ Hız: {tren.AnlikHiz:0.0} km/h (Hedef: {tren.HedefHiz:0} km/h)\n" +
-                             $"⚡ Cer motor gücü (+ çekiş / - rejenerasyon): {tren.CekilenGucKw:0.0} kW\n" +
-                             $"🔌 Cer motor I (+ çekiş / - rejenerasyon): {tren.CekilenAkimA:0.0} A\n" +
-                             $"🔋 Pantograf net güç (yardımcılar dahil): {tren.AnlikPantografGucuKw:0.0} kW\n" +
-                             $"🔌 Pantograf net I (yardımcılar dahil): {tren.AnlikPantografAkimiA:0.0} A\n" +
-                             $"🔋 Katener Gerilimi: {tren.KatenerGerilimiV:0.0} V\n" +
-                             $"🚦 Limit Kontrolü: {tren.LimitStatus}\n" +
-                             $"📊 İvme: {tren.Ivme:0.00} m/s²\n" +
-                             $"👥 Yolcu: {tren.YolcuSayisi}\n" +
-                             $"🏁 Sonraki İstasyon: {tren.SonrakiIstasyon} ({tren.SonrakiIstasyonMesafe:0} m)\n" +
-                             $"🔗 En Yakın Trafo: {tren.EnYakinTrafo}\n" +
-                             $"⚙ Durum: {tren.Durum}"
+                    ToolTip = CreateCalculationToolTip(BuildTrainElectricalTooltip(tren))
                 };
 
                 string arrow = tren.Yon == "ileri" ? "➔" : "⬅";
@@ -855,6 +1129,8 @@ namespace CerGucuSimulasyonu
         private void AttachItemEvents(FrameworkElement element, object itemData)
         {
             element.Cursor = Cursors.Hand;
+            ToolTipService.SetInitialShowDelay(element, 350);
+            ToolTipService.SetShowDuration(element, 60000);
 
             element.MouseLeftButtonDown += (s, e) =>
             {

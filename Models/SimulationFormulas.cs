@@ -238,6 +238,14 @@ public static class SimulationFormulas
     public static double MechanicalPowerKw(double forceKn, double speedKmh) =>
         forceKn * SpeedMetersPerSecond(speedKmh);
 
+    /// <summary>Calculates pantograph-side traction power after motor efficiency is accounted for.</summary>
+    public static double TractionElectricalPowerKw(double forceKn, double speedKmh, double efficiency) =>
+        efficiency > 0 ? MechanicalPowerKw(forceKn, speedKmh) / efficiency : 0;
+
+    /// <summary>Calculates regenerative pantograph power after motor efficiency is accounted for.</summary>
+    public static double RegenerativeElectricalPowerKw(double brakingForceKn, double speedKmh, double efficiency) =>
+        MechanicalPowerKw(brakingForceKn, speedKmh) * efficiency;
+
     /// <summary>Calculates signed traction-minus-regeneration power at the motor set.</summary>
     public static double SignedTractionPowerKw(double tractionPowerKw, double regenerativePowerKw) =>
         tractionPowerKw - regenerativePowerKw;
@@ -252,6 +260,18 @@ public static class SimulationFormulas
     /// <summary>Calculates DC current from power and voltage, returning zero for invalid voltage.</summary>
     public static double CurrentA(double powerKw, double voltageV) =>
         voltageV > 0 ? powerKw * 1000.0 / voltageV : 0;
+
+    /// <summary>Sums signed pantograph power from trains assigned to the same track section.</summary>
+    public static double TotalPantographPowerKw(IEnumerable<TrenKonumu> trains) =>
+        trains.Sum(train => train.AnlikPantografGucuKw);
+
+    /// <summary>Sums signed pantograph current from trains assigned to the same track section.</summary>
+    public static double TotalPantographCurrentA(IEnumerable<TrenKonumu> trains) =>
+        trains.Sum(train => train.AnlikPantografAkimiA);
+
+    /// <summary>Calculates the mean pantograph voltage for trains assigned to a track section.</summary>
+    public static double AveragePantographVoltageV(IReadOnlyCollection<TrenKonumu> trains) =>
+        trains.Count > 0 ? trains.Average(train => train.KatenerGerilimiV) : 0;
 
     /// <summary>Converts Davis, grade and curve resistance components into total running resistance.</summary>
     public static double TotalResistanceKn(

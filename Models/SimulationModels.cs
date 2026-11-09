@@ -248,6 +248,8 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _ivme = 0; // m/s²
         [ObservableProperty] private double _cekilenGucKw = 0;
         [ObservableProperty] private double _cekilenAkimA = 0;
+        [JsonIgnore] public double AnlikCekisKuvvetiKn { get; set; }
+        [JsonIgnore] public double AnlikRejeneratifFrenKuvvetiKn { get; set; }
         [ObservableProperty] private double _anlikPantografGucuKw = 0;
         [ObservableProperty] private double _anlikPantografAkimiA = 0;
         [ObservableProperty] private double _katenerGerilimiV = 1620;

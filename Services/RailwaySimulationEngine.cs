@@ -33,6 +33,8 @@ namespace CerGucuSimulasyonu.Services
             TrainPowerDemand Demand);
 
         private sealed record TrainPowerFlow(
+            double TractionEffortKn,
+            double RegenerativeEffortKn,
             double TractionPowerKw,
             double RegenerativePowerKw,
             double NetPowerKw);
@@ -100,6 +102,8 @@ namespace CerGucuSimulasyonu.Services
                         tren.CekilenAkimA = 0;
                         tren.AnlikPantografGucuKw = 0;
                         tren.AnlikPantografAkimiA = 0;
+                        tren.AnlikCekisKuvvetiKn = 0;
+                        tren.AnlikRejeneratifFrenKuvvetiKn = 0;
                         tren.Durum = $"SEFER BEKLİYOR (~{Math.Max(0, tren.DispatchTimeSeconds - _simTotalElapsed):0} sn)";
                         tren.IsOutOfSpec = false;
                         tren.NeedsLimitReview = false;
@@ -385,6 +389,8 @@ namespace CerGucuSimulasyonu.Services
                 double signedTractionCurrent = SimulationFormulas.CurrentA(signedTractionPower, voltage);
 
                 train.KatenerGerilimiV = Math.Round(voltage, 1);
+                train.AnlikCekisKuvvetiKn = flow.TractionEffortKn;
+                train.AnlikRejeneratifFrenKuvvetiKn = flow.RegenerativeEffortKn;
                 train.CekilenGucKw = Math.Round(signedTractionPower, 1);
                 train.CekilenAkimA = Math.Round(signedTractionCurrent, 1);
                 train.AnlikPantografGucuKw = Math.Round(flow.NetPowerKw, 1);
@@ -638,7 +644,7 @@ namespace CerGucuSimulasyonu.Services
         {
             if (state.Feeds.Count == 0 || voltageV <= 0)
             {
-                return new TrainPowerFlow(0, 0, 0);
+                return new TrainPowerFlow(0, 0, 0, 0, 0);
             }
 
             double speedMs = SimulationFormulas.SpeedMetersPerSecond(state.Train.AnlikHiz);
@@ -653,15 +659,25 @@ namespace CerGucuSimulasyonu.Services
                 _data.Tren.MaximumRegenerativeBrakeForceKn(state.Train.AnlikHiz, voltageV));
 
             double tractionPowerKw = speedMs > 0
-                ? SimulationFormulas.MechanicalPowerKw(tractionForceKn, state.Train.AnlikHiz) / efficiency
+                ? SimulationFormulas.TractionElectricalPowerKw(
+                    tractionForceKn,
+                    state.Train.AnlikHiz,
+                    efficiency)
                 : 0;
-            double regenerativePowerKw =
-                SimulationFormulas.MechanicalPowerKw(regenerativeForceKn, state.Train.AnlikHiz) * efficiency;
+            double regenerativePowerKw = SimulationFormulas.RegenerativeElectricalPowerKw(
+                regenerativeForceKn,
+                state.Train.AnlikHiz,
+                efficiency);
             double netPowerKw = SimulationFormulas.NetPantographPowerKw(
                 tractionPowerKw,
                 state.Demand.AuxiliaryPowerKw,
                 regenerativePowerKw);
-            return new TrainPowerFlow(tractionPowerKw, regenerativePowerKw, netPowerKw);
+            return new TrainPowerFlow(
+                tractionForceKn,
+                regenerativeForceKn,
+                tractionPowerKw,
+                regenerativePowerKw,
+                netPowerKw);
         }
 
         private IReadOnlyList<SubstationFeed> GetSubstationFeeds(TrenKonumu train)
