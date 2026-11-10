@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,6 +37,7 @@ public sealed class ScenarioRunner
         {
             cancellationToken.ThrowIfCancellationRequested();
             var scenarioData = Clone(source);
+            InitializeScenarioTrainsAtDepot(scenarioData);
             var engine = new RailwaySimulationEngine(
                 scenarioData,
                 scenario.OutOfServiceSubstations);
@@ -68,5 +70,30 @@ public sealed class ScenarioRunner
         string json = JsonSerializer.Serialize(source, _cloneOptions);
         return JsonSerializer.Deserialize<SimulationData>(json, _cloneOptions)
             ?? throw new InvalidOperationException("Simulation data could not be cloned.");
+    }
+
+    private static void InitializeScenarioTrainsAtDepot(SimulationData data)
+    {
+        double lineLength = data.HatUzunlugu > 0 ? data.HatUzunlugu : 15394;
+        double depotPosition = data.Istasyonlar
+            .Where(station => station.Ad.Contains("depo", StringComparison.OrdinalIgnoreCase))
+            .Select(station => station.H2OrtaNokta)
+            .DefaultIfEmpty(lineLength)
+            .Last();
+        double headwaySeconds = data.Isletme.SeferAraligiHeadwaySaniye > 0
+            ? data.Isletme.SeferAraligiHeadwaySaniye
+            : 90;
+
+        for (int i = 0; i < data.Trenler.Count; i++)
+        {
+            TrenKonumu train = data.Trenler[i];
+            train.Konum = Math.Clamp(depotPosition, 0, lineLength);
+            train.HatTipi = "H2";
+            train.Yon = "geri";
+            train.AnlikHiz = 0;
+            train.IsDispatched = false;
+            train.DispatchTimeSeconds = i * headwaySeconds;
+            train.Durum = "DEPO SAHASINDA - SEFER BEKLİYOR";
+        }
     }
 }

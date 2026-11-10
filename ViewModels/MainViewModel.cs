@@ -68,7 +68,18 @@ namespace CerGucuSimulasyonu.ViewModels
         private IReadOnlyList<SimulationRunResult> _scenarioResults = Array.Empty<SimulationRunResult>();
 
         [ObservableProperty]
-        private double _simulationSpeed = 1.0; // 1x, 2x, 5x
+        private double _simulationSpeed = 1.0;
+
+        partial void OnSimulationSpeedChanged(double value)
+        {
+            double boundedSpeed = double.IsFinite(value)
+                ? Math.Clamp(value, 0.1, 10.0)
+                : 1.0;
+            if (value != boundedSpeed)
+            {
+                SimulationSpeed = boundedSpeed;
+            }
+        }
 
         [ObservableProperty]
         private string _simulationTimeString = "00:00:00";
@@ -281,6 +292,10 @@ namespace CerGucuSimulasyonu.ViewModels
                     {
                         GenerateRandomTrains();
                     }
+                    else
+                    {
+                        StartTrainsAtDepot();
+                    }
                     UpdateUiMetricsAndCharts();
                     return;
                 }
@@ -290,8 +305,8 @@ namespace CerGucuSimulasyonu.ViewModels
                 }
             }
 
-            // Fallback varsayılan Gebze-Darıca Metro Hattı (15,350 m - DWG Metrajları)
-            Data.HatUzunlugu = 15350;
+            // Reported route lengths: H1 ends at 15,394 m and H2 at 15,347 m.
+            Data.HatUzunlugu = 15394;
 
             // 12 İstasyon (DWG Gerçek Metrajları - Karşılıklı Peronlar Eşit)
             var istasyonListesi = new (int id, string ad, string kisa, double pos)[]
@@ -351,19 +366,6 @@ namespace CerGucuSimulasyonu.ViewModels
                 });
             }
 
-            // Ray Paralellemeleri
-            Data.RayParalellemeleri.Clear();
-            double[] rpPos = { 2400, 5100, 7800, 11200, 14600 };
-            for (int i = 0; i < rpPos.Length; i++)
-            {
-                Data.RayParalellemeleri.Add(new RayParalellemesi
-                {
-                    No = i + 1,
-                    H1BaglantiKm = rpPos[i],
-                    H2BaglantiKm = rpPos[i]
-                });
-            }
-
             // Katener Seksiyonları (EK-1 Montaj Karnesi Belgesine Göre Seksiyonlama)
             Data.KatenerSeksiyonlari.Clear();
             Data.KatenerSeksiyonlari.Add(new KatenerSeksiyonu { SeksiyonNo = 1, Ad = "Seksiyon 1 (Darıca Sahil TM-1 Bölgesi)", BaslangicKm = 0, BitisKm = 514, BesleyenTrafolar = "TM-1 (Darıca Sahil)", MontajEtaplari = "Etap 01-07" });
@@ -372,7 +374,7 @@ namespace CerGucuSimulasyonu.ViewModels
             Data.KatenerSeksiyonlari.Add(new KatenerSeksiyonu { SeksiyonNo = 4, Ad = "Seksiyon 4 (Fatih - Kent Meydanı Bölgesi)", BaslangicKm = 4711, BitisKm = 7032, BesleyenTrafolar = "TM-3 / TM-4", MontajEtaplari = "Etap 37-53" });
             Data.KatenerSeksiyonlari.Add(new KatenerSeksiyonu { SeksiyonNo = 5, Ad = "Seksiyon 5 (Stadyum - Akse Sapağı TM-4 Bölgesi)", BaslangicKm = 7032, BitisKm = 9389, BesleyenTrafolar = "TM-4 (Akse Sapağı)", MontajEtaplari = "Etap 55-65" });
             Data.KatenerSeksiyonlari.Add(new KatenerSeksiyonu { SeksiyonNo = 6, Ad = "Seksiyon 6 (Adliye - Mutlukent TM-5 Bölgesi)", BaslangicKm = 9389, BitisKm = 12186, BesleyenTrafolar = "TM-5 (Mutlukent)", MontajEtaplari = "Etap 67-85" });
-            Data.KatenerSeksiyonlari.Add(new KatenerSeksiyonu { SeksiyonNo = 7, Ad = "Seksiyon 7 (OSB - Depo TM-6 & TM-7 Bölgesi)", BaslangicKm = 12186, BitisKm = 15350, BesleyenTrafolar = "TM-6 (OSB) / TM-7 (Depo)", MontajEtaplari = "Etap 87+" });
+            Data.KatenerSeksiyonlari.Add(new KatenerSeksiyonu { SeksiyonNo = 7, Ad = "Seksiyon 7 (OSB - Depo TM-6 & TM-7 Bölgesi)", BaslangicKm = 12186, BitisKm = Data.HatUzunlugu, BesleyenTrafolar = "TM-6 (OSB) / TM-7 (Depo)", MontajEtaplari = "Etap 87+" });
 
             // Seksiyon Ayırıcılar (İzoleli Overlap - PE 938)
             Data.SeksiyonAyiricilar.Clear();
@@ -390,10 +392,7 @@ namespace CerGucuSimulasyonu.ViewModels
                 });
             }
 
-            // Hız Limitleri
-            Data.HizLimitleri.Clear();
-            Data.HizLimitleri.Add(new HizLimiti { Baslangic = 0, Bitis = 15350, Limit = 80, HatTipi = "H1" });
-            Data.HizLimitleri.Add(new HizLimiti { Baslangic = 0, Bitis = 15350, Limit = 80, HatTipi = "H2" });
+            DocumentTrackProfile.Apply(Data);
 
             // Başlangıç Trenleri
             GenerateRandomTrains();
@@ -568,16 +567,6 @@ namespace CerGucuSimulasyonu.ViewModels
             }
         }
 
-        [RelayCommand]
-        public void SetSpeed(string speedMultiplier)
-        {
-            if (double.TryParse(speedMultiplier, out double mult))
-            {
-                SimulationSpeed = mult;
-                StatusText = $"⏩ Simülasyon Hızı: {mult}x";
-            }
-        }
-
         private void SimTimer_Tick(object? sender, EventArgs e)
         {
             double dt = 0.2 * SimulationSpeed; // saniye
@@ -671,13 +660,14 @@ namespace CerGucuSimulasyonu.ViewModels
             ActiveToolMode = mode;
             StatusText = mode switch
             {
-                "SELECT" => "Mod: Seç & Canlı İzle | Hat üzerindeki trenlere, trafolara ve istasyonlara tıklayarak soldaki panelde canlı verilerini inceleyin.",
-                "STATION" => "Mod: İstasyon Ekle | Hat üzerine sol tıklayarak yeni istasyon ekleyin.",
-                "TRAFO" => "Mod: Trafo Merkezi Ekle | Hat üzerine sol tıklayarak yeni trafo merkezi ekleyin.",
-                "SPEED" => "Mod: Hız Limiti Ekle | Hat üzerinde basılı tutup sürükleyerek hız limiti bölgesi oluşturun.",
-                "EGIM" => "Mod: Hat Eğimi Ekle | Hat üzerinde basılı tutup sürükleyerek eğim bölgesi oluşturun.",
-                "KURP" => "Mod: Hat Kurbu Ekle | Hat üzerinde basılı tutup sürükleyerek kurp bölgesi oluşturun.",
-                "PARALLEL" => "Mod: Ray Paralellemesi Ekle | Hat üzerine sol tıklayarak ray paralellemesi ekleyin.",
+                "SELECT" => "Mod: Seç & Canlı İzle | Hat üzerindeki öğelere tıklayarak canlı verilerini inceleyin.",
+                "DELETE" => "Mod: Sil | Silmek istediğiniz harita öğesine tıklayın ve işlemi onaylayın. Sağ tık menüsü de kullanılabilir.",
+                "STATION" => "Mod: İstasyon Ekle | Haritaya tıklayın, önizlemeyi inceleyip onaylayın.",
+                "TRAFO" => "Mod: Trafo Merkezi Ekle | Haritaya tıklayın, önizlemeyi inceleyip onaylayın.",
+                "SPEED" => "Mod: Hız Limiti Ekle | Sürükleyerek kesimi belirleyin; önizlemeyi onaylayarak ekleyin.",
+                "EGIM" => "Mod: Hat Eğimi Ekle | Sürükleyerek kesimi seçin; önizlemede açı ve H1 yönündeki yukarı/aşağı yönü belirleyin.",
+                "KURP" => "Mod: Kurp Ekle | Yatayda aralığı seçin; yukarı sürükleme H1'i, aşağı sürükleme H2'yi iç hatta alır. Yarıçapı R alanına yazıp önizlemeyi onaylayın.",
+                "PARALLEL" => "Mod: Ray Paralellemesi Ekle | Haritaya tıklayın, önizlemeyi inceleyip onaylayın.",
                 _ => $"Mod: {mode}"
             };
         }
@@ -687,25 +677,25 @@ namespace CerGucuSimulasyonu.ViewModels
         {
             Data.Trenler.Clear();
             int trainCount = _rand.Next(5, 8);
-            double lineLen = Data.HatUzunlugu > 0 ? Data.HatUzunlugu : 17850;
+            double depotPosition = GetDepotStartPosition();
+            double headwaySeconds = Data.Isletme.SeferAraligiHeadwaySaniye > 0
+                ? Data.Isletme.SeferAraligiHeadwaySaniye
+                : 90;
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < trainCount; i++)
             {
-                double pos = Math.Round((i + 1) * (lineLen / (trainCount + 1)), 1);
-                string track = i % 2 == 0 ? "H1" : "H2";
-                string dir = track == "H1" ? "ileri" : "geri";
-                double speed = _rand.Next(45, 75);
-
                 Data.Trenler.Add(new TrenKonumu
                 {
                     Id = i + 1,
                     TrenAdi = $"Tren {i + 1:00}",
-                    Konum = pos,
-                    HatTipi = track,
-                    Yon = dir,
-                    AnlikHiz = speed,
+                    Konum = depotPosition,
+                    HatTipi = "H2",
+                    Yon = "geri",
+                    AnlikHiz = 0,
+                    IsDispatched = false,
+                    DispatchTimeSeconds = i * headwaySeconds,
                     YolcuSayisi = _rand.Next(80, 250),
-                    Durum = "HAREKET HALİNDE"
+                    Durum = "DEPO SAHASINDA - SEFER BEKLİYOR"
                 });
             }
 
@@ -714,28 +704,69 @@ namespace CerGucuSimulasyonu.ViewModels
                 SelectedItem = Data.Trenler[0];
             }
 
-            StatusText = $"🎲 {trainCount} adet tren Gebze-Darıca hattına yerleştirildi.";
+            StatusText = $"🎲 {trainCount} tren Depo sahasına yerleştirildi; H2 üzerinden {headwaySeconds:0} sn sefer aralığıyla Darıca yönünde çıkacak.";
         }
 
         [RelayCommand]
         public void AddSingleTrain()
         {
-            double lineLen = Data.HatUzunlugu > 0 ? Data.HatUzunlugu : 17850;
             int newId = Data.Trenler.Count + 1;
+            double headwaySeconds = Data.Isletme.SeferAraligiHeadwaySaniye > 0
+                ? Data.Isletme.SeferAraligiHeadwaySaniye
+                : 90;
+            double dispatchTime = _elapsedSimTime.TotalSeconds +
+                Math.Max(1, Data.Trenler.Count) * headwaySeconds;
             var train = new TrenKonumu
             {
                 Id = newId,
                 TrenAdi = $"Tren {newId:00}",
-                Konum = Math.Round(lineLen / 2, 1),
-                HatTipi = "H1",
-                Yon = "ileri",
-                AnlikHiz = 60,
+                Konum = GetDepotStartPosition(),
+                HatTipi = "H2",
+                Yon = "geri",
+                AnlikHiz = 0,
+                IsDispatched = false,
+                DispatchTimeSeconds = dispatchTime,
                 YolcuSayisi = 120,
-                Durum = "HAREKET HALİNDE"
+                Durum = "DEPO SAHASINDA - SEFER BEKLİYOR"
             };
             Data.Trenler.Add(train);
             SelectedItem = train;
-            StatusText = $"🚃 Tren #{newId} hatta eklendi.";
+            StatusText = $"🚃 Tren #{newId} Depo sahasına eklendi; planlanan çıkış: {dispatchTime:0} sn.";
+        }
+
+        private double GetDepotStartPosition()
+        {
+            double lineLength = Data.HatUzunlugu > 0 ? Data.HatUzunlugu : 15394;
+            double depotStationPosition = Data.Istasyonlar
+                .Where(station => station.Ad.Contains("depo", StringComparison.OrdinalIgnoreCase))
+                .Select(station => station.H2OrtaNokta)
+                .DefaultIfEmpty(lineLength)
+                .Last();
+            return Math.Clamp(depotStationPosition, 0, lineLength);
+        }
+
+        private void StartTrainsAtDepot()
+        {
+            double depotPosition = GetDepotStartPosition();
+            double headwaySeconds = Data.Isletme.SeferAraligiHeadwaySaniye > 0
+                ? Data.Isletme.SeferAraligiHeadwaySaniye
+                : 90;
+
+            for (int i = 0; i < Data.Trenler.Count; i++)
+            {
+                TrenKonumu train = Data.Trenler[i];
+                train.Konum = depotPosition;
+                train.HatTipi = "H2";
+                train.Yon = "geri";
+                train.AnlikHiz = 0;
+                train.IsDispatched = false;
+                train.DispatchTimeSeconds = _elapsedSimTime.TotalSeconds + i * headwaySeconds;
+                train.Durum = "DEPO SAHASINDA - SEFER BEKLİYOR";
+                train.CekilenGucKw = 0;
+                train.CekilenAkimA = 0;
+                train.AnlikPantografGucuKw = 0;
+                train.AnlikPantografAkimiA = 0;
+            }
         }
 
         [RelayCommand]
@@ -794,6 +825,7 @@ namespace CerGucuSimulasyonu.ViewModels
                             train.AnlikPantografGucuKw = 0;
                             train.AnlikPantografAkimiA = 0;
                         }
+                        StartTrainsAtDepot();
                         if (Data.Trenler.Any())
                         {
                             SelectedItem = Data.Trenler.First();

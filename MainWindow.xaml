@@ -7,7 +7,7 @@
         xmlns:models="clr-namespace:CerGucuSimulasyonu.Models"
         mc:Ignorable="d"
         Title="⚡ Gebze-Darıca Metro Cer Gücü &amp; Sinyalizasyon Canlı Simülasyonu ve Analiz Sistemi"
-        Height="840" Width="1520"
+        Height="740" Width="1420"
         MinHeight="720" MinWidth="1180"
         Background="#10111D"
         FontFamily="Segoe UI" FontSize="13"
@@ -173,8 +173,6 @@
                             </Button.Style>
                         </Button>
 
-                        <Button Command="{Binding ResetSimulationCommand}" Content="🔄 Sıfırla" Background="#24263D" Foreground="#E2E8F0" BorderBrush="#3F4263" Margin="2,0" Padding="6,4" Cursor="Hand"/>
-
                         <Border Background="#0F101A" CornerRadius="4" Padding="6,3" Margin="4,0" BorderBrush="#2F314C" BorderThickness="1">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="⏱ " Foreground="#FACC15"/>
@@ -182,10 +180,26 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Hız -->
-                        <Button Command="{Binding SetSpeedCommand}" CommandParameter="1.0" Content="1x" Background="#23243B" Foreground="White" BorderBrush="#3F4263" Margin="1,0" Padding="5,2" Cursor="Hand"/>
-                        <Button Command="{Binding SetSpeedCommand}" CommandParameter="2.0" Content="2x" Background="#23243B" Foreground="White" BorderBrush="#3F4263" Margin="1,0" Padding="5,2" Cursor="Hand"/>
-                        <Button Command="{Binding SetSpeedCommand}" CommandParameter="5.0" Content="5x" Background="#23243B" Foreground="White" BorderBrush="#3F4263" Margin="1,0" Padding="5,2" Cursor="Hand"/>
+                        <TextBlock Text="Hız" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="6,0,2,0"/>
+                        <Slider Minimum="0.1"
+                                Maximum="10"
+                                Value="{Binding SimulationSpeed, UpdateSourceTrigger=PropertyChanged}"
+                                Width="110"
+                                VerticalAlignment="Center"
+                                IsSnapToTickEnabled="True"
+                                TickFrequency="0.1"
+                                ToolTip="Simülasyon hızı (0,1x–10x)."/>
+                        <TextBox Text="{Binding SimulationSpeed, StringFormat={}{0:F1}, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="42"
+                                 Margin="4,0,0,0"
+                                 Padding="3,2"
+                                 VerticalContentAlignment="Center"
+                                 TextAlignment="Right"
+                                 Background="#1E2238"
+                                 Foreground="White"
+                                 BorderBrush="#3E446E"
+                                 ToolTip="Simülasyon hızını 0,1x–10x arasında girin."/>
+                        <TextBlock Text="x" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="2,0,0,0"/>
                     </StackPanel>
 
                     <Separator Width="1" Height="20" Background="#2F314C" Margin="4,0"/>
@@ -194,6 +208,10 @@
                     <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
                         <RadioButton x:Name="BtnModeSelect" GroupName="ToolMode" Content="🔍Seç" IsChecked="True" 
                                      Click="OnModeChanged" Tag="SELECT"
+                                     Style="{StaticResource ModeToggleButtonStyle}"/>
+                        <RadioButton x:Name="BtnModeDelete" GroupName="ToolMode" Content="🗑 Sil"
+                                     ToolTip="Silmek istediğiniz harita öğesine tıklayın."
+                                     Click="OnModeChanged" Tag="DELETE"
                                      Style="{StaticResource ModeToggleButtonStyle}"/>
 
                         <RadioButton x:Name="BtnModeStation" GroupName="ToolMode" Content="🚉 İstasyon" 
@@ -204,17 +222,31 @@
                                      Click="OnModeChanged" Tag="TRAFO"
                                      Style="{StaticResource ModeToggleButtonStyle}"/>
 
-                        <RadioButton x:Name="BtnModeSpeed" GroupName="ToolMode" Content="🚦 Hız" 
+                        <RadioButton x:Name="BtnModeSpeed" GroupName="ToolMode" Content="🚦 Hız"
+                                     ToolTip="Sürükleyerek başlangıç-bitiş aralığını seçin; o kesime hız limiti eklenir. Limiti seçtikten sonra öğeyi düzenleyin."
                                      Click="OnModeChanged" Tag="SPEED"
                                      Style="{StaticResource ModeToggleButtonStyle}"/>
 
-                        <RadioButton x:Name="BtnModeEgim" GroupName="ToolMode" Content="📐 Eğim" 
+                        <RadioButton x:Name="BtnModeEgim" GroupName="ToolMode" Content="📐 Eğim"
+                                     ToolTip="Sürükleyerek eğimin geçerli olacağı kesimi seçin; önizlemede açı ve yönü belirleyin."
                                      Click="OnModeChanged" Tag="EGIM"
                                      Style="{StaticResource ModeToggleButtonStyle}"/>
 
-                        <RadioButton x:Name="BtnModeKurp" GroupName="ToolMode" Content="↩ Kurp" 
+                        <RadioButton x:Name="BtnModeKurp" GroupName="ToolMode" Content="↩ Kurp"
+                                     ToolTip="Yatayda kurp aralığını seçin; yukarı sürükleme H1, aşağı sürükleme H2 hattını seçer. Yarıçapı R alanına yazın."
                                      Click="OnModeChanged" Tag="KURP"
                                      Style="{StaticResource ModeToggleButtonStyle}"/>
+                        <TextBlock Text="R (m)" Foreground="#CBD5E1" VerticalAlignment="Center" Margin="6,0,2,0"/>
+                        <TextBox x:Name="TxtCurveRadius"
+                                 Text="350"
+                                 Width="58"
+                                 MaxLength="7"
+                                 Padding="4,2"
+                                 VerticalContentAlignment="Center"
+                                 Background="#1E2238"
+                                 Foreground="White"
+                                 BorderBrush="#3E446E"
+                                 ToolTip="Kurp çizilirken kullanılacak yatay yarıçap; birim metre."/>
 
                         <RadioButton x:Name="BtnModeParallel" GroupName="ToolMode" Content="⊥ Paralel" 
                                      Click="OnModeChanged" Tag="PARALLEL"
@@ -224,17 +256,9 @@
 
                 <!-- SAĞ ALAN: BUTONLAR -->
                 <WrapPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Button Click="OnOpenStartupWizard" Content="⚙️ Parametre Sihirbazı" Background="#3B82F6" Foreground="White" BorderThickness="0" Margin="2,0" Padding="8,4" FontWeight="Bold" Cursor="Hand"/>
-                    <Button Command="{Binding GenerateRandomTrainsCommand}" Content="🎲 Tren Üret" Background="#7C4DFF" Foreground="White" BorderThickness="0" Margin="2,0" Padding="8,4" FontWeight="Bold" Cursor="Hand"/>
                     <Button Command="{Binding AddSingleTrainCommand}" Content="🚃 +1 Tren" Background="#24263D" Foreground="#38BDF8" BorderBrush="#38BDF8" Margin="2,0" Padding="6,4" Cursor="Hand"/>
-                    <Button Command="{Binding ZoomInCommand}" Content="🔍+" ToolTip="Yakınlaştır" Margin="1,0" Padding="6,4" Cursor="Hand"/>
-                    <Button Command="{Binding ZoomOutCommand}" Content="🔍-" ToolTip="Uzaklaştır" Margin="1,0" Padding="6,4" Cursor="Hand"/>
-                    <Button Command="{Binding ZoomResetCommand}" Content="🔄 %100" ToolTip="Yakınlaştırmayı Sıfırla" Margin="1,0" Padding="6,4" Cursor="Hand"/>
-                    <Button Command="{Binding SaveDataCommand}" Content="💾 Kaydet" Background="#059669" Foreground="White" BorderThickness="0" Margin="3,0" Padding="8,4" Cursor="Hand"/>
-                    <Button Command="{Binding LoadDataCommand}" Content="📂 Yükle" Margin="1,0" Padding="6,4" Cursor="Hand"/>
                     <Button Command="{Binding ExportWordReportCommand}" Content="📝 Word Raporu" Background="#2563EB" Foreground="White" BorderThickness="0" Margin="3,0" Padding="8,4" Cursor="Hand"/>
                     <Button Command="{Binding ExportExcelReportCommand}" Content="📊 Excel Raporu" Background="#16A34A" Foreground="White" BorderThickness="0" Margin="1,0" Padding="8,4" Cursor="Hand"/>
-                    <Button Command="{Binding RunAllScenariosCommand}" Content="▶ Tüm Senaryolar" Background="#9333EA" Foreground="White" BorderThickness="0" Margin="3,0" Padding="8,4" Cursor="Hand"/>
                 </WrapPanel>
 
             </DockPanel>
@@ -279,6 +303,64 @@
                         <Ellipse Width="10" Height="10" Fill="#FB923C" Margin="0,0,5,0"/>
                         <TextBlock Text="H2 (Depo → Darıca)" Foreground="#FB923C" FontWeight="SemiBold" Margin="0,0,15,0" FontSize="11"/>
                         <TextBlock Text="🚉 12 İstasyon | ⚡ 7 DC Trafo | 🛡️ EN 50122-1" Foreground="#C5C7D9" FontSize="11"/>
+                        <TextBlock Text="| Eğim profili yatay/düşey aynı ölçekte; H1-H2 aralığı ve simgeler şematiktir"
+                                   Foreground="#FBBF24" FontSize="10" Margin="10,0,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="PendingPreviewPanel"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        Margin="12,48,12,0"
+                        Padding="14"
+                        Background="#F01B2033"
+                        BorderBrush="#FBBF24"
+                        BorderThickness="1.5"
+                        CornerRadius="8"
+                        Visibility="Collapsed"
+                        Panel.ZIndex="10">
+                    <StackPanel MinWidth="310">
+                        <TextBlock Text="Öğe önizlemesi"
+                                   Foreground="#FBBF24"
+                                   FontWeight="Bold"
+                                   FontSize="13"/>
+                        <TextBlock x:Name="TxtPendingPreview"
+                                   Foreground="White"
+                                   TextWrapping="Wrap"
+                                   Margin="0,6,0,8"/>
+                        <StackPanel x:Name="PendingGradeFields" Visibility="Collapsed">
+                            <TextBlock Text="Eğim açısı (derece)"
+                                       Foreground="#CBD5E1"
+                                       Margin="0,0,0,3"/>
+                            <TextBox x:Name="TxtPendingGradeAngle"
+                                     Text="1"
+                                     Width="90"
+                                     HorizontalAlignment="Left"
+                                     Padding="5,3"
+                                     Background="#111827"
+                                     Foreground="White"
+                                     BorderBrush="#475569"
+                                     TextChanged="PendingGradeAngle_Changed"/>
+                            <TextBlock Text="H1 yönündeki eğim yönü"
+                                       Foreground="#CBD5E1"
+                                       Margin="0,7,0,3"/>
+                            <ComboBox x:Name="CmbPendingGradeDirection"
+                                      SelectedIndex="0"
+                                      SelectionChanged="PendingGradeDirection_Changed"
+                                      Background="#111827"
+                                      Foreground="White">
+                                <ComboBoxItem Content="Yukarı (H1 yönü)"/>
+                                <ComboBoxItem Content="Aşağı (H1 yönü)"/>
+                            </ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                            <Button Content="İptal" Click="CancelPendingPreview_Click"
+                                    Background="#374151" Foreground="White" BorderThickness="0"
+                                    Padding="12,5" Margin="0,0,6,0" Cursor="Hand"/>
+                            <Button Content="Onayla ve ekle" Click="ConfirmPendingPreview_Click"
+                                    Background="#059669" Foreground="White" BorderThickness="0"
+                                    Padding="12,5" Cursor="Hand"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
             </Grid>

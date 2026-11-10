@@ -342,7 +342,7 @@
 
                                 <Grid Margin="0,4">
                                     <TextBlock Text="Hat Uzunluğu (m):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
-                                    <TextBox x:Name="TxtHatUzunlugu" Width="100" HorizontalAlignment="Right" Text="15350"/>
+                                    <TextBox x:Name="TxtHatUzunlugu" Width="100" HorizontalAlignment="Right" Text="15394"/>
                                 </Grid>
                                 <Grid Margin="0,4">
                                     <TextBlock Text="Rijit Katener Km Direnci (mΩ/km):" VerticalAlignment="Center" Foreground="#CBD5E1"/>

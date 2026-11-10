@@ -22,8 +22,26 @@ namespace CerGucuSimulasyonu.Models
 
         public double Uzunluk => SimulationFormulas.Length(Baslangic, Bitis);
         public string EgimTipi => EgimYuzdesi > 0 ? "Tırmanış / Çıkış (+)" : (EgimYuzdesi < 0 ? "İniş / Eğim (-)" : "Düz Hat");
+        [JsonIgnore]
+        public double AciDerece => Math.Atan(Math.Abs(EgimYuzdesi) / 100.0) * 180.0 / Math.PI;
+        [JsonIgnore]
+        public string Yon => EgimYuzdesi >= 0 ? "Yukarı (H1 yönü)" : "Aşağı (H1 yönü)";
         public double EgimBinde => SimulationFormulas.GradePermille(EgimYuzdesi);
         public double EkEgitimKuvvetiKn => SimulationFormulas.ReferenceGradeForceKn(EgimYuzdesi);
+
+        public void SetAngleAndDirection(double angleDegrees, bool uphillInH1Direction)
+        {
+            if (!double.IsFinite(angleDegrees) || angleDegrees < 0 || angleDegrees >= 45)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(angleDegrees),
+                    "Eğim açısı 0° veya daha büyük ve 45°'den küçük olmalıdır.");
+            }
+
+            EgimYuzdesi = SimulationFormulas.GradePercentFromAngleDegrees(
+                angleDegrees,
+                uphillInH1Direction);
+        }
     }
 
     public partial class HatKurbu : ObservableObject
@@ -32,6 +50,8 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _bitis;
         [ObservableProperty] private double _yaricap = 300;
         [ObservableProperty] private string _hatTipi = "H1";
+        [ObservableProperty] private string _yon = "Belirsiz";
+        [ObservableProperty] private string _icHat = "H1";
 
         public double Uzunluk => SimulationFormulas.Length(Baslangic, Bitis);
         public double RocklDirenci => SimulationFormulas.CurveResistanceCoefficient(Yaricap);
@@ -301,7 +321,7 @@ namespace CerGucuSimulasyonu.Models
     // Ana model container
     public partial class SimulationData : ObservableObject
     {
-        [ObservableProperty] private double _hatUzunlugu = 15350;
+        [ObservableProperty] private double _hatUzunlugu = 15394;
         [ObservableProperty] private CerKatenerParametreleri _cerKatener = new();
         [ObservableProperty] private TrenParametreleri _tren = new();
         [ObservableProperty] private IsletmeParametreleri _isletme = new();

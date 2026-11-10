@@ -69,7 +69,7 @@ namespace CerGucuSimulasyonu.Services
         public void AdvanceOneStep(double dt)
         {
             _simTotalElapsed += dt;
-            double maxLine = _data.HatUzunlugu > 0 ? _data.HatUzunlugu : 15350;
+            double maxLine = _data.HatUzunlugu > 0 ? _data.HatUzunlugu : 15394;
             double minSafeDistance = _data.Isletme?.MinimumTrenMesafesiMetre > 0 ? _data.Isletme.MinimumTrenMesafesiMetre : 400.0;
             double trainWeightTon = _data.Tren.Aw3DoluAgirlik > 0 ? _data.Tren.Aw3DoluAgirlik : 236.0;
             double rotatingMassTon = SimulationFormulas.RotatingMassTon(

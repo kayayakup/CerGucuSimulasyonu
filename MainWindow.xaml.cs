@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,6 +18,7 @@ namespace CerGucuSimulasyonu
     {
         private MainViewModel ViewModel => (MainViewModel)DataContext;
 
+        // The two schematic lanes are spaced for readability; their real lateral separation is not documented.
         private const double H1_Y = 190;
         private const double H2_Y = 320;
         private const double TRAFO_Y = 95; // Trafoları rayların üstüne bağımsız alarak istasyonlarla çakışmasını önle
@@ -31,6 +33,8 @@ namespace CerGucuSimulasyonu
         private double _dragItemOriginalKm = 0;
         private Point? _regionStartPoint = null;
         private Rectangle? _previewRect = null;
+        private object? _pendingItem;
+        private List<(double Position, double H1Elevation, double H2Elevation)> _trackElevationProfile = new();
 
         private DispatcherTimer? _uiAnimationTimer;
         private SimulationData? _hookedData;
@@ -169,24 +173,132 @@ namespace CerGucuSimulasyonu
             return BASE_LINE_PX * ViewModel.ZoomLevel;
         }
 
+        private double MetersToPixels(double meters)
+        {
+            double hatLength = ViewModel.Data.HatUzunlugu > 0
+                ? ViewModel.Data.HatUzunlugu
+                : 15394;
+            return meters * GetTrackPixelLength() / hatLength;
+        }
+
         private double KmToX(double km)
         {
-            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 17850;
+            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 15394;
             return MARGIN_L + (km / hat * GetTrackPixelLength());
         }
 
         private double XToKm(double x)
         {
-            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 17850;
+            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 15394;
             double len = GetTrackPixelLength();
             if (len <= 0) return 0;
             double km = (x - MARGIN_L) / len * hat;
             return Math.Max(0, Math.Min(hat, km));
         }
 
-        private string GetNearestTrack(double y)
+        private double GetTrackY(double positionM, string track)
         {
-            return Math.Abs(y - H1_Y) <= Math.Abs(y - H2_Y) ? "H1" : "H2";
+            double elevation = 0;
+            if (_trackElevationProfile.Count > 1)
+            {
+                int low = 0;
+                int high = _trackElevationProfile.Count - 1;
+                while (low + 1 < high)
+                {
+                    int middle = low + (high - low) / 2;
+                    if (_trackElevationProfile[middle].Position <= positionM)
+                    {
+                        low = middle;
+                    }
+                    else
+                    {
+                        high = middle;
+                    }
+                }
+
+                var previous = _trackElevationProfile[low];
+                var next = _trackElevationProfile[high];
+                double ratio = (positionM - previous.Position) /
+                    (next.Position - previous.Position);
+                double previousElevation = track == "H1"
+                    ? previous.H1Elevation
+                    : previous.H2Elevation;
+                double nextElevation = track == "H1"
+                    ? next.H1Elevation
+                    : next.H2Elevation;
+                elevation = previousElevation + (nextElevation - previousElevation) * ratio;
+            }
+
+            double startingElevation = track == "H1"
+                ? _trackElevationProfile[0].H1Elevation
+                : _trackElevationProfile[0].H2Elevation;
+            return (track == "H1" ? H1_Y : H2_Y) -
+                MetersToPixels(elevation - startingElevation);
+        }
+
+        private void BuildTrackElevationProfile()
+        {
+            double lineLength = ViewModel.Data.HatUzunlugu > 0
+                ? ViewModel.Data.HatUzunlugu
+                : 15394;
+            IEnumerable<HatEgimi> gradients = ViewModel.Data.HatEgimleri;
+            if (_pendingItem is HatEgimi pendingGradient)
+            {
+                gradients = gradients.Append(pendingGradient);
+            }
+
+            HatEgimi[] validGradients = gradients
+                .Where(gradient =>
+                    gradient.Bitis > gradient.Baslangic &&
+                    gradient.HatTipi is "H1" or "H2")
+                .OrderBy(gradient => gradient.Baslangic)
+                .ToArray();
+            double[] boundaries = validGradients
+                .SelectMany(gradient => new[] { gradient.Baslangic, gradient.Bitis })
+                .Append(0)
+                .Append(lineLength)
+                .Where(position => position >= 0 && position <= lineLength)
+                .Distinct()
+                .OrderBy(position => position)
+                .ToArray();
+
+            _trackElevationProfile =
+                new List<(double Position, double H1Elevation, double H2Elevation)>(boundaries.Length);
+            double h1Elevation = 0;
+            double h2Elevation = 0;
+            _trackElevationProfile.Add((boundaries[0], h1Elevation, h2Elevation));
+            for (int i = 1; i < boundaries.Length; i++)
+            {
+                double start = boundaries[i - 1];
+                double end = boundaries[i];
+                double midpoint = (start + end) / 2;
+                double h1Grade = GetGradeAt(validGradients, "H1", midpoint);
+                double h2Grade = GetGradeAt(validGradients, "H2", midpoint);
+                h1Elevation += (end - start) * h1Grade / 100.0;
+                h2Elevation += (end - start) * h2Grade / 100.0;
+                _trackElevationProfile.Add((end, h1Elevation, h2Elevation));
+            }
+        }
+
+        private static double GetGradeAt(
+            HatEgimi[] gradients,
+            string track,
+            double positionM)
+        {
+            HatEgimi? gradient = gradients.FirstOrDefault(item =>
+                item.HatTipi == track &&
+                positionM >= item.Baslangic &&
+                positionM < item.Bitis);
+            return gradient?.EgimYuzdesi ?? 0;
+        }
+
+        private string GetNearestTrack(double x, double y)
+        {
+            double positionM = XToKm(x);
+            return Math.Abs(y - GetTrackY(positionM, "H1")) <=
+                   Math.Abs(y - GetTrackY(positionM, "H2"))
+                ? "H1"
+                : "H2";
         }
 
         #endregion
@@ -197,24 +309,140 @@ namespace CerGucuSimulasyonu
         {
             TrackCanvas.Children.Clear();
 
-            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 17850;
+            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 15394;
             double trackPx = GetTrackPixelLength();
             double totalWidth = MARGIN_L + trackPx + MARGIN_R;
 
             TrackCanvas.Width = totalWidth;
+            BuildTrackElevationProfile();
 
             double xs = MARGIN_L;
             double xe = MARGIN_L + trackPx;
 
             DrawRulerAndGrid(xs, xe, hat);
             DrawKatenerSeksiyonlari();
-            DrawRegions();
             DrawTrackLines(xs, xe);
+            DrawRegions();
             DrawRayParalellemeleri();
             DrawSeksiyonAyiricilar();
             DrawIstasyonlar();
             DrawTrafoMerkezleri();
             DrawTrenler();
+            DrawPendingPreview();
+        }
+
+        private void DrawPendingPreview()
+        {
+            if (_pendingItem == null)
+            {
+                return;
+            }
+
+            double x1;
+            double x2;
+            string track;
+            switch (_pendingItem)
+            {
+                case HizLimiti speed:
+                    x1 = KmToX(speed.Baslangic);
+                    x2 = KmToX(speed.Bitis);
+                    track = speed.HatTipi;
+                    AddPreviewLine(x1, x2, track == "H1" ? H1_Y - 50 : H2_Y + 51);
+                    break;
+                case HatEgimi grade:
+                    x1 = KmToX(grade.Baslangic);
+                    x2 = KmToX(grade.Bitis);
+                    track = grade.HatTipi;
+                    double gradeCenterY = GetTrackY(
+                        (grade.Baslangic + grade.Bitis) / 2,
+                        track);
+                    var gradePreview = new Rectangle
+                    {
+                        Width = Math.Max(12, x2 - x1),
+                        Height = 18,
+                        Fill = new SolidColorBrush(Color.FromArgb(45, 250, 204, 21)),
+                        Stroke = Brushes.Yellow,
+                        StrokeThickness = 2,
+                        StrokeDashArray = new DoubleCollection { 5, 3 },
+                        IsHitTestVisible = false
+                    };
+                    Canvas.SetLeft(gradePreview, x1);
+                    Canvas.SetTop(gradePreview, gradeCenterY + (track == "H1" ? -34 : 24));
+                    TrackCanvas.Children.Add(gradePreview);
+                    break;
+                case HatKurbu curve:
+                    {
+                        var curvePreview = new Polyline
+                        {
+                            Stroke = Brushes.Yellow,
+                            StrokeThickness = 4,
+                            StrokeDashArray = new DoubleCollection { 6, 3 },
+                            IsHitTestVisible = false
+                        };
+                        double stepM = Math.Max(10, (curve.Bitis - curve.Baslangic) / 32);
+                        for (double position = curve.Baslangic; position < curve.Bitis; position += stepM)
+                        {
+                            curvePreview.Points.Add(new Point(KmToX(position), GetTrackY(position, curve.HatTipi)));
+                        }
+                        curvePreview.Points.Add(new Point(KmToX(curve.Bitis), GetTrackY(curve.Bitis, curve.HatTipi)));
+                        TrackCanvas.Children.Add(curvePreview);
+                    }
+                    break;
+                case Istasyon station:
+                    AddPointPreview(station.H1OrtaNokta);
+                    break;
+                case TrafoMerkezi substation:
+                    AddPointPreview(substation.DilasKonumuH1);
+                    break;
+                case RayParalellemesi parallel:
+                    double px = KmToX(parallel.H1BaglantiKm);
+                    var parallelPreview = new Line
+                    {
+                        X1 = px,
+                        X2 = px,
+                        Y1 = GetTrackY(parallel.H1BaglantiKm, "H1"),
+                        Y2 = GetTrackY(parallel.H2BaglantiKm, "H2"),
+                        Stroke = Brushes.Yellow,
+                        StrokeThickness = 3,
+                        StrokeDashArray = new DoubleCollection { 5, 3 },
+                        IsHitTestVisible = false
+                    };
+                    TrackCanvas.Children.Add(parallelPreview);
+                    break;
+            }
+
+            void AddPreviewLine(double startX, double endX, double y)
+            {
+                var line = new Line
+                {
+                    X1 = startX,
+                    X2 = endX,
+                    Y1 = y,
+                    Y2 = y,
+                    Stroke = Brushes.Yellow,
+                    StrokeThickness = 4,
+                    StrokeDashArray = new DoubleCollection { 6, 3 },
+                    IsHitTestVisible = false
+                };
+                TrackCanvas.Children.Add(line);
+            }
+
+            void AddPointPreview(double position)
+            {
+                double x = KmToX(position);
+                var marker = new Ellipse
+                {
+                    Width = 24,
+                    Height = 24,
+                    Fill = new SolidColorBrush(Color.FromArgb(60, 250, 204, 21)),
+                    Stroke = Brushes.Yellow,
+                    StrokeThickness = 3,
+                    IsHitTestVisible = false
+                };
+                Canvas.SetLeft(marker, x - 12);
+                Canvas.SetTop(marker, GetTrackY(position, "H1") - 12);
+                TrackCanvas.Children.Add(marker);
+            }
         }
 
         private void DrawRulerAndGrid(double xs, double xe, double hat)
@@ -363,9 +591,9 @@ namespace CerGucuSimulasyonu
                 var isolatorLine = new Line
                 {
                     X1 = x,
-                    Y1 = 140,
+                    Y1 = GetTrackY(ayirici.Konum, "H1") - 40,
                     X2 = x,
-                    Y2 = 360,
+                    Y2 = GetTrackY(ayirici.Konum, "H2") + 40,
                     Stroke = new SolidColorBrush(isSelected ? Colors.White : Color.FromRgb(167, 139, 250)),
                     StrokeThickness = isSelected ? 2.5 : 1.5,
                     StrokeDashArray = new DoubleCollection { 3, 2 },
@@ -400,7 +628,9 @@ namespace CerGucuSimulasyonu
 
                 AttachItemEvents(badge, ayirici);
                 Canvas.SetLeft(badge, x - 13);
-                Canvas.SetTop(badge, (H1_Y + H2_Y) / 2 - 9);
+                Canvas.SetTop(
+                    badge,
+                    (GetTrackY(ayirici.Konum, "H1") + GetTrackY(ayirici.Konum, "H2")) / 2 - 9);
                 TrackCanvas.Children.Add(badge);
             }
         }
@@ -411,23 +641,17 @@ namespace CerGucuSimulasyonu
             for (int i = 0; i < ViewModel.Data.HizLimitleri.Count; i++)
             {
                 var hiz = ViewModel.Data.HizLimitleri[i];
-                double x1 = KmToX(hiz.Baslangic);
-                double x2 = KmToX(hiz.Bitis);
-                double w = Math.Max(6, x2 - x1);
-                double y = hiz.HatTipi == "H1" ? H1_Y - 50 : H2_Y + 44;
+                double labelOffset = hiz.HatTipi == "H1" ? -50 : 44;
 
-                var line = new Line
+                var line = new Polyline
                 {
-                    X1 = x1,
-                    Y1 = y + 7,
-                    X2 = x2,
-                    Y2 = y + 7,
                     Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)),
                     StrokeThickness = 2.5,
                     StrokeDashArray = new DoubleCollection { 4, 3 },
                     Tag = hiz,
                     ToolTip = $"Hız Limiti: {hiz.Limit:0} km/h ({hiz.Baslangic:0}m - {hiz.Bitis:0}m) [{hiz.HatTipi}]"
                 };
+                AddRegionPathPoints(line, hiz.Baslangic, hiz.Bitis, hiz.HatTipi, labelOffset + 7);
                 AttachItemEvents(line, hiz);
                 TrackCanvas.Children.Add(line);
 
@@ -446,8 +670,9 @@ namespace CerGucuSimulasyonu
                     Tag = hiz
                 };
                 AttachItemEvents(badge, hiz);
-                Canvas.SetLeft(badge, x1 + (w / 2) - 18);
-                Canvas.SetTop(badge, y - 1);
+                double middlePosition = (hiz.Baslangic + hiz.Bitis) / 2;
+                Canvas.SetLeft(badge, KmToX(middlePosition) - 18);
+                Canvas.SetTop(badge, GetTrackY(middlePosition, hiz.HatTipi) + labelOffset - 1);
                 TrackCanvas.Children.Add(badge);
             }
 
@@ -455,37 +680,28 @@ namespace CerGucuSimulasyonu
             for (int i = 0; i < ViewModel.Data.HatEgimleri.Count; i++)
             {
                 var egim = ViewModel.Data.HatEgimleri[i];
-                double x1 = KmToX(egim.Baslangic);
-                double x2 = KmToX(egim.Bitis);
-                double w = Math.Max(12, x2 - x1);
-                double y = egim.HatTipi == "H1" ? H1_Y - 34 : H2_Y + 24;
 
                 bool isUp = egim.EgimYuzdesi > 0;
                 bool isDown = egim.EgimYuzdesi < 0;
-                Color colBg = isUp 
-                    ? Color.FromArgb(100, 239, 68, 68) 
-                    : (isDown ? Color.FromArgb(100, 16, 185, 129) : Color.FromArgb(80, 100, 116, 139));
                 Color colBorder = isUp ? Color.FromRgb(248, 113, 113) : (isDown ? Color.FromRgb(52, 211, 153) : Color.FromRgb(148, 163, 184));
 
-                var rect = new Rectangle
+                var slopePath = new Polyline
                 {
-                    Width = w,
-                    Height = 18,
-                    Fill = new SolidColorBrush(colBg),
                     Stroke = new SolidColorBrush(colBorder),
-                    StrokeThickness = 1.2,
-                    RadiusX = 4,
-                    RadiusY = 4,
+                    StrokeThickness = 12,
+                    Opacity = 0.38,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
                     Tag = egim,
-                    ToolTip = $"📐 Eğim Bölgesi ({egim.HatTipi}): %{egim.EgimYuzdesi:0.#} {(isUp ? "↗ Tırmanış (Çıkış)" : (isDown ? "↘ İniş" : "➡ Düz"))} | {egim.Baslangic:0}m - {egim.Bitis:0}m ({egim.Uzunluk:0}m)"
+                    ToolTip = $"📐 Eğim Bölgesi ({egim.HatTipi}): {egim.AciDerece:0.##}° {egim.Yon}, %{Math.Abs(egim.EgimYuzdesi):0.###} | {egim.Baslangic:0}m - {egim.Bitis:0}m ({egim.Uzunluk:0}m)"
                 };
-                AttachItemEvents(rect, egim);
-                Canvas.SetLeft(rect, x1);
-                Canvas.SetTop(rect, y);
-                TrackCanvas.Children.Add(rect);
+                AddRegionPathPoints(slopePath, egim.Baslangic, egim.Bitis, egim.HatTipi, 0);
+                AttachItemEvents(slopePath, egim);
+                TrackCanvas.Children.Add(slopePath);
 
                 string arrowSymbol = isUp ? "↗" : (isDown ? "↘" : "➡");
                 string desc = isUp ? "Çıkış" : (isDown ? "İniş" : "Düz");
+                double middlePosition = (egim.Baslangic + egim.Bitis) / 2;
                 var txt = new TextBlock
                 {
                     Text = $"{arrowSymbol} %{Math.Abs(egim.EgimYuzdesi):0.#} ({desc})",
@@ -494,8 +710,9 @@ namespace CerGucuSimulasyonu
                     FontWeight = FontWeights.Bold,
                     IsHitTestVisible = false
                 };
-                Canvas.SetLeft(txt, x1 + Math.Max(4, (w / 2) - 28));
-                Canvas.SetTop(txt, y + 1);
+                Canvas.SetLeft(txt, KmToX(middlePosition) - 28);
+                Canvas.SetTop(txt, GetTrackY(middlePosition, egim.HatTipi) +
+                    (egim.HatTipi == "H1" ? -18 : 6));
                 TrackCanvas.Children.Add(txt);
             }
 
@@ -503,40 +720,82 @@ namespace CerGucuSimulasyonu
             for (int i = 0; i < ViewModel.Data.HatKurplari.Count; i++)
             {
                 var kurp = ViewModel.Data.HatKurplari[i];
-                double x1 = KmToX(kurp.Baslangic);
                 double x2 = KmToX(kurp.Bitis);
-                double w = Math.Max(6, x2 - x1);
-                double y = kurp.HatTipi == "H1" ? H1_Y + 16 : H2_Y - 30;
+                string tooltip =
+                    $"↪ {kurp.HatTipi} kurbu | R={kurp.Yaricap:0} m | {kurp.Baslangic:0}–{kurp.Bitis:0} m\n" +
+                    (kurp.Yon == "Belirsiz"
+                        ? "Raporda gerçek dönüş yönü verilmemiştir; haritadaki yön ve kıvrım yalnızca güzergâhı okunur kılmak için şematiktir."
+                        : $"Dönüş yönü: {kurp.Yon} (H1 yönüne göre).");
 
-                var rect = new Rectangle
+                string track = kurp.HatTipi;
+                var curveHighlight = new Polyline
                 {
-                    Width = w,
-                    Height = 14,
-                    Fill = new SolidColorBrush(Color.FromArgb(70, 255, 183, 77)),
-                    Stroke = new SolidColorBrush(Color.FromRgb(255, 183, 77)),
-                    StrokeThickness = 1,
-                    RadiusX = 3,
-                    RadiusY = 3,
+                    Stroke = new SolidColorBrush(track == "H1"
+                        ? Color.FromRgb(192, 132, 252)
+                        : Color.FromRgb(253, 224, 71)),
+                    StrokeThickness = 9,
+                    Opacity = 0.8,
+                    StrokeStartLineCap = PenLineCap.Round,
+                    StrokeEndLineCap = PenLineCap.Round,
                     Tag = kurp,
-                    ToolTip = $"Kurp R={kurp.Yaricap:0}m ({kurp.Baslangic:0}m - {kurp.Bitis:0}m) [{kurp.HatTipi}]"
+                    ToolTip = tooltip
                 };
-                AttachItemEvents(rect, kurp);
-                Canvas.SetLeft(rect, x1);
-                Canvas.SetTop(rect, y);
-                TrackCanvas.Children.Add(rect);
-
-                var txt = new TextBlock
+                double stepM = Math.Max(10, (kurp.Bitis - kurp.Baslangic) / 32);
+                for (double position = kurp.Baslangic; position < kurp.Bitis; position += stepM)
                 {
-                    Text = $"R={kurp.Yaricap:0}",
-                    FontSize = 9,
-                    Foreground = new SolidColorBrush(Color.FromRgb(255, 200, 120)),
-                    FontWeight = FontWeights.Bold,
-                    IsHitTestVisible = false
+                    curveHighlight.Points.Add(new Point(KmToX(position), GetTrackY(position, track)));
+                }
+                curveHighlight.Points.Add(new Point(x2, GetTrackY(kurp.Bitis, track)));
+                AttachItemEvents(curveHighlight, kurp);
+                TrackCanvas.Children.Add(curveHighlight);
+
+                double middlePosition = (kurp.Baslangic + kurp.Bitis) / 2;
+                var curveLabel = new Border
+                {
+                    Padding = new Thickness(4, 1, 4, 1),
+                    Background = new SolidColorBrush(Color.FromArgb(230, 15, 23, 42)),
+                    BorderBrush = new SolidColorBrush(track == "H1"
+                        ? Color.FromRgb(192, 132, 252)
+                        : Color.FromRgb(253, 224, 71)),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(3),
+                    Tag = kurp,
+                    ToolTip = tooltip,
+                    Child = new TextBlock
+                    {
+                        Text = "KURP",
+                        FontSize = 8,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = new SolidColorBrush(track == "H1"
+                            ? Color.FromRgb(216, 180, 254)
+                            : Color.FromRgb(254, 240, 138))
+                    }
                 };
-                Canvas.SetLeft(txt, x1 + (w / 2) - 14);
-                Canvas.SetTop(txt, y - 1);
-                TrackCanvas.Children.Add(txt);
+                AttachItemEvents(curveLabel, kurp);
+                Canvas.SetLeft(curveLabel, KmToX(middlePosition) - 19);
+                Canvas.SetTop(curveLabel, GetTrackY(middlePosition, track) - 20);
+                TrackCanvas.Children.Add(curveLabel);
             }
+        }
+
+        private void AddRegionPathPoints(
+            Polyline path,
+            double startM,
+            double endM,
+            string track,
+            double verticalOffset)
+        {
+            double stepM = Math.Max(10, (endM - startM) / 64);
+            for (double position = startM; position < endM; position += stepM)
+            {
+                path.Points.Add(new Point(
+                    KmToX(position),
+                    GetTrackY(position, track) + verticalOffset));
+            }
+
+            path.Points.Add(new Point(
+                KmToX(endM),
+                GetTrackY(endM, track) + verticalOffset));
         }
 
         private string BuildTrainElectricalTooltip(TrenKonumu train)
@@ -824,12 +1083,8 @@ namespace CerGucuSimulasyonu
         private void DrawTrackLines(double xs, double xe)
         {
             // H1 Rayı (Üst Hat - Darıca -> Depo)
-            var h1Line = new Line
+            var h1Line = new Polyline
             {
-                X1 = xs,
-                Y1 = H1_Y,
-                X2 = xe,
-                Y2 = H1_Y,
                 Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)),
                 StrokeThickness = 6,
                 StrokeStartLineCap = PenLineCap.Round,
@@ -840,6 +1095,7 @@ namespace CerGucuSimulasyonu
                     null,
                     "H1 ray / katener"))
             };
+            AddTrackPathPoints(h1Line, "H1");
             ToolTipService.SetInitialShowDelay(h1Line, 350);
             ToolTipService.SetShowDuration(h1Line, 60000);
             TrackCanvas.Children.Add(h1Line);
@@ -852,16 +1108,12 @@ namespace CerGucuSimulasyonu
                 Foreground = new SolidColorBrush(Color.FromRgb(56, 189, 248))
             };
             Canvas.SetLeft(lblH1, xs);
-            Canvas.SetTop(lblH1, H1_Y - 24);
+            Canvas.SetTop(lblH1, GetTrackY(0, "H1") - 24);
             TrackCanvas.Children.Add(lblH1);
 
             // H2 Rayı (Alt Hat - Depo -> Darıca)
-            var h2Line = new Line
+            var h2Line = new Polyline
             {
-                X1 = xs,
-                Y1 = H2_Y,
-                X2 = xe,
-                Y2 = H2_Y,
                 Stroke = new SolidColorBrush(Color.FromRgb(251, 146, 60)),
                 StrokeThickness = 6,
                 StrokeStartLineCap = PenLineCap.Round,
@@ -872,6 +1124,7 @@ namespace CerGucuSimulasyonu
                     null,
                     "H2 ray / katener"))
             };
+            AddTrackPathPoints(h2Line, "H2");
             ToolTipService.SetInitialShowDelay(h2Line, 350);
             ToolTipService.SetShowDuration(h2Line, 60000);
             TrackCanvas.Children.Add(h2Line);
@@ -884,8 +1137,21 @@ namespace CerGucuSimulasyonu
                 Foreground = new SolidColorBrush(Color.FromRgb(251, 146, 60))
             };
             Canvas.SetLeft(lblH2, xs);
-            Canvas.SetTop(lblH2, H2_Y + 14);
+            Canvas.SetTop(lblH2, GetTrackY(0, "H2") + 14);
             TrackCanvas.Children.Add(lblH2);
+        }
+
+        private void AddTrackPathPoints(Polyline path, string track)
+        {
+            double lineLength = ViewModel.Data.HatUzunlugu > 0
+                ? ViewModel.Data.HatUzunlugu
+                : 15394;
+            double stepM = Math.Max(10, lineLength / 500);
+            for (double position = 0; position < lineLength; position += stepM)
+            {
+                path.Points.Add(new Point(KmToX(position), GetTrackY(position, track)));
+            }
+            path.Points.Add(new Point(KmToX(lineLength), GetTrackY(lineLength, track)));
         }
 
         private void DrawRayParalellemeleri()
@@ -893,15 +1159,15 @@ namespace CerGucuSimulasyonu
             for (int i = 0; i < ViewModel.Data.RayParalellemeleri.Count; i++)
             {
                 var rp = ViewModel.Data.RayParalellemeleri[i];
-                double x1 = KmToX(rp.H1BaglantiKm);
-                double x2 = KmToX(rp.H2BaglantiKm);
+                Point h1Point = new(KmToX(rp.H1BaglantiKm), GetTrackY(rp.H1BaglantiKm, "H1"));
+                Point h2Point = new(KmToX(rp.H2BaglantiKm), GetTrackY(rp.H2BaglantiKm, "H2"));
 
                 var line = new Line
                 {
-                    X1 = x1,
-                    Y1 = H1_Y,
-                    X2 = x2,
-                    Y2 = H2_Y,
+                    X1 = h1Point.X,
+                    Y1 = h1Point.Y,
+                    X2 = h2Point.X,
+                    Y2 = h2Point.Y,
                     Stroke = new SolidColorBrush(Color.FromRgb(120, 144, 156)),
                     StrokeThickness = 2.5,
                     StrokeDashArray = new DoubleCollection { 4, 3 },
@@ -915,12 +1181,12 @@ namespace CerGucuSimulasyonu
                 TrackCanvas.Children.Add(line);
 
                 var pin1 = new Ellipse { Width = 8, Height = 8, Fill = new SolidColorBrush(Color.FromRgb(120, 144, 156)), Tag = rp };
-                Canvas.SetLeft(pin1, x1 - 4); Canvas.SetTop(pin1, H1_Y - 4);
+                Canvas.SetLeft(pin1, h1Point.X - 4); Canvas.SetTop(pin1, h1Point.Y - 4);
                 AttachItemEvents(pin1, rp);
                 TrackCanvas.Children.Add(pin1);
 
                 var pin2 = new Ellipse { Width = 8, Height = 8, Fill = new SolidColorBrush(Color.FromRgb(120, 144, 156)), Tag = rp };
-                Canvas.SetLeft(pin2, x2 - 4); Canvas.SetTop(pin2, H2_Y - 4);
+                Canvas.SetLeft(pin2, h2Point.X - 4); Canvas.SetTop(pin2, h2Point.Y - 4);
                 AttachItemEvents(pin2, rp);
                 TrackCanvas.Children.Add(pin2);
             }
@@ -928,13 +1194,11 @@ namespace CerGucuSimulasyonu
 
         private void DrawIstasyonlar()
         {
-            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 15350;
-
             for (int i = 0; i < ViewModel.Data.Istasyonlar.Count; i++)
             {
                 var ist = ViewModel.Data.Istasyonlar[i];
                 double x = KmToX(ist.H1OrtaNokta);
-                double peronW = Math.Max(28, (ist.Uzunluk / hat) * GetTrackPixelLength());
+                double peronW = MetersToPixels(ist.Uzunluk);
                 bool isSelected = ViewModel.SelectedItem == ist;
 
                 // Karşılıklı Peron 1 (H1 Rayı Üzerinde / Yanında)
@@ -951,7 +1215,7 @@ namespace CerGucuSimulasyonu
                 };
                 AttachItemEvents(peron1, ist);
                 Canvas.SetLeft(peron1, x - (peronW / 2));
-                Canvas.SetTop(peron1, H1_Y - 7);
+                Canvas.SetTop(peron1, GetTrackY(ist.H1OrtaNokta, "H1") - 7);
                 TrackCanvas.Children.Add(peron1);
 
                 // Karşılıklı Peron 2 (H2 Rayı Üzerinde / Yanında - Birebir Aynı Metraj ve Genişlik)
@@ -968,7 +1232,7 @@ namespace CerGucuSimulasyonu
                 };
                 AttachItemEvents(peron2, ist);
                 Canvas.SetLeft(peron2, x - (peronW / 2));
-                Canvas.SetTop(peron2, H2_Y + 7);
+                Canvas.SetTop(peron2, GetTrackY(ist.H2OrtaNokta, "H2") + 7);
                 TrackCanvas.Children.Add(peron2);
 
                 // İki Hat Arasındaki Şık ve Kompakt İstasyon Etiket Kapsülü
@@ -1012,7 +1276,10 @@ namespace CerGucuSimulasyonu
 
                 AttachItemEvents(stationBadge, ist);
                 Canvas.SetLeft(stationBadge, x - (badgeW / 2));
-                Canvas.SetTop(stationBadge, (H1_Y + H2_Y) / 2 - (badgeH / 2));
+                Canvas.SetTop(
+                    stationBadge,
+                    (GetTrackY(ist.H1OrtaNokta, "H1") +
+                     GetTrackY(ist.H2OrtaNokta, "H2")) / 2 - (badgeH / 2));
                 TrackCanvas.Children.Add(stationBadge);
             }
         }
@@ -1042,7 +1309,7 @@ namespace CerGucuSimulasyonu
                     X1 = x,
                     Y1 = TRAFO_Y + 38,
                     X2 = x,
-                    Y2 = H1_Y,
+                    Y2 = GetTrackY(tm.DilasKonumuH1, "H1"),
                     Stroke = new SolidColorBrush(Color.FromArgb(140, 192, 132, 252)),
                     StrokeThickness = 1.5,
                     StrokeDashArray = new DoubleCollection { 2, 2 }
@@ -1079,7 +1346,7 @@ namespace CerGucuSimulasyonu
             {
                 var tren = ViewModel.Data.Trenler[i];
                 double x = KmToX(tren.Konum);
-                double y = tren.HatTipi == "H1" ? H1_Y : H2_Y;
+                double y = GetTrackY(tren.Konum, tren.HatTipi);
                 bool isH1 = tren.HatTipi == "H1";
                 bool isSelected = ViewModel.SelectedItem == tren;
 
@@ -1091,10 +1358,11 @@ namespace CerGucuSimulasyonu
                             ? Color.FromRgb(250, 204, 21)
                             : Color.FromRgb(251, 146, 60);
 
+                double trainLengthPx = MetersToPixels(ViewModel.Data.Tren.TrenUzunlugu);
                 var trainBox = new Border
                 {
-                    Width = 68,
-                    Height = 26,
+                    Width = trainLengthPx,
+                    Height = 8,
                     Background = new SolidColorBrush(bodyColor),
                     BorderBrush = isSelected
                         ? Brushes.White
@@ -1110,15 +1378,24 @@ namespace CerGucuSimulasyonu
                 };
 
                 string arrow = tren.Yon == "ileri" ? "➔" : "⬅";
-                var sp = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-                sp.Children.Add(new TextBlock { Text = $"{tren.TrenAdi} ", FontSize = 9.5, FontWeight = FontWeights.Bold, Foreground = Brushes.Black });
-                sp.Children.Add(new TextBlock { Text = arrow, FontSize = 10, FontWeight = FontWeights.Bold, Foreground = Brushes.Black });
-                trainBox.Child = sp;
-
                 AttachItemEvents(trainBox, tren);
-                Canvas.SetLeft(trainBox, x - 34);
-                Canvas.SetTop(trainBox, isH1 ? y - 30 : y + 4);
+                Canvas.SetLeft(trainBox, x - trainLengthPx / 2);
+                Canvas.SetTop(trainBox, isH1 ? y - 13 : y + 5);
                 TrackCanvas.Children.Add(trainBox);
+
+                var trainLabel = new TextBlock
+                {
+                    Text = $"{tren.TrenAdi} {arrow}",
+                    Width = 72,
+                    FontSize = 9,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = Brushes.White,
+                    TextAlignment = TextAlignment.Center,
+                    IsHitTestVisible = false
+                };
+                Canvas.SetLeft(trainLabel, x - 36);
+                Canvas.SetTop(trainLabel, isH1 ? y - 31 : y + 14);
+                TrackCanvas.Children.Add(trainLabel);
             }
         }
 
@@ -1134,6 +1411,33 @@ namespace CerGucuSimulasyonu
 
             element.MouseLeftButtonDown += (s, e) =>
             {
+                if (ViewModel.ActiveToolMode == "DELETE")
+                {
+                    string itemName = itemData switch
+                    {
+                        TrenKonumu train => train.TrenAdi,
+                        Istasyon station => station.Ad,
+                        TrafoMerkezi substation => substation.Ad,
+                        RayParalellemesi parallel => parallel.Ad,
+                        HizLimiti => "Hız limiti",
+                        HatEgimi => "Eğim bölgesi",
+                        HatKurbu => "Kurp",
+                        KatenerSeksiyonu section => section.Ad,
+                        SeksiyonAyirici separator => separator.Ad,
+                        _ => "Seçili öğe"
+                    };
+                    if (MessageBox.Show(
+                            $"“{itemName}” silinsin mi?",
+                            "Öğeyi sil",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning) == MessageBoxResult.Yes)
+                    {
+                        DeleteItem(itemData);
+                    }
+                    e.Handled = true;
+                    return;
+                }
+
                 ViewModel.SelectedItem = itemData;
 
                 if (ViewModel.ActiveToolMode == "SELECT")
@@ -1155,7 +1459,7 @@ namespace CerGucuSimulasyonu
 // KatenerEtap info removed
                         SeksiyonAyirici ay => $"⫽ {ay.Ad} seçildi | Konum: {ay.Konum:0} m ({ay.Tip})",
                         RayParalellemesi rp => $"⊥ Ray Paralellemesi P{rp.No} seçildi | Konum: {rp.H1BaglantiKm:0} m",
-                        HatEgimi eg => $"📐 Eğim Bölgesi seçildi | %{eg.EgimYuzdesi:0.#} ({eg.Baslangic:0}m - {eg.Bitis:0}m)",
+                        HatEgimi eg => $"📐 Eğim Bölgesi seçildi | {eg.AciDerece:0.##}° {eg.Yon} (%{Math.Abs(eg.EgimYuzdesi):0.###}; {eg.Baslangic:0}m - {eg.Bitis:0}m)",
                         HatKurbu kr => $"↩ Kurp Bölgesi seçildi | R={kr.Yaricap:0}m ({kr.Baslangic:0}m - {kr.Bitis:0}m)",
                         _ => $"Seçili: {itemData.GetType().Name}"
                     };
@@ -1218,7 +1522,7 @@ namespace CerGucuSimulasyonu
 
         private void SetItemKm(object item, double newKm)
         {
-            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 17850;
+            double hat = ViewModel.Data.HatUzunlugu > 0 ? ViewModel.Data.HatUzunlugu : 15394;
             double clamped = Math.Max(0, Math.Min(hat, Math.Round(newKm, 1)));
 
             switch (item)
@@ -1267,9 +1571,14 @@ namespace CerGucuSimulasyonu
 
         private void TrackCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (_pendingItem != null)
+            {
+                return;
+            }
+
             Point p = e.GetPosition(TrackCanvas);
             double km = Math.Round(XToKm(p.X), 1);
-            string track = GetNearestTrack(p.Y);
+            string track = GetNearestTrack(p.X, p.Y);
 
             if (ViewModel.ActiveToolMode == "STATION")
             {
@@ -1283,9 +1592,7 @@ namespace CerGucuSimulasyonu
                     H2OrtaNokta = km,
                     Uzunluk = 120
                 };
-                ViewModel.Data.Istasyonlar.Add(ist);
-                ViewModel.SelectedItem = ist;
-                ViewModel.StatusText = $"🚉 Yeni istasyon ({km} m) eklendi.";
+                StagePendingItem(ist);
             }
             else if (ViewModel.ActiveToolMode == "TRAFO")
             {
@@ -1300,9 +1607,7 @@ namespace CerGucuSimulasyonu
                     FiderKabloDirenci = 2,
                     GeriDonusKabloDirenci = 1.5
                 };
-                ViewModel.Data.TrafoMerkezleri.Add(tm);
-                ViewModel.SelectedItem = tm;
-                ViewModel.StatusText = $"⚡ Yeni trafo merkezi TM-{n} ({km} m) eklendi.";
+                StagePendingItem(tm);
             }
             else if (ViewModel.ActiveToolMode == "PARALLEL")
             {
@@ -1313,9 +1618,7 @@ namespace CerGucuSimulasyonu
                     H1BaglantiKm = km,
                     H2BaglantiKm = km
                 };
-                ViewModel.Data.RayParalellemeleri.Add(rp);
-                ViewModel.SelectedItem = rp;
-                ViewModel.StatusText = $"⊥ Ray Paralellemesi P{n} ({km} m) eklendi.";
+                StagePendingItem(rp);
             }
             else if (ViewModel.ActiveToolMode is "SPEED" or "EGIM" or "KURP")
             {
@@ -1336,9 +1639,14 @@ namespace CerGucuSimulasyonu
         {
             Point p = e.GetPosition(TrackCanvas);
             double km = Math.Round(XToKm(p.X), 1);
-            string track = GetNearestTrack(p.Y);
+            string track = GetNearestTrack(p.X, p.Y);
 
             TxtCursorInfo.Text = $"📍 Konum: {km:0} m ({km / 1000:0.00} km) | Hat: {track}";
+            if (_regionStartPoint.HasValue && ViewModel.ActiveToolMode == "KURP")
+            {
+                string insideTrack = p.Y < _regionStartPoint.Value.Y ? "H1" : "H2";
+                TxtCursorInfo.Text += $" | Kurp iç hattı: {insideTrack} | R: {TxtCurveRadius.Text} m";
+            }
 
             // Dragging an existing object
             if (_isDragging && _draggedItem != null)
@@ -1353,7 +1661,10 @@ namespace CerGucuSimulasyonu
             {
                 double x1 = Math.Min(_regionStartPoint.Value.X, p.X);
                 double x2 = Math.Max(_regionStartPoint.Value.X, p.X);
-                double y = GetNearestTrack(p.Y) == "H1" ? H1_Y - 30 : H2_Y - 10;
+                string previewTrack = GetNearestTrack(p.X, p.Y);
+                double middlePosition = XToKm((_regionStartPoint.Value.X + p.X) / 2);
+                double y = GetTrackY(middlePosition, previewTrack) +
+                    (previewTrack == "H1" ? -30 : -10);
 
                 Canvas.SetLeft(_previewRect, x1);
                 Canvas.SetTop(_previewRect, y);
@@ -1383,27 +1694,74 @@ namespace CerGucuSimulasyonu
                 double km2 = Math.Round(XToKm(p.X), 1);
                 double startKm = Math.Min(km1, km2);
                 double endKm = Math.Max(km1, km2);
-                string track = GetNearestTrack(p.Y);
+                string track = GetNearestTrack(p.X, p.Y);
 
                 if (endKm - startKm > 10)
                 {
                     if (ViewModel.ActiveToolMode == "SPEED")
                     {
-                        ViewModel.Data.HizLimitleri.Add(new HizLimiti { Baslangic = startKm, Bitis = endKm, Limit = 80, HatTipi = track });
-                        ViewModel.StatusText = $"🚦 Hız Limiti (80 km/h, {startKm:0}m - {endKm:0}m) eklendi.";
+                        StagePendingItem(new HizLimiti
+                        {
+                            Baslangic = startKm,
+                            Bitis = endKm,
+                            Limit = 80,
+                            HatTipi = track
+                        });
                     }
                     else if (ViewModel.ActiveToolMode == "EGIM")
                     {
-                        ViewModel.Data.HatEgimleri.Add(new HatEgimi { Baslangic = startKm, Bitis = endKm, EgimYuzdesi = 1.0, HatTipi = track });
-                        ViewModel.StatusText = $"📐 Eğim (%1.0, {startKm:0}m - {endKm:0}m) eklendi.";
+                        StagePendingItem(new HatEgimi
+                        {
+                            Baslangic = startKm,
+                            Bitis = endKm,
+                            HatTipi = track
+                        });
                     }
                     else if (ViewModel.ActiveToolMode == "KURP")
                     {
-                        ViewModel.Data.HatKurplari.Add(new HatKurbu { Baslangic = startKm, Bitis = endKm, Yaricap = 350, HatTipi = track });
-                        ViewModel.StatusText = $"↩ Kurp (R=350m, {startKm:0}m - {endKm:0}m) eklendi.";
+                        double verticalDrag = p.Y - _regionStartPoint.Value.Y;
+                        if (Math.Abs(verticalDrag) < 5)
+                        {
+                            ViewModel.StatusText = "Kurp yönünü belirlemek için mouse'u başlangıç noktasından yukarı veya aşağı sürükleyin.";
+                            goto FinishRegion;
+                        }
+
+                        if (!double.TryParse(
+                                TxtCurveRadius.Text,
+                                NumberStyles.Float,
+                                CultureInfo.CurrentCulture,
+                                out double radius) &&
+                            !double.TryParse(
+                                TxtCurveRadius.Text,
+                                NumberStyles.Float,
+                                CultureInfo.InvariantCulture,
+                                out radius))
+                        {
+                            ViewModel.StatusText = "Kurp yarıçapı geçersiz. R (m) alanına pozitif bir değer girin.";
+                            goto FinishRegion;
+                        }
+
+                        if (radius <= 0)
+                        {
+                            ViewModel.StatusText = "Kurp yarıçapı sıfırdan büyük olmalıdır.";
+                            goto FinishRegion;
+                        }
+
+                        string innerTrack = verticalDrag < 0 ? "H1" : "H2";
+                        string curveDirection = verticalDrag < 0 ? "Sola" : "Sağa";
+                        StagePendingItem(new HatKurbu
+                        {
+                            Baslangic = startKm,
+                            Bitis = endKm,
+                            Yaricap = radius,
+                            HatTipi = innerTrack,
+                            IcHat = innerTrack,
+                            Yon = curveDirection
+                        });
                     }
                 }
 
+                FinishRegion:
                 _regionStartPoint = null;
                 if (_previewRect != null)
                 {
@@ -1413,6 +1771,145 @@ namespace CerGucuSimulasyonu
                 TrackCanvas.ReleaseMouseCapture();
                 Redraw();
             }
+        }
+
+        private void StagePendingItem(object item)
+        {
+            _pendingItem = item;
+            PendingPreviewPanel.Visibility = Visibility.Visible;
+            PendingGradeFields.Visibility = item is HatEgimi ? Visibility.Visible : Visibility.Collapsed;
+            if (item is HatEgimi)
+            {
+                TxtPendingGradeAngle.Text = "1";
+                CmbPendingGradeDirection.SelectedIndex = 0;
+            }
+
+            UpdatePendingPreviewText();
+            Redraw();
+        }
+
+        private void UpdatePendingPreviewText()
+        {
+            if (_pendingItem == null)
+            {
+                return;
+            }
+
+            TxtPendingPreview.Text = _pendingItem switch
+            {
+                Istasyon station => $"İstasyon {station.Ad} • {station.H1OrtaNokta:0} m",
+                TrafoMerkezi substation => $"Trafo merkezi {substation.Ad} • {substation.DilasKonumuH1:0} m",
+                RayParalellemesi parallel => $"Ray paralellemesi P{parallel.No} • {parallel.H1BaglantiKm:0} m",
+                HizLimiti speed => $"Hız limiti {speed.Limit:0} km/h • {speed.HatTipi} • {speed.Baslangic:0}–{speed.Bitis:0} m",
+                HatEgimi grade => BuildGradePreviewText(grade),
+                HatKurbu curve => $"Kurp {curve.HatTipi} • {curve.Baslangic:0}–{curve.Bitis:0} m • R={curve.Yaricap:0.##} m",
+                _ => "Yeni öğe"
+            };
+        }
+
+        private string BuildGradePreviewText(HatEgimi grade)
+        {
+            if (!TryParseNumber(TxtPendingGradeAngle.Text, out double angle) ||
+                CmbPendingGradeDirection.SelectedIndex < 0)
+            {
+                return $"Eğim • {grade.HatTipi} • {grade.Baslangic:0}–{grade.Bitis:0} m • açı/yön girin";
+            }
+
+            bool uphill = CmbPendingGradeDirection.SelectedIndex == 0;
+            double gradePercent = SimulationFormulas.GradePercentFromAngleDegrees(angle, uphill);
+            return $"Eğim • {grade.HatTipi} • {grade.Baslangic:0}–{grade.Bitis:0} m • " +
+                   $"{angle:0.##}° • { (uphill ? "yukarı" : "aşağı") } • %{Math.Abs(gradePercent):0.###}";
+        }
+
+        private static bool TryParseNumber(string value, out double number) =>
+            double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out number) ||
+            double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number);
+
+        private void PendingGradeAngle_Changed(object sender, TextChangedEventArgs e)
+        {
+            if (_pendingItem is HatEgimi)
+            {
+                UpdatePendingPreviewText();
+                Redraw();
+            }
+        }
+
+        private void PendingGradeDirection_Changed(object sender, SelectionChangedEventArgs e)
+        {
+            if (_pendingItem is HatEgimi)
+            {
+                UpdatePendingPreviewText();
+                Redraw();
+            }
+        }
+
+        private void ConfirmPendingPreview_Click(object sender, RoutedEventArgs e)
+        {
+            if (_pendingItem == null)
+            {
+                return;
+            }
+
+            if (_pendingItem is HatEgimi grade)
+            {
+                if (!TryParseNumber(TxtPendingGradeAngle.Text, out double angle) ||
+                    angle < 0 ||
+                    angle >= 45 ||
+                    CmbPendingGradeDirection.SelectedIndex < 0)
+                {
+                    MessageBox.Show(
+                        "Eğim açısı 0° ile 45° arasında olmalı; yön de seçilmelidir.",
+                        "Geçersiz eğim",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                grade.SetAngleAndDirection(angle, CmbPendingGradeDirection.SelectedIndex == 0);
+            }
+
+            object item = _pendingItem;
+            switch (item)
+            {
+                case Istasyon station:
+                    ViewModel.Data.Istasyonlar.Add(station);
+                    ViewModel.StatusText = $"İstasyon {station.Ad} eklendi.";
+                    break;
+                case TrafoMerkezi substation:
+                    ViewModel.Data.TrafoMerkezleri.Add(substation);
+                    ViewModel.StatusText = $"Trafo merkezi {substation.Ad} eklendi.";
+                    break;
+                case RayParalellemesi parallel:
+                    ViewModel.Data.RayParalellemeleri.Add(parallel);
+                    ViewModel.StatusText = $"Ray paralellemesi P{parallel.No} eklendi.";
+                    break;
+                case HizLimiti speed:
+                    ViewModel.Data.HizLimitleri.Add(speed);
+                    ViewModel.StatusText = $"Hız limiti ({speed.Limit:0} km/h) eklendi.";
+                    break;
+                case HatEgimi slope:
+                    ViewModel.Data.HatEgimleri.Add(slope);
+                    ViewModel.StatusText = $"Eğim ({slope.AciDerece:0.##}°, {slope.Yon}) eklendi.";
+                    break;
+                case HatKurbu curve:
+                    ViewModel.Data.HatKurplari.Add(curve);
+                    ViewModel.StatusText =
+                        $"Kurp {curve.HatTipi}'ye eklendi; R={curve.Yaricap:0.##} m.";
+                    break;
+            }
+
+            ViewModel.SelectedItem = item;
+            _pendingItem = null;
+            PendingPreviewPanel.Visibility = Visibility.Collapsed;
+            Redraw();
+        }
+
+        private void CancelPendingPreview_Click(object sender, RoutedEventArgs e)
+        {
+            _pendingItem = null;
+            PendingPreviewPanel.Visibility = Visibility.Collapsed;
+            ViewModel.StatusText = "Öğe ekleme iptal edildi; hat verisi değiştirilmedi.";
+            Redraw();
         }
 
         private void TrackCanvas_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -1478,6 +1975,11 @@ namespace CerGucuSimulasyonu
 
         private void DeleteItem(object item)
         {
+            if (Equals(ViewModel.SelectedItem, item))
+            {
+                ViewModel.SelectedItem = null;
+            }
+
             switch (item)
             {
                 case TrenKonumu t: ViewModel.Data.Trenler.Remove(t); break;
@@ -1501,7 +2003,7 @@ namespace CerGucuSimulasyonu
             {
                 Title = "Öğe Düzenle",
                 Width = 360,
-                Height = 320,
+                Height = 380,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 Background = new SolidColorBrush(Color.FromRgb(24, 25, 40)),
@@ -1524,6 +2026,37 @@ namespace CerGucuSimulasyonu
                 sp.Children.Add(row);
 
                 win.Closing += (s, e) => onSave(tb.Text);
+            }
+
+            void AddChoice(string label, string initialValue, IReadOnlyList<string> choices, Action<string> onSave)
+            {
+                var row = new Grid { Margin = new Thickness(0, 4, 0, 4) };
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(140) });
+                row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                row.Children.Add(new TextBlock
+                {
+                    Text = label,
+                    Foreground = new SolidColorBrush(Color.FromRgb(180, 185, 210)),
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+                var comboBox = new ComboBox
+                {
+                    ItemsSource = choices,
+                    SelectedItem = initialValue,
+                    Background = new SolidColorBrush(Color.FromRgb(38, 40, 60)),
+                    Foreground = Brushes.White,
+                    Padding = new Thickness(6, 4, 6, 4)
+                };
+                Grid.SetColumn(comboBox, 1);
+                row.Children.Add(comboBox);
+                sp.Children.Add(row);
+                win.Closing += (_, _) =>
+                {
+                    if (comboBox.SelectedItem is string selected)
+                    {
+                        onSave(selected);
+                    }
+                };
             }
 
             switch (item)
@@ -1560,16 +2093,48 @@ namespace CerGucuSimulasyonu
                     AddField("Başlangıç (m)", hz.Baslangic.ToString(), v => { if (double.TryParse(v, out var d)) hz.Baslangic = d; });
                     AddField("Bitiş (m)", hz.Bitis.ToString(), v => { if (double.TryParse(v, out var d)) hz.Bitis = d; });
                     AddField("Hız Limiti (km/h)", hz.Limit.ToString(), v => { if (double.TryParse(v, out var d)) hz.Limit = d; });
+                    AddChoice("Hat", hz.HatTipi, new[] { "H1", "H2" }, value => hz.HatTipi = value);
                     break;
                 case HatEgimi eg:
                     AddField("Başlangıç (m)", eg.Baslangic.ToString(), v => { if (double.TryParse(v, out var d)) eg.Baslangic = d; });
                     AddField("Bitiş (m)", eg.Bitis.ToString(), v => { if (double.TryParse(v, out var d)) eg.Bitis = d; });
-                    AddField("Eğim (%)", eg.EgimYuzdesi.ToString(), v => { if (double.TryParse(v, out var d)) eg.EgimYuzdesi = d; });
+                    AddChoice("Hat", eg.HatTipi, new[] { "H1", "H2" }, value => eg.HatTipi = value);
+                    AddField("Eğim açısı (°)", eg.AciDerece.ToString(CultureInfo.CurrentCulture), v =>
+                    {
+                        if (TryParseNumber(v, out double degrees) && degrees >= 0 && degrees < 45)
+                        {
+                            eg.SetAngleAndDirection(degrees, eg.EgimYuzdesi >= 0);
+                        }
+                        else
+                        {
+                            ViewModel.StatusText = "Eğim açısı 0° veya daha büyük ve 45°'den küçük olmalıdır.";
+                        }
+                    });
+                    AddChoice(
+                        "Eğim yönü",
+                        eg.Yon,
+                        new[] { "Yukarı (H1 yönü)", "Aşağı (H1 yönü)" },
+                        value => eg.SetAngleAndDirection(eg.AciDerece, value.StartsWith("Yukarı", StringComparison.Ordinal)));
                     break;
                 case HatKurbu kr:
                     AddField("Başlangıç (m)", kr.Baslangic.ToString(), v => { if (double.TryParse(v, out var d)) kr.Baslangic = d; });
                     AddField("Bitiş (m)", kr.Bitis.ToString(), v => { if (double.TryParse(v, out var d)) kr.Bitis = d; });
+                    AddChoice("Hat", kr.HatTipi, new[] { "H1", "H2" }, value =>
+                    {
+                        kr.HatTipi = value;
+                        kr.IcHat = value;
+                    });
                     AddField("Yarıçap R (m)", kr.Yaricap.ToString(), v => { if (double.TryParse(v, out var d)) kr.Yaricap = d; });
+                    AddChoice(
+                        "H1 yönündeki dönüş",
+                        kr.Yon,
+                        new[] { "Belirsiz", "Sağa", "Sola" },
+                        value => kr.Yon = value);
+                    AddChoice(
+                        "İç hatta olan katener",
+                        kr.IcHat,
+                        new[] { "H1", "H2" },
+                        value => kr.IcHat = value);
                     break;
             }
 

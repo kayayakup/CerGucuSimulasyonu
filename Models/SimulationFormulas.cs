@@ -13,6 +13,12 @@ public static class SimulationFormulas
     public static double GradePermille(double gradePercent) =>
         Math.Abs(Math.Round(gradePercent * 10, 1));
 
+    /// <summary>Converts a signed vertical angle into a signed track grade percentage.</summary>
+    public static double GradePercentFromAngleDegrees(double angleDegrees, bool uphillInH1Direction) =>
+        Math.Tan(angleDegrees * Math.PI / 180.0) *
+        100.0 *
+        (uphillInH1Direction ? 1 : -1);
+
     /// <summary>Calculates gravity force along the track; uphill is positive and downhill negative.</summary>
     public static double GradeForceKn(double massTon, double gradePercent, string direction) =>
         massTon * 9.81 * gradePercent / 100.0 * (direction == "geri" ? -1 : 1);

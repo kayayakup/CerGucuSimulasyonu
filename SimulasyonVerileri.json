@@ -1,5 +1,5 @@
 {
-  "HatUzunlugu": 15350,
+  "HatUzunlugu": 15394,
   "CerKatener": {
     "RijitKatenerKmDirenci": 15,
     "NormalRayKmDirenci": 21,
@@ -43,122 +43,1253 @@
   },
   "HatEgimleri": [
     {
-      "Uzunluk": 2500,
-      "EgimTipi": "T\u0131rman\u0131\u015F / \u00C7\u0131k\u0131\u015F (\u002B)",
-      "EgimBinde": 8,
-      "EkEgitimKuvvetiKn": 18.5,
-      "Baslangic": 0,
-      "Bitis": 2500,
-      "EgimYuzdesi": 0.8,
+      "Uzunluk": 520.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 0.0,
+      "Bitis": 520.0,
+      "EgimYuzdesi": 0.0,
       "HatTipi": "H1"
     },
     {
-      "Uzunluk": 2000,
-      "EgimTipi": "\u0130ni\u015F / E\u011Fim (-)",
-      "EgimBinde": 12,
-      "EkEgitimKuvvetiKn": -27.8,
-      "Baslangic": 4500,
-      "Bitis": 6500,
-      "EgimYuzdesi": -1.2,
+      "Uzunluk": 657.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 44.0,
+      "EkEgitimKuvvetiKn": 101.9,
+      "Baslangic": 608.0,
+      "Bitis": 1265.0,
+      "EgimYuzdesi": 4.4,
       "HatTipi": "H1"
     },
     {
-      "Uzunluk": 2500,
-      "EgimTipi": "T\u0131rman\u0131\u015F / \u00C7\u0131k\u0131\u015F (\u002B)",
-      "EgimBinde": 15,
-      "EkEgitimKuvvetiKn": 34.7,
-      "Baslangic": 8500,
-      "Bitis": 11000,
-      "EgimYuzdesi": 1.5,
+      "Uzunluk": 186.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 1353.0,
+      "Bitis": 1539.0,
+      "EgimYuzdesi": 0.0,
       "HatTipi": "H1"
     },
     {
-      "Uzunluk": 2850,
-      "EgimTipi": "\u0130ni\u015F / E\u011Fim (-)",
-      "EgimBinde": 5,
-      "EkEgitimKuvvetiKn": -11.6,
-      "Baslangic": 12500,
-      "Bitis": 15350,
-      "EgimYuzdesi": -0.5,
+      "Uzunluk": 1462.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 22.8,
+      "EkEgitimKuvvetiKn": 52.8,
+      "Baslangic": 1687.0,
+      "Bitis": 3149.0,
+      "EgimYuzdesi": 2.28,
       "HatTipi": "H1"
     },
     {
-      "Uzunluk": 2500,
-      "EgimTipi": "\u0130ni\u015F / E\u011Fim (-)",
-      "EgimBinde": 8,
-      "EkEgitimKuvvetiKn": -18.5,
-      "Baslangic": 0,
-      "Bitis": 2500,
-      "EgimYuzdesi": -0.8,
-      "HatTipi": "H2"
+      "Uzunluk": 184.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 3274.0,
+      "Bitis": 3458.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
     },
     {
-      "Uzunluk": 2000,
-      "EgimTipi": "T\u0131rman\u0131\u015F / \u00C7\u0131k\u0131\u015F (\u002B)",
-      "EgimBinde": 12,
-      "EkEgitimKuvvetiKn": 27.8,
-      "Baslangic": 4500,
-      "Bitis": 6500,
-      "EgimYuzdesi": 1.2,
-      "HatTipi": "H2"
+      "Uzunluk": 500.0,
+      "EgimTipi": "?ni? / E?im (-)",
+      "EgimBinde": 36.1,
+      "EkEgitimKuvvetiKn": -83.6,
+      "Baslangic": 3609.0,
+      "Bitis": 4109.0,
+      "EgimYuzdesi": -3.61,
+      "HatTipi": "H1"
     },
     {
-      "Uzunluk": 2500,
-      "EgimTipi": "\u0130ni\u015F / E\u011Fim (-)",
-      "EgimBinde": 15,
-      "EkEgitimKuvvetiKn": -34.7,
-      "Baslangic": 8500,
-      "Bitis": 11000,
-      "EgimYuzdesi": -1.5,
-      "HatTipi": "H2"
+      "Uzunluk": 293.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 4218.0,
+      "Bitis": 4511.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
     },
     {
-      "Uzunluk": 2850,
-      "EgimTipi": "T\u0131rman\u0131\u015F / \u00C7\u0131k\u0131\u015F (\u002B)",
-      "EgimBinde": 5,
+      "Uzunluk": 997.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 45.0,
+      "EkEgitimKuvvetiKn": 104.2,
+      "Baslangic": 4601.0,
+      "Bitis": 5598.0,
+      "EgimYuzdesi": 4.5,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 186.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 5733.0,
+      "Bitis": 5919.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 562.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 45.0,
+      "EkEgitimKuvvetiKn": 104.2,
+      "Baslangic": 6054.0,
+      "Bitis": 6616.0,
+      "EgimYuzdesi": 4.5,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 113.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 20.0,
+      "EkEgitimKuvvetiKn": 46.3,
+      "Baslangic": 6691.0,
+      "Bitis": 6804.0,
+      "EgimYuzdesi": 2.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 105.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 34.0,
+      "EkEgitimKuvvetiKn": 78.7,
+      "Baslangic": 6864.0,
+      "Bitis": 6969.0,
+      "EgimYuzdesi": 3.4,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 190.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 7071.0,
+      "Bitis": 7261.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 623.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 26.9,
+      "EkEgitimKuvvetiKn": 62.3,
+      "Baslangic": 7422.0,
+      "Bitis": 8045.0,
+      "EgimYuzdesi": 2.69,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 150.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 8207.0,
+      "Bitis": 8357.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 391.0,
+      "EgimTipi": "?ni? / E?im (-)",
+      "EgimBinde": 41.0,
+      "EkEgitimKuvvetiKn": -94.9,
+      "Baslangic": 8501.0,
+      "Bitis": 8892.0,
+      "EgimYuzdesi": -4.1,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 192.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 9015.0,
+      "Bitis": 9207.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 775.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 24.3,
+      "EkEgitimKuvvetiKn": 56.3,
+      "Baslangic": 9304.0,
+      "Bitis": 10079.0,
+      "EgimYuzdesi": 2.43,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 489.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 10201.0,
+      "Bitis": 10690.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 158.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 30.2,
+      "EkEgitimKuvvetiKn": 69.9,
+      "Baslangic": 10796.0,
+      "Bitis": 10954.0,
+      "EgimYuzdesi": 3.02,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 480.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 5.0,
       "EkEgitimKuvvetiKn": 11.6,
-      "Baslangic": 12500,
-      "Bitis": 15350,
+      "Baslangic": 11042.0,
+      "Bitis": 11522.0,
       "EgimYuzdesi": 0.5,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 311.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 30.3,
+      "EkEgitimKuvvetiKn": 70.1,
+      "Baslangic": 11610.0,
+      "Bitis": 11921.0,
+      "EgimYuzdesi": 3.03,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 142.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 12036.0,
+      "Bitis": 12178.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 593.0,
+      "EgimTipi": "?ni? / E?im (-)",
+      "EgimBinde": 33.0,
+      "EkEgitimKuvvetiKn": -76.4,
+      "Baslangic": 12277.0,
+      "Bitis": 12870.0,
+      "EgimYuzdesi": -3.3,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 263.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 33.5,
+      "EkEgitimKuvvetiKn": 77.6,
+      "Baslangic": 13069.0,
+      "Bitis": 13332.0,
+      "EgimYuzdesi": 3.35,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 148.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 10.0,
+      "EkEgitimKuvvetiKn": 23.2,
+      "Baslangic": 13402.0,
+      "Bitis": 13550.0,
+      "EgimYuzdesi": 1.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 130.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 45.0,
+      "EkEgitimKuvvetiKn": 104.2,
+      "Baslangic": 13620.0,
+      "Bitis": 13750.0,
+      "EgimYuzdesi": 4.5,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 187.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 13840.0,
+      "Bitis": 14027.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 844.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 9.1,
+      "EkEgitimKuvvetiKn": 21.1,
+      "Baslangic": 14163.0,
+      "Bitis": 15007.0,
+      "EgimYuzdesi": 0.91,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 119.0,
+      "EgimTipi": "?ni? / E?im (-)",
+      "EgimBinde": 10.0,
+      "EkEgitimKuvvetiKn": -23.2,
+      "Baslangic": 15122.0,
+      "Bitis": 15241.0,
+      "EgimYuzdesi": -1.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 53.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 15341.0,
+      "Bitis": 15394.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H1"
+    },
+    {
+      "Uzunluk": 511.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 0.0,
+      "Bitis": 511.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 639.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 45.0,
+      "EkEgitimKuvvetiKn": 104.2,
+      "Baslangic": 601.0,
+      "Bitis": 1240.0,
+      "EgimYuzdesi": 4.5,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 191.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 1330.0,
+      "Bitis": 1521.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 1460.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 22.8,
+      "EkEgitimKuvvetiKn": 52.8,
+      "Baslangic": 1670.0,
+      "Bitis": 3130.0,
+      "EgimYuzdesi": 2.28,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 175.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 3256.0,
+      "Bitis": 3431.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 494.0,
+      "EgimTipi": "?ni? / E?im (-)",
+      "EgimBinde": 36.3,
+      "EkEgitimKuvvetiKn": -84.0,
+      "Baslangic": 3572.0,
+      "Bitis": 4066.0,
+      "EgimYuzdesi": -3.63,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 301.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 4189.0,
+      "Bitis": 4490.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 1004.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 45.0,
+      "EkEgitimKuvvetiKn": 104.2,
+      "Baslangic": 4610.0,
+      "Bitis": 5614.0,
+      "EgimYuzdesi": 4.5,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 174.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 5704.0,
+      "Bitis": 5878.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 546.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 44.5,
+      "EkEgitimKuvvetiKn": 103.0,
+      "Baslangic": 6012.0,
+      "Bitis": 6558.0,
+      "EgimYuzdesi": 4.45,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 120.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 20.0,
+      "EkEgitimKuvvetiKn": 46.3,
+      "Baslangic": 6661.0,
+      "Bitis": 6781.0,
+      "EgimYuzdesi": 2.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 103.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 34.4,
+      "EkEgitimKuvvetiKn": 79.6,
+      "Baslangic": 6841.0,
+      "Bitis": 6944.0,
+      "EgimYuzdesi": 3.44,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 175.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 7047.0,
+      "Bitis": 7222.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 602.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 27.6,
+      "EkEgitimKuvvetiKn": 63.9,
+      "Baslangic": 7388.0,
+      "Bitis": 7990.0,
+      "EgimYuzdesi": 2.76,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 140.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 8155.0,
+      "Bitis": 8295.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 372.0,
+      "EgimTipi": "?ni? / E?im (-)",
+      "EgimBinde": 43.0,
+      "EkEgitimKuvvetiKn": -99.6,
+      "Baslangic": 8424.0,
+      "Bitis": 8796.0,
+      "EgimYuzdesi": -4.3,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 201.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 8925.0,
+      "Bitis": 9126.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 759.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 24.4,
+      "EkEgitimKuvvetiKn": 56.5,
+      "Baslangic": 9248.0,
+      "Bitis": 10007.0,
+      "EgimYuzdesi": 2.44,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 489.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 10129.0,
+      "Bitis": 10618.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 175.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 28.6,
+      "EkEgitimKuvvetiKn": 66.2,
+      "Baslangic": 10718.0,
+      "Bitis": 10893.0,
+      "EgimYuzdesi": 2.86,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 498.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 5.0,
+      "EkEgitimKuvvetiKn": 11.6,
+      "Baslangic": 10976.0,
+      "Bitis": 11474.0,
+      "EgimYuzdesi": 0.5,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 317.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 29.9,
+      "EkEgitimKuvvetiKn": 69.2,
+      "Baslangic": 11561.0,
+      "Bitis": 11878.0,
+      "EgimYuzdesi": 2.99,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 153.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 11992.0,
+      "Bitis": 12145.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 593.0,
+      "EgimTipi": "?ni? / E?im (-)",
+      "EgimBinde": 33.0,
+      "EkEgitimKuvvetiKn": -76.4,
+      "Baslangic": 12244.0,
+      "Bitis": 12837.0,
+      "EgimYuzdesi": -3.3,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 240.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 35.0,
+      "EkEgitimKuvvetiKn": 81.0,
+      "Baslangic": 13041.0,
+      "Bitis": 13281.0,
+      "EgimYuzdesi": 3.5,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 153.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 10.0,
+      "EkEgitimKuvvetiKn": 23.2,
+      "Baslangic": 13356.0,
+      "Bitis": 13509.0,
+      "EgimYuzdesi": 1.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 130.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 45.0,
+      "EkEgitimKuvvetiKn": 104.2,
+      "Baslangic": 13579.0,
+      "Bitis": 13709.0,
+      "EgimYuzdesi": 4.5,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 182.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 13799.0,
+      "Bitis": 13981.0,
+      "EgimYuzdesi": 0.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 843.0,
+      "EgimTipi": "T?rman?? / ??k?? (+)",
+      "EgimBinde": 9.1,
+      "EkEgitimKuvvetiKn": 21.1,
+      "Baslangic": 14118.0,
+      "Bitis": 14961.0,
+      "EgimYuzdesi": 0.91,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 119.0,
+      "EgimTipi": "?ni? / E?im (-)",
+      "EgimBinde": 10.0,
+      "EkEgitimKuvvetiKn": -23.2,
+      "Baslangic": 15076.0,
+      "Bitis": 15195.0,
+      "EgimYuzdesi": -1.0,
+      "HatTipi": "H2"
+    },
+    {
+      "Uzunluk": 52.0,
+      "EgimTipi": "D?z Hat",
+      "EgimBinde": 0.0,
+      "EkEgitimKuvvetiKn": 0.0,
+      "Baslangic": 15295.0,
+      "Bitis": 15347.0,
+      "EgimYuzdesi": 0.0,
       "HatTipi": "H2"
     }
   ],
   "HatKurplari": [
     {
-      "Uzunluk": 400,
+      "Uzunluk": 121.0,
+      "RocklDirenci": 2.03,
+      "MaksHiz": 93,
+      "Baslangic": 471.0,
+      "Bitis": 592.0,
+      "Yaricap": 375.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 217.0,
+      "RocklDirenci": 1.19,
+      "MaksHiz": 117,
+      "Baslangic": 1048.0,
+      "Bitis": 1265.0,
+      "Yaricap": 600.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 241.0,
+      "RocklDirenci": 0.33,
+      "MaksHiz": 214,
+      "Baslangic": 1575.0,
+      "Bitis": 1816.0,
+      "Yaricap": 2000.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 232.0,
+      "RocklDirenci": 0.22,
+      "MaksHiz": 262,
+      "Baslangic": 2514.0,
+      "Bitis": 2746.0,
+      "Yaricap": 3000.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 234.0,
+      "RocklDirenci": 1.19,
+      "MaksHiz": 117,
+      "Baslangic": 3517.0,
+      "Bitis": 3751.0,
+      "Yaricap": 600.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 100.0,
+      "RocklDirenci": 1.19,
+      "MaksHiz": 117,
+      "Baslangic": 3889.0,
+      "Bitis": 3989.0,
+      "Yaricap": 600.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 73.0,
+      "RocklDirenci": 1.01,
+      "MaksHiz": 127,
+      "Baslangic": 4116.0,
+      "Bitis": 4189.0,
+      "Yaricap": 700.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 62.0,
+      "RocklDirenci": 1.09,
+      "MaksHiz": 122,
+      "Baslangic": 4552.0,
+      "Bitis": 4614.0,
+      "Yaricap": 650.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 294.0,
       "RocklDirenci": 2.2,
       "MaksHiz": 90,
-      "Baslangic": 1200,
-      "Bitis": 1600,
-      "Yaricap": 350,
-      "HatTipi": "H1"
+      "Baslangic": 4787.0,
+      "Bitis": 5081.0,
+      "Yaricap": 350.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
     },
     {
-      "Uzunluk": 400,
-      "RocklDirenci": 1.88,
-      "MaksHiz": 96,
-      "Baslangic": 4500,
-      "Bitis": 4900,
-      "Yaricap": 400,
-      "HatTipi": "H1"
+      "Uzunluk": 365.0,
+      "RocklDirenci": 2.2,
+      "MaksHiz": 90,
+      "Baslangic": 5302.0,
+      "Bitis": 5667.0,
+      "Yaricap": 350.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
     },
     {
-      "Uzunluk": 400,
+      "Uzunluk": 397.0,
       "RocklDirenci": 1.46,
       "MaksHiz": 107,
-      "Baslangic": 7800,
-      "Bitis": 8200,
-      "Yaricap": 500,
-      "HatTipi": "H2"
+      "Baslangic": 6203.0,
+      "Bitis": 6600.0,
+      "Yaricap": 500.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
     },
     {
-      "Uzunluk": 500,
-      "RocklDirenci": 2.45,
-      "MaksHiz": 86,
-      "Baslangic": 12800,
-      "Bitis": 13300,
-      "Yaricap": 320,
-      "HatTipi": "H2"
+      "Uzunluk": 46.0,
+      "RocklDirenci": 0.69,
+      "MaksHiz": 151,
+      "Baslangic": 6842.0,
+      "Bitis": 6888.0,
+      "Yaricap": 1000.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 46.0,
+      "RocklDirenci": 0.69,
+      "MaksHiz": 151,
+      "Baslangic": 6994.0,
+      "Bitis": 7040.0,
+      "Yaricap": 1000.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 90.0,
+      "RocklDirenci": 0.69,
+      "MaksHiz": 151,
+      "Baslangic": 7269.0,
+      "Bitis": 7359.0,
+      "Yaricap": 1000.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 575.0,
+      "RocklDirenci": 1.88,
+      "MaksHiz": 96,
+      "Baslangic": 7532.0,
+      "Bitis": 8107.0,
+      "Yaricap": 400.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 350.0,
+      "RocklDirenci": 1.88,
+      "MaksHiz": 96,
+      "Baslangic": 8471.0,
+      "Bitis": 8821.0,
+      "Yaricap": 400.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 339.0,
+      "RocklDirenci": 1.19,
+      "MaksHiz": 117,
+      "Baslangic": 9256.0,
+      "Bitis": 9595.0,
+      "Yaricap": 600.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 110.0,
+      "RocklDirenci": 0.45,
+      "MaksHiz": 185,
+      "Baslangic": 9956.0,
+      "Bitis": 10066.0,
+      "Yaricap": 1500.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 66.0,
+      "RocklDirenci": 0.33,
+      "MaksHiz": 214,
+      "Baslangic": 10143.0,
+      "Bitis": 10209.0,
+      "Yaricap": 2000.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 317.0,
+      "RocklDirenci": 2.03,
+      "MaksHiz": 93,
+      "Baslangic": 10826.0,
+      "Bitis": 11143.0,
+      "Yaricap": 375.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 270.0,
+      "RocklDirenci": 0.87,
+      "MaksHiz": 135,
+      "Baslangic": 11707.0,
+      "Bitis": 11977.0,
+      "Yaricap": 800.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 112.0,
+      "RocklDirenci": 1.46,
+      "MaksHiz": 107,
+      "Baslangic": 12256.0,
+      "Bitis": 12368.0,
+      "Yaricap": 500.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 281.0,
+      "RocklDirenci": 1.0,
+      "MaksHiz": 127,
+      "Baslangic": 13006.0,
+      "Bitis": 13287.0,
+      "Yaricap": 706.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 25.0,
+      "RocklDirenci": 0.87,
+      "MaksHiz": 135,
+      "Baslangic": 13605.0,
+      "Bitis": 13630.0,
+      "Yaricap": 800.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 60.0,
+      "RocklDirenci": 0.52,
+      "MaksHiz": 173,
+      "Baslangic": 13754.0,
+      "Bitis": 13814.0,
+      "Yaricap": 1300.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 253.0,
+      "RocklDirenci": 0.44,
+      "MaksHiz": 187,
+      "Baslangic": 14060.0,
+      "Bitis": 14313.0,
+      "Yaricap": 1530.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 71.0,
+      "RocklDirenci": 0.33,
+      "MaksHiz": 214,
+      "Baslangic": 15106.0,
+      "Bitis": 15177.0,
+      "Yaricap": 2000.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 71.0,
+      "RocklDirenci": 0.33,
+      "MaksHiz": 214,
+      "Baslangic": 15238.0,
+      "Bitis": 15309.0,
+      "Yaricap": 2000.0,
+      "HatTipi": "H1",
+      "Yon": "Belirsiz",
+      "IcHat": "H1"
+    },
+    {
+      "Uzunluk": 135.0,
+      "RocklDirenci": 2.03,
+      "MaksHiz": 93,
+      "Baslangic": 441.0,
+      "Bitis": 576.0,
+      "Yaricap": 375.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 130.0,
+      "RocklDirenci": 1.46,
+      "MaksHiz": 107,
+      "Baslangic": 1097.0,
+      "Bitis": 1227.0,
+      "Yaricap": 500.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 240.0,
+      "RocklDirenci": 0.33,
+      "MaksHiz": 214,
+      "Baslangic": 1555.0,
+      "Bitis": 1795.0,
+      "Yaricap": 2000.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 232.0,
+      "RocklDirenci": 0.22,
+      "MaksHiz": 262,
+      "Baslangic": 2513.0,
+      "Bitis": 2745.0,
+      "Yaricap": 3000.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 216.0,
+      "RocklDirenci": 1.28,
+      "MaksHiz": 114,
+      "Baslangic": 3501.0,
+      "Bitis": 3717.0,
+      "Yaricap": 563.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 195.0,
+      "RocklDirenci": 1.21,
+      "MaksHiz": 117,
+      "Baslangic": 3863.0,
+      "Bitis": 4058.0,
+      "Yaricap": 593.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 79.0,
+      "RocklDirenci": 1.09,
+      "MaksHiz": 122,
+      "Baslangic": 4528.0,
+      "Bitis": 4607.0,
+      "Yaricap": 650.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 301.0,
+      "RocklDirenci": 2.2,
+      "MaksHiz": 90,
+      "Baslangic": 4769.0,
+      "Bitis": 5070.0,
+      "Yaricap": 350.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 364.0,
+      "RocklDirenci": 2.2,
+      "MaksHiz": 90,
+      "Baslangic": 5276.0,
+      "Bitis": 5640.0,
+      "Yaricap": 350.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 397.0,
+      "RocklDirenci": 1.46,
+      "MaksHiz": 107,
+      "Baslangic": 6147.0,
+      "Bitis": 6544.0,
+      "Yaricap": 500.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 45.0,
+      "RocklDirenci": 0.69,
+      "MaksHiz": 151,
+      "Baslangic": 6820.0,
+      "Bitis": 6865.0,
+      "Yaricap": 1000.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 45.0,
+      "RocklDirenci": 0.69,
+      "MaksHiz": 151,
+      "Baslangic": 6971.0,
+      "Bitis": 7016.0,
+      "Yaricap": 1000.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 95.0,
+      "RocklDirenci": 0.67,
+      "MaksHiz": 154,
+      "Baslangic": 7246.0,
+      "Bitis": 7341.0,
+      "Yaricap": 1032.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 527.0,
+      "RocklDirenci": 2.03,
+      "MaksHiz": 93,
+      "Baslangic": 7522.0,
+      "Bitis": 8049.0,
+      "Yaricap": 375.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 316.0,
+      "RocklDirenci": 2.03,
+      "MaksHiz": 93,
+      "Baslangic": 8401.0,
+      "Bitis": 8717.0,
+      "Yaricap": 375.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 340.0,
+      "RocklDirenci": 1.19,
+      "MaksHiz": 117,
+      "Baslangic": 9171.0,
+      "Bitis": 9511.0,
+      "Yaricap": 600.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 65.0,
+      "RocklDirenci": 0.27,
+      "MaksHiz": 239,
+      "Baslangic": 9952.0,
+      "Bitis": 10017.0,
+      "Yaricap": 2500.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 66.0,
+      "RocklDirenci": 0.33,
+      "MaksHiz": 214,
+      "Baslangic": 10072.0,
+      "Bitis": 10138.0,
+      "Yaricap": 2000.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 335.0,
+      "RocklDirenci": 1.93,
+      "MaksHiz": 95,
+      "Baslangic": 10764.0,
+      "Bitis": 11099.0,
+      "Yaricap": 391.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 280.0,
+      "RocklDirenci": 0.85,
+      "MaksHiz": 137,
+      "Baslangic": 11637.0,
+      "Bitis": 11917.0,
+      "Yaricap": 824.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 119.0,
+      "RocklDirenci": 1.41,
+      "MaksHiz": 109,
+      "Baslangic": 12238.0,
+      "Bitis": 12357.0,
+      "Yaricap": 516.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 60.0,
+      "RocklDirenci": 0.03,
+      "MaksHiz": 689,
+      "Baslangic": 12483.0,
+      "Bitis": 12543.0,
+      "Yaricap": 20700.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 60.0,
+      "RocklDirenci": 0.01,
+      "MaksHiz": 1018,
+      "Baslangic": 12603.0,
+      "Bitis": 12663.0,
+      "Yaricap": 45150.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 323.0,
+      "RocklDirenci": 0.87,
+      "MaksHiz": 135,
+      "Baslangic": 12982.0,
+      "Bitis": 13305.0,
+      "Yaricap": 800.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 46.0,
+      "RocklDirenci": 0.57,
+      "MaksHiz": 166,
+      "Baslangic": 13539.0,
+      "Bitis": 13585.0,
+      "Yaricap": 1200.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 46.0,
+      "RocklDirenci": 0.57,
+      "MaksHiz": 166,
+      "Baslangic": 13723.0,
+      "Bitis": 13769.0,
+      "Yaricap": 1200.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 248.0,
+      "RocklDirenci": 0.45,
+      "MaksHiz": 185,
+      "Baslangic": 14063.0,
+      "Bitis": 14311.0,
+      "Yaricap": 1500.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 70.0,
+      "RocklDirenci": 0.33,
+      "MaksHiz": 214,
+      "Baslangic": 15060.0,
+      "Bitis": 15130.0,
+      "Yaricap": 2000.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
+    },
+    {
+      "Uzunluk": 70.0,
+      "RocklDirenci": 0.33,
+      "MaksHiz": 214,
+      "Baslangic": 15192.0,
+      "Bitis": 15262.0,
+      "Yaricap": 2000.0,
+      "HatTipi": "H2",
+      "Yon": "Belirsiz",
+      "IcHat": "H2"
     }
   ],
   "TrafoMerkezleri": [
@@ -174,7 +1305,7 @@
       "AnlikAkimA": 0,
       "AnlikGerilimV": 1500,
       "YuklenmeYuzdesi": 0,
-      "Durum": "BO\u015ETA",
+      "Durum": "BO\u015eTA",
       "BeslenenTrenSayisi": 0
     },
     {
@@ -189,7 +1320,7 @@
       "AnlikAkimA": 0,
       "AnlikGerilimV": 1500,
       "YuklenmeYuzdesi": 0,
-      "Durum": "BO\u015ETA",
+      "Durum": "BO\u015eTA",
       "BeslenenTrenSayisi": 0
     },
     {
@@ -204,12 +1335,12 @@
       "AnlikAkimA": 0,
       "AnlikGerilimV": 1500,
       "YuklenmeYuzdesi": 0,
-      "Durum": "BO\u015ETA",
+      "Durum": "BO\u015eTA",
       "BeslenenTrenSayisi": 0
     },
     {
-      "Ad": "TM-4 (Akse Sapa\u011F\u0131)",
-      "Istasyon": "Akse Sapa\u011F\u0131",
+      "Ad": "TM-4 (Akse Sapa\u011f\u0131)",
+      "Istasyon": "Akse Sapa\u011f\u0131",
       "Direnc": 15,
       "DilasKonumuH1": 9032,
       "DilasKonumuH2": 9032,
@@ -219,7 +1350,7 @@
       "AnlikAkimA": 0,
       "AnlikGerilimV": 1500,
       "YuklenmeYuzdesi": 0,
-      "Durum": "BO\u015ETA",
+      "Durum": "BO\u015eTA",
       "BeslenenTrenSayisi": 0
     },
     {
@@ -271,43 +1402,307 @@
   "RayParalellemeleri": [
     {
       "Ad": "P1 Ray Paralellemesi",
-      "Durum": "AKT\u0130F",
-      "BagliHatlar": "Hat 1 (H1) \u2194 Hat 2 (H2)",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
       "No": 1,
-      "H1BaglantiKm": 2400,
-      "H2BaglantiKm": 2400
+      "H1BaglantiKm": 288.0,
+      "H2BaglantiKm": 288.0
     },
     {
       "Ad": "P2 Ray Paralellemesi",
-      "Durum": "AKT\u0130F",
-      "BagliHatlar": "Hat 1 (H1) \u2194 Hat 2 (H2)",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
       "No": 2,
-      "H1BaglantiKm": 5100,
-      "H2BaglantiKm": 5100
+      "H1BaglantiKm": 1429.0,
+      "H2BaglantiKm": 1407.0
     },
     {
       "Ad": "P3 Ray Paralellemesi",
-      "Durum": "AKT\u0130F",
-      "BagliHatlar": "Hat 1 (H1) \u2194 Hat 2 (H2)",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
       "No": 3,
-      "H1BaglantiKm": 7800,
-      "H2BaglantiKm": 7800
+      "H1BaglantiKm": 1925.0,
+      "H2BaglantiKm": 1907.0
     },
     {
       "Ad": "P4 Ray Paralellemesi",
-      "Durum": "AKT\u0130F",
-      "BagliHatlar": "Hat 1 (H1) \u2194 Hat 2 (H2)",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
       "No": 4,
-      "H1BaglantiKm": 11200,
-      "H2BaglantiKm": 11200
+      "H1BaglantiKm": 2626.0,
+      "H2BaglantiKm": 2607.0
     },
     {
       "Ad": "P5 Ray Paralellemesi",
-      "Durum": "AKT\u0130F",
-      "BagliHatlar": "Hat 1 (H1) \u2194 Hat 2 (H2)",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
       "No": 5,
-      "H1BaglantiKm": 14600,
-      "H2BaglantiKm": 14600
+      "H1BaglantiKm": 3867.0,
+      "H2BaglantiKm": 3834.0
+    },
+    {
+      "Ad": "P6 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 6,
+      "H1BaglantiKm": 4313.0,
+      "H2BaglantiKm": 4289.0
+    },
+    {
+      "Ad": "P7 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 7,
+      "H1BaglantiKm": 4445.0,
+      "H2BaglantiKm": 4421.0
+    },
+    {
+      "Ad": "P8 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 8,
+      "H1BaglantiKm": 5834.0,
+      "H2BaglantiKm": 5790.0
+    },
+    {
+      "Ad": "P9 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 9,
+      "H1BaglantiKm": 6111.0,
+      "H2BaglantiKm": 6068.0
+    },
+    {
+      "Ad": "P10 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 10,
+      "H1BaglantiKm": 6339.0,
+      "H2BaglantiKm": 6308.0
+    },
+    {
+      "Ad": "P11 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 11,
+      "H1BaglantiKm": 6552.0,
+      "H2BaglantiKm": 6528.0
+    },
+    {
+      "Ad": "P12 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 12,
+      "H1BaglantiKm": 6748.0,
+      "H2BaglantiKm": 6726.0
+    },
+    {
+      "Ad": "P13 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 13,
+      "H1BaglantiKm": 6945.0,
+      "H2BaglantiKm": 6922.0
+    },
+    {
+      "Ad": "P14 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 14,
+      "H1BaglantiKm": 8287.0,
+      "H2BaglantiKm": 8225.0
+    },
+    {
+      "Ad": "P15 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 15,
+      "H1BaglantiKm": 8672.0,
+      "H2BaglantiKm": 8596.0
+    },
+    {
+      "Ad": "P16 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 16,
+      "H1BaglantiKm": 9123.0,
+      "H2BaglantiKm": 9032.0
+    },
+    {
+      "Ad": "P17 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 17,
+      "H1BaglantiKm": 9393.0,
+      "H2BaglantiKm": 9311.0
+    },
+    {
+      "Ad": "P18 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 18,
+      "H1BaglantiKm": 9623.0,
+      "H2BaglantiKm": 9553.0
+    },
+    {
+      "Ad": "P19 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 19,
+      "H1BaglantiKm": 9852.0,
+      "H2BaglantiKm": 9782.0
+    },
+    {
+      "Ad": "P20 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 20,
+      "H1BaglantiKm": 10082.0,
+      "H2BaglantiKm": 10011.0
+    },
+    {
+      "Ad": "P21 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 21,
+      "H1BaglantiKm": 10299.0,
+      "H2BaglantiKm": 10227.0
+    },
+    {
+      "Ad": "P22 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 22,
+      "H1BaglantiKm": 10732.0,
+      "H2BaglantiKm": 10661.0
+    },
+    {
+      "Ad": "P23 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 23,
+      "H1BaglantiKm": 10962.0,
+      "H2BaglantiKm": 10900.0
+    },
+    {
+      "Ad": "P24 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 24,
+      "H1BaglantiKm": 11190.0,
+      "H2BaglantiKm": 11141.0
+    },
+    {
+      "Ad": "P25 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 25,
+      "H1BaglantiKm": 11428.0,
+      "H2BaglantiKm": 11379.0
+    },
+    {
+      "Ad": "P26 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 26,
+      "H1BaglantiKm": 11662.0,
+      "H2BaglantiKm": 11614.0
+    },
+    {
+      "Ad": "P27 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 27,
+      "H1BaglantiKm": 11888.0,
+      "H2BaglantiKm": 11845.0
+    },
+    {
+      "Ad": "P28 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 28,
+      "H1BaglantiKm": 12114.0,
+      "H2BaglantiKm": 12073.0
+    },
+    {
+      "Ad": "P29 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 29,
+      "H1BaglantiKm": 12285.0,
+      "H2BaglantiKm": 12245.0
+    },
+    {
+      "Ad": "P30 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 30,
+      "H1BaglantiKm": 12515.0,
+      "H2BaglantiKm": 12481.0
+    },
+    {
+      "Ad": "P31 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 31,
+      "H1BaglantiKm": 12730.0,
+      "H2BaglantiKm": 12696.0
+    },
+    {
+      "Ad": "P32 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 32,
+      "H1BaglantiKm": 12970.0,
+      "H2BaglantiKm": 12936.0
+    },
+    {
+      "Ad": "P33 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 33,
+      "H1BaglantiKm": 13186.0,
+      "H2BaglantiKm": 13148.0
+    },
+    {
+      "Ad": "P34 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 34,
+      "H1BaglantiKm": 13480.0,
+      "H2BaglantiKm": 13438.0
+    },
+    {
+      "Ad": "P35 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 35,
+      "H1BaglantiKm": 13717.0,
+      "H2BaglantiKm": 13674.0
+    },
+    {
+      "Ad": "P36 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 36,
+      "H1BaglantiKm": 14230.0,
+      "H2BaglantiKm": 14185.0
+    },
+    {
+      "Ad": "P37 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 37,
+      "H1BaglantiKm": 14470.0,
+      "H2BaglantiKm": 14424.0
+    },
+    {
+      "Ad": "P38 Ray Paralellemesi",
+      "Durum": "AKT?F",
+      "BagliHatlar": "Hat 1 (H1) ? Hat 2 (H2)",
+      "No": 38,
+      "H1BaglantiKm": 14714.0,
+      "H2BaglantiKm": 14668.0
     }
   ],
   "KatenerSeksiyonlari": [],
@@ -321,7 +1716,7 @@
       "H2OrtaNokta": 186.1,
       "Uzunluk": 100,
       "BekleyenYolcu": 45,
-      "YaklasanTrenler": "3 km i\u00E7inde tren yok",
+      "YaklasanTrenler": "3 km i\u00e7inde tren yok",
       "Durum": "NORMAL"
     },
     {
@@ -332,7 +1727,7 @@
       "H2OrtaNokta": 1407,
       "Uzunluk": 100,
       "BekleyenYolcu": 45,
-      "YaklasanTrenler": "3 km i\u00E7inde tren yok",
+      "YaklasanTrenler": "3 km i\u00e7inde tren yok",
       "Durum": "NORMAL"
     },
     {
@@ -343,7 +1738,7 @@
       "H2OrtaNokta": 3327.8,
       "Uzunluk": 100,
       "BekleyenYolcu": 45,
-      "YaklasanTrenler": "3 km i\u00E7inde tren yok",
+      "YaklasanTrenler": "3 km i\u00e7inde tren yok",
       "Durum": "NORMAL"
     },
     {
@@ -392,7 +1787,7 @@
     },
     {
       "IstasyonId": 8,
-      "Ad": "Akse Sapa\u011F\u0131",
+      "Ad": "Akse Sapa\u011f\u0131",
       "KisaAd": "AKSE",
       "H1OrtaNokta": 9032.3,
       "H2OrtaNokta": 9032.3,
@@ -431,7 +1826,7 @@
       "H2OrtaNokta": 13891.6,
       "Uzunluk": 115,
       "BekleyenYolcu": 45,
-      "YaklasanTrenler": "3 km i\u00E7inde tren yok",
+      "YaklasanTrenler": "3 km i\u00e7inde tren yok",
       "Durum": "NORMAL"
     },
     {
@@ -442,20 +1837,20 @@
       "H2OrtaNokta": 15347,
       "Uzunluk": 100,
       "BekleyenYolcu": 0,
-      "YaklasanTrenler": "3 km i\u00E7inde tren yok",
+      "YaklasanTrenler": "3 km i\u00e7inde tren yok",
       "Durum": "NORMAL"
     }
   ],
   "HizLimitleri": [
     {
       "Baslangic": 0,
-      "Bitis": 15350,
+      "Bitis": 15394,
       "Limit": 80,
       "HatTipi": "H1"
     },
     {
       "Baslangic": 0,
-      "Bitis": 15350,
+      "Bitis": 15347,
       "Limit": 80,
       "HatTipi": "H2"
     }
@@ -525,7 +1920,7 @@
       "CekilenAkimA": -703.7,
       "KatenerGerilimiV": 1620,
       "YolcuSayisi": 242,
-      "SonrakiIstasyon": "Akse Sapa\u011F\u0131",
+      "SonrakiIstasyon": "Akse Sapa\u011f\u0131",
       "SonrakiIstasyonMesafe": 301,
       "IstasyonBeklemeSayaci": 0,
       "EnYakinTrafo": "",
@@ -590,7 +1985,7 @@
       "AnlikHiz": 15.840000000000002,
       "IsDispatched": true,
       "DispatchTimeSeconds": 450,
-      "Durum": "HIZLANIYOR (CER G\u00DCC\u00DC \u00C7EK\u0130YOR)",
+      "Durum": "HIZLANIYOR (CER G\u00dcC\u00dc \u00c7EK\u0130YOR)",
       "HedefHiz": 80,
       "Ivme": 1.1,
       "CekilenGucKw": 1705.1,
