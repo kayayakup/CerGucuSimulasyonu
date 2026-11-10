@@ -73,7 +73,7 @@ namespace CerGucuSimulasyonu.ViewModels
         partial void OnSimulationSpeedChanged(double value)
         {
             double boundedSpeed = double.IsFinite(value)
-                ? Math.Clamp(value, 0.1, 10.0)
+                ? Math.Clamp(value, 0.1, 50.0)
                 : 1.0;
             if (value != boundedSpeed)
             {

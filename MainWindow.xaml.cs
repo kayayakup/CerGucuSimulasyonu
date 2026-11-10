@@ -327,8 +327,8 @@ namespace CerGucuSimulasyonu
             DrawSeksiyonAyiricilar();
             DrawIstasyonlar();
             DrawTrafoMerkezleri();
-            DrawTrenler();
             DrawPendingPreview();
+            DrawTrenler();
         }
 
         private void DrawPendingPreview()
@@ -637,49 +637,57 @@ namespace CerGucuSimulasyonu
 
         private void DrawRegions()
         {
-            // Hız Limitleri (En üst katman)
+            List<List<(double Start, double End)>> h1LabelLanes = new();
+            List<List<(double Start, double End)>> h2LabelLanes = new();
+
             for (int i = 0; i < ViewModel.Data.HizLimitleri.Count; i++)
             {
                 var hiz = ViewModel.Data.HizLimitleri[i];
-                double labelOffset = hiz.HatTipi == "H1" ? -50 : 44;
+                double lineOffset = hiz.HatTipi == "H1" ? -8 : 8;
 
                 var line = new Polyline
                 {
                     Stroke = new SolidColorBrush(Color.FromRgb(56, 189, 248)),
-                    StrokeThickness = 2.5,
-                    StrokeDashArray = new DoubleCollection { 4, 3 },
+                    StrokeThickness = 1.5,
+                    Opacity = 0.75,
+                    StrokeDashArray = new DoubleCollection { 3, 3 },
                     Tag = hiz,
                     ToolTip = $"Hız Limiti: {hiz.Limit:0} km/h ({hiz.Baslangic:0}m - {hiz.Bitis:0}m) [{hiz.HatTipi}]"
                 };
-                AddRegionPathPoints(line, hiz.Baslangic, hiz.Bitis, hiz.HatTipi, labelOffset + 7);
+                AddRegionPathPoints(line, hiz.Baslangic, hiz.Bitis, hiz.HatTipi, lineOffset);
                 AttachItemEvents(line, hiz);
                 TrackCanvas.Children.Add(line);
 
-                var badge = new Border
-                {
-                    Background = new SolidColorBrush(Color.FromArgb(220, 14, 116, 144)),
-                    CornerRadius = new CornerRadius(3),
-                    Padding = new Thickness(4, 1, 4, 1),
-                    Child = new TextBlock
-                    {
-                        Text = $"{hiz.Limit:0} km/h",
-                        FontSize = 9,
-                        FontWeight = FontWeights.Bold,
-                        Foreground = Brushes.White
-                    },
-                    Tag = hiz
-                };
-                AttachItemEvents(badge, hiz);
                 double middlePosition = (hiz.Baslangic + hiz.Bitis) / 2;
-                Canvas.SetLeft(badge, KmToX(middlePosition) - 18);
-                Canvas.SetTop(badge, GetTrackY(middlePosition, hiz.HatTipi) + labelOffset - 1);
+                double labelWidth = 94;
+                if (!ShouldShowRegionLabel(hiz.Baslangic, hiz.Bitis, labelWidth, hiz))
+                {
+                    continue;
+                }
+
+                var badge = CreateRegionLabel(
+                    $"HIZ {hiz.Limit:0} km/h",
+                    Color.FromRgb(14, 116, 144),
+                    hiz,
+                    labelWidth);
+                AttachItemEvents(badge, hiz);
+                double labelX = KmToX(middlePosition);
+                int lane = AllocateAnnotationLane(
+                    hiz.HatTipi == "H1" ? h1LabelLanes : h2LabelLanes,
+                    labelX - labelWidth / 2,
+                    labelX + labelWidth / 2);
+                Canvas.SetLeft(badge, labelX - labelWidth / 2);
+                Canvas.SetTop(badge, GetAnnotationTop(middlePosition, hiz.HatTipi, lane));
                 TrackCanvas.Children.Add(badge);
             }
 
-            // Eğimler (Gradients with directional indicators)
             for (int i = 0; i < ViewModel.Data.HatEgimleri.Count; i++)
             {
                 var egim = ViewModel.Data.HatEgimleri[i];
+                if (Math.Abs(egim.EgimYuzdesi) < 0.0001)
+                {
+                    continue;
+                }
 
                 bool isUp = egim.EgimYuzdesi > 0;
                 bool isDown = egim.EgimYuzdesi < 0;
@@ -688,8 +696,8 @@ namespace CerGucuSimulasyonu
                 var slopePath = new Polyline
                 {
                     Stroke = new SolidColorBrush(colBorder),
-                    StrokeThickness = 12,
-                    Opacity = 0.38,
+                    StrokeThickness = 3,
+                    Opacity = 0.48,
                     StrokeStartLineCap = PenLineCap.Round,
                     StrokeEndLineCap = PenLineCap.Round,
                     Tag = egim,
@@ -700,23 +708,29 @@ namespace CerGucuSimulasyonu
                 TrackCanvas.Children.Add(slopePath);
 
                 string arrowSymbol = isUp ? "↗" : (isDown ? "↘" : "➡");
-                string desc = isUp ? "Çıkış" : (isDown ? "İniş" : "Düz");
                 double middlePosition = (egim.Baslangic + egim.Bitis) / 2;
-                var txt = new TextBlock
+                double labelWidth = 104;
+                if (!ShouldShowRegionLabel(egim.Baslangic, egim.Bitis, labelWidth, egim))
                 {
-                    Text = $"{arrowSymbol} %{Math.Abs(egim.EgimYuzdesi):0.#} ({desc})",
-                    FontSize = 9.5,
-                    Foreground = Brushes.White,
-                    FontWeight = FontWeights.Bold,
-                    IsHitTestVisible = false
-                };
-                Canvas.SetLeft(txt, KmToX(middlePosition) - 28);
-                Canvas.SetTop(txt, GetTrackY(middlePosition, egim.HatTipi) +
-                    (egim.HatTipi == "H1" ? -18 : 6));
-                TrackCanvas.Children.Add(txt);
+                    continue;
+                }
+
+                var label = CreateRegionLabel(
+                    $"EĞİM {arrowSymbol} %{Math.Abs(egim.EgimYuzdesi):0.#}",
+                    isUp ? Color.FromRgb(153, 27, 27) : Color.FromRgb(6, 95, 70),
+                    egim,
+                    labelWidth);
+                AttachItemEvents(label, egim);
+                double labelX = KmToX(middlePosition);
+                int lane = AllocateAnnotationLane(
+                    egim.HatTipi == "H1" ? h1LabelLanes : h2LabelLanes,
+                    labelX - labelWidth / 2,
+                    labelX + labelWidth / 2);
+                Canvas.SetLeft(label, labelX - labelWidth / 2);
+                Canvas.SetTop(label, GetAnnotationTop(middlePosition, egim.HatTipi, lane));
+                TrackCanvas.Children.Add(label);
             }
 
-            // Kurplar (Curves)
             for (int i = 0; i < ViewModel.Data.HatKurplari.Count; i++)
             {
                 var kurp = ViewModel.Data.HatKurplari[i];
@@ -733,8 +747,9 @@ namespace CerGucuSimulasyonu
                     Stroke = new SolidColorBrush(track == "H1"
                         ? Color.FromRgb(192, 132, 252)
                         : Color.FromRgb(253, 224, 71)),
-                    StrokeThickness = 9,
-                    Opacity = 0.8,
+                    StrokeThickness = 3,
+                    Opacity = 0.72,
+                    StrokeDashArray = new DoubleCollection { 5, 3 },
                     StrokeStartLineCap = PenLineCap.Round,
                     StrokeEndLineCap = PenLineCap.Round,
                     Tag = kurp,
@@ -750,32 +765,101 @@ namespace CerGucuSimulasyonu
                 TrackCanvas.Children.Add(curveHighlight);
 
                 double middlePosition = (kurp.Baslangic + kurp.Bitis) / 2;
-                var curveLabel = new Border
+                double labelWidth = 96;
+                if (!ShouldShowRegionLabel(kurp.Baslangic, kurp.Bitis, labelWidth, kurp))
                 {
-                    Padding = new Thickness(4, 1, 4, 1),
-                    Background = new SolidColorBrush(Color.FromArgb(230, 15, 23, 42)),
-                    BorderBrush = new SolidColorBrush(track == "H1"
-                        ? Color.FromRgb(192, 132, 252)
-                        : Color.FromRgb(253, 224, 71)),
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(3),
-                    Tag = kurp,
-                    ToolTip = tooltip,
-                    Child = new TextBlock
-                    {
-                        Text = "KURP",
-                        FontSize = 8,
-                        FontWeight = FontWeights.Bold,
-                        Foreground = new SolidColorBrush(track == "H1"
-                            ? Color.FromRgb(216, 180, 254)
-                            : Color.FromRgb(254, 240, 138))
-                    }
-                };
+                    continue;
+                }
+
+                var curveLabel = CreateRegionLabel(
+                    $"KURP R{kurp.Yaricap:0}m",
+                    track == "H1"
+                        ? Color.FromRgb(88, 28, 135)
+                        : Color.FromRgb(133, 77, 14),
+                    kurp,
+                    labelWidth,
+                    tooltip);
                 AttachItemEvents(curveLabel, kurp);
-                Canvas.SetLeft(curveLabel, KmToX(middlePosition) - 19);
-                Canvas.SetTop(curveLabel, GetTrackY(middlePosition, track) - 20);
+                double labelX = KmToX(middlePosition);
+                int lane = AllocateAnnotationLane(
+                    track == "H1" ? h1LabelLanes : h2LabelLanes,
+                    labelX - labelWidth / 2,
+                    labelX + labelWidth / 2);
+                Canvas.SetLeft(curveLabel, labelX - labelWidth / 2);
+                Canvas.SetTop(curveLabel, GetAnnotationTop(middlePosition, track, lane));
                 TrackCanvas.Children.Add(curveLabel);
             }
+        }
+
+        private Border CreateRegionLabel(
+            string text,
+            Color background,
+            object item,
+            double width,
+            string? toolTip = null)
+        {
+            var label = new Border
+            {
+                Width = width,
+                Height = 19,
+                Padding = new Thickness(4, 1, 4, 1),
+                Background = new SolidColorBrush(Color.FromArgb(245, background.R, background.G, background.B)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225)),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(4),
+                Tag = item,
+                ToolTip = toolTip,
+                Child = new TextBlock
+                {
+                    Text = text,
+                    FontSize = 9,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = Brushes.White,
+                    TextAlignment = TextAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                }
+            };
+            Panel.SetZIndex(label, 20);
+            return label;
+        }
+
+        private static int AllocateAnnotationLane(
+            List<List<(double Start, double End)>> lanes,
+            double start,
+            double end)
+        {
+            const double spacing = 8;
+            for (int laneIndex = 0; laneIndex < lanes.Count; laneIndex++)
+            {
+                if (lanes[laneIndex].All(interval =>
+                    end + spacing <= interval.Start || start >= interval.End + spacing))
+                {
+                    lanes[laneIndex].Add((start, end));
+                    return laneIndex;
+                }
+            }
+
+            lanes.Add(new List<(double Start, double End)> { (start, end) });
+            return lanes.Count - 1;
+        }
+
+        private double GetAnnotationTop(double positionM, string track, int lane)
+        {
+            double y = GetTrackY(positionM, track);
+            return track == "H1"
+                ? y - 25 - lane * 21
+                : y + 8 + lane * 21;
+        }
+
+        private bool ShouldShowRegionLabel(
+            double startM,
+            double endM,
+            double labelWidth,
+            object item)
+        {
+            return ViewModel.SelectedItem == item ||
+                   KmToX(endM) - KmToX(startM) >= labelWidth + 12;
         }
 
         private void AddRegionPathPoints(
@@ -1359,10 +1443,11 @@ namespace CerGucuSimulasyonu
                             : Color.FromRgb(251, 146, 60);
 
                 double trainLengthPx = MetersToPixels(ViewModel.Data.Tren.TrenUzunlugu);
+                double trainSymbolWidth = Math.Max(18, trainLengthPx);
                 var trainBox = new Border
                 {
-                    Width = trainLengthPx,
-                    Height = 8,
+                    Width = trainSymbolWidth,
+                    Height = 10,
                     Background = new SolidColorBrush(bodyColor),
                     BorderBrush = isSelected
                         ? Brushes.White
@@ -1376,25 +1461,36 @@ namespace CerGucuSimulasyonu
                     Tag = tren,
                     ToolTip = CreateCalculationToolTip(BuildTrainElectricalTooltip(tren))
                 };
+                Panel.SetZIndex(trainBox, 100);
 
                 string arrow = tren.Yon == "ileri" ? "➔" : "⬅";
                 AttachItemEvents(trainBox, tren);
-                Canvas.SetLeft(trainBox, x - trainLengthPx / 2);
-                Canvas.SetTop(trainBox, isH1 ? y - 13 : y + 5);
+                Canvas.SetLeft(trainBox, x - trainSymbolWidth / 2);
+                Canvas.SetTop(trainBox, isH1 ? y - 15 : y + 5);
                 TrackCanvas.Children.Add(trainBox);
 
-                var trainLabel = new TextBlock
+                var trainLabel = new Border
                 {
-                    Text = $"{tren.TrenAdi} {arrow}",
-                    Width = 72,
-                    FontSize = 9,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = Brushes.White,
-                    TextAlignment = TextAlignment.Center,
-                    IsHitTestVisible = false
+                    Width = 68,
+                    Height = 18,
+                    Background = new SolidColorBrush(Color.FromArgb(235, 15, 23, 42)),
+                    BorderBrush = new SolidColorBrush(bodyColor),
+                    BorderThickness = new Thickness(1),
+                    CornerRadius = new CornerRadius(4),
+                    IsHitTestVisible = false,
+                    Child = new TextBlock
+                    {
+                        Text = $"{tren.TrenAdi} {arrow}",
+                        FontSize = 9,
+                        FontWeight = FontWeights.Bold,
+                        Foreground = Brushes.White,
+                        TextAlignment = TextAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
+                    }
                 };
+                Panel.SetZIndex(trainLabel, 101);
                 Canvas.SetLeft(trainLabel, x - 36);
-                Canvas.SetTop(trainLabel, isH1 ? y - 31 : y + 14);
+                Canvas.SetTop(trainLabel, isH1 ? y - 37 : y + 17);
                 TrackCanvas.Children.Add(trainLabel);
             }
         }
