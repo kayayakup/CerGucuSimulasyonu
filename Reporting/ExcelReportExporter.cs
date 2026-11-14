@@ -38,7 +38,8 @@ public sealed class ExcelReportExporter
             new[] { "Maks. cer gücü [kW]", result.MaximumTractionPowerKw.ToString("0.0") },
             new[] { "Maks. rejeneratif güç [kW]", result.MaximumRegenerativePowerKw.ToString("0.0") },
             new[] { "Min. tren gerilimi [V]", result.MinimumTrainVoltageV.ToString("0.0") },
-            new[] { "Maks. trafo yüklenmesi [%]", result.MaximumSubstationLoadPercent.ToString("0.0") },
+            new[] { "Maks. doğrultucu yüklenmesi [%]", result.MaximumRectifierLoadPercent.ToString("0.0") },
+            new[] { "Maks. trafo yüklenmesi [%]", result.MaximumTransformerLoadPercent.ToString("0.0") },
             new[] { "Tüketilen enerji [kWh]", result.TotalConsumedEnergyKwh.ToString("0.00") },
             new[] { "Geri kazanılan enerji [kWh]", result.TotalRecoveredEnergyKwh.ToString("0.00") }
         };
@@ -59,11 +60,12 @@ public sealed class ExcelReportExporter
             snapshot.RecoveredEnergyKwh.ToString("0.000"),
             snapshot.MinimumTrainVoltageV.ToString("0.0"),
             snapshot.AverageTrainVoltageV.ToString("0.0"),
-            snapshot.MaximumSubstationLoadPercent.ToString("0.0"),
+            snapshot.MaximumRectifierLoadPercent.ToString("0.0"),
+            snapshot.MaximumTransformerLoadPercent.ToString("0.0"),
             snapshot.AverageTrainSpeedKmh.ToString("0.0")
         }).ToArray();
         WriteTable(sheet, 1, 1,
-            new[] { "Saniye", "Cer [kW]", "Rejen. [kW]", "Net [kW]", "Tüketim [kWh]", "Geri kazanım [kWh]", "Min. gerilim [V]", "Ort. gerilim [V]", "Max. TM yük [%]", "Ort. hız [km/h]" },
+            new[] { "Saniye", "Cer [kW]", "Rejen. [kW]", "Net [kW]", "Tüketim [kWh]", "Geri kazanım [kWh]", "Min. gerilim [V]", "Ort. gerilim [V]", "Max. doğrultucu yük [%]", "Max. trafo yük [%]", "Ort. hız [km/h]" },
             rows);
         FormatSheet(sheet);
     }
@@ -111,11 +113,22 @@ public sealed class ExcelReportExporter
         {
             entry.Second.ToString(), entry.Substation.Name, entry.Substation.PowerKw.ToString("0.0"),
             entry.Substation.CurrentA.ToString("0.0"), entry.Substation.VoltageV.ToString("0.0"),
-            entry.Substation.LoadPercent.ToString("0.0"), entry.Substation.FedTrainCount.ToString(),
+            entry.Substation.RectifierPowerKw.ToString("0.0"),
+            entry.Substation.RectifierCurrentA.ToString("0.0"),
+            entry.Substation.BridgeRectifierPowerKw.ToString("0.0"),
+            entry.Substation.BridgeRectifierCurrentA.ToString("0.0"),
+            entry.Substation.DcRippleFrequencyHz.ToString("0.0"),
+            entry.Substation.RegenerativeDcPowerKw.ToString("0.0"),
+            entry.Substation.AcInputPowerKw.ToString("0.0"),
+            entry.Substation.AcApparentPowerKva.ToString("0.0"),
+            entry.Substation.AcInputCurrentA.ToString("0.0"),
+            entry.Substation.LoadPercent.ToString("0.0"),
+            entry.Substation.TransformerLoadPercent.ToString("0.0"),
+            entry.Substation.FedTrainCount.ToString(),
             entry.Substation.State, entry.Substation.LimitStatus
         }).ToArray();
         WriteTable(sheet, 1, 1,
-            new[] { "Saniye", "TM", "Güç [kW]", "I [A]", "Gerilim [V]", "Yük [%]", "Beslenen tren", "Durum", "Limit Durumu" },
+            new[] { "Saniye", "TM", "Net DC P [kW]", "Net DC I [A]", "DC bara U [V]", "Doğrultucu DC P [kW]", "Doğrultucu DC I [A]", "Köprü başı DC P [kW]", "Köprü başı DC I [A]", "12-pulse dalgalanma f [Hz]", "Net rejeneratif DC P [kW]", "AC giriş P [kW]", "AC giriş S [kVA]", "AC giriş I [A]", "Doğrultucu yük [%]", "Trafo yük [%]", "Beslenen tren", "Durum", "Limit Durumu" },
             rows);
         for (int index = 0; index < entries.Length; index++)
         {

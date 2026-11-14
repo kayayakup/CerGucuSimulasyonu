@@ -69,6 +69,9 @@ namespace CerGucuSimulasyonu.ViewModels
 
         [ObservableProperty]
         private double _simulationSpeed = 1.0;
+        private const double BaseSimulationUpdateSeconds = 0.2;
+        private const double MinimumTimerIntervalSeconds = 1.0 / 60.0;
+        private const double MaximumTimerIntervalSeconds = 0.2;
 
         partial void OnSimulationSpeedChanged(double value)
         {
@@ -78,7 +81,10 @@ namespace CerGucuSimulasyonu.ViewModels
             if (value != boundedSpeed)
             {
                 SimulationSpeed = boundedSpeed;
+                return;
             }
+
+            UpdateSimulationTimerInterval();
         }
 
         [ObservableProperty]
@@ -126,6 +132,7 @@ namespace CerGucuSimulasyonu.ViewModels
 
         private DispatcherTimer? _simTimer;
         private TimeSpan _elapsedSimTime = TimeSpan.Zero;
+        private DateTime _lastLiveChartSampleUtc = DateTime.MinValue;
         private bool _isUpdatingReportTime;
         private readonly Random _rand = new();
         private readonly SimulationRecorder _simulationRecorder = new();
@@ -276,9 +283,23 @@ namespace CerGucuSimulasyonu.ViewModels
         {
             _simTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromMilliseconds(200) // 5 Hz güncelleme
+                Interval = TimeSpan.FromSeconds(CalculateSimulationTimerIntervalSeconds())
             };
             _simTimer.Tick += SimTimer_Tick;
+        }
+
+        private double CalculateSimulationTimerIntervalSeconds() =>
+            Math.Clamp(
+                BaseSimulationUpdateSeconds / SimulationSpeed,
+                MinimumTimerIntervalSeconds,
+                MaximumTimerIntervalSeconds);
+
+        private void UpdateSimulationTimerInterval()
+        {
+            if (_simTimer is not null)
+            {
+                _simTimer.Interval = TimeSpan.FromSeconds(CalculateSimulationTimerIntervalSeconds());
+            }
         }
 
         public void LoadInitialMockData()
@@ -540,6 +561,7 @@ namespace CerGucuSimulasyonu.ViewModels
                 VoltageChart?.Clear();
                 SelectedTrainSpeedChart?.Clear();
                 TrafoLoadChart?.Clear();
+                _lastLiveChartSampleUtc = DateTime.MinValue;
 
                 LastRunResult = null;
                 ComplianceResults = Array.Empty<ComplianceResult>();
@@ -569,14 +591,14 @@ namespace CerGucuSimulasyonu.ViewModels
 
         private void SimTimer_Tick(object? sender, EventArgs e)
         {
-            double dt = 0.2 * SimulationSpeed; // saniye
+            double dt = (_simTimer?.Interval.TotalSeconds ?? BaseSimulationUpdateSeconds) * SimulationSpeed;
             _elapsedSimTime = _elapsedSimTime.Add(TimeSpan.FromSeconds(dt));
             SimulationTimeString = FormatSimulationTime(_elapsedSimTime);
 
             _engine.AdvanceOneStep(dt);
             UpdateUiMetricsAndCharts();
 
-            _simulationRecorder.CaptureIfDue(Data, _elapsedSimTime.TotalSeconds, dt);
+            _simulationRecorder.CaptureIfDue(Data, _elapsedSimTime.TotalSeconds);
             if (_simulationRecorder.IsComplete)
             {
                 LastRunResult = _simulationRecorder.Complete();
@@ -604,9 +626,13 @@ namespace CerGucuSimulasyonu.ViewModels
             ToplamTuketilenEnerjiKwh = Math.Round(Data.Trenler.Sum(t => t.ToplamTuketilenEnerjiKwh), 3);
             ToplamGeriKazanilanEnerjiKwh = Math.Round(Data.Trenler.Sum(t => t.ToplamRejeneratifEnerjiKwh), 3);
 
-            var peakTrafo = Data.TrafoMerkezleri.OrderByDescending(t => t.YuklenmeYuzdesi).FirstOrDefault();
-            EnYuksekTrafoYukYuzdesi = peakTrafo?.YuklenmeYuzdesi ?? 0;
-            EnCokYuklenenTrafoAdi = peakTrafo != null && peakTrafo.YuklenmeYuzdesi > 0 ? peakTrafo.Ad : "-";
+            var peakTrafo = Data.TrafoMerkezleri
+                .OrderByDescending(t => Math.Max(t.YuklenmeYuzdesi, t.TrafoYuklenmeYuzdesi))
+                .FirstOrDefault();
+            EnYuksekTrafoYukYuzdesi = peakTrafo == null
+                ? 0
+                : Math.Max(peakTrafo.YuklenmeYuzdesi, peakTrafo.TrafoYuklenmeYuzdesi);
+            EnCokYuklenenTrafoAdi = EnYuksekTrafoYukYuzdesi > 0 ? peakTrafo?.Ad ?? "-" : "-";
 
             if (Data.Trenler.Count > 0)
             {
@@ -640,14 +666,20 @@ namespace CerGucuSimulasyonu.ViewModels
                 }
             }
 
-            string timeStr = DateTime.Now.ToString("HH:mm:ss");
-            PowerChart?.AddPoint(ToplamCekilenGucKw, ToplamRejeneratifGucKw, timeStr);
-            VoltageChart?.AddPoint(OrtalamaKatenerGerilimiV, MinHatGerilimiV, timeStr);
-            TrafoLoadChart?.AddPoint(EnYuksekTrafoYukYuzdesi, null, timeStr);
-
-            if (SelectedItem is TrenKonumu selTrain)
+            DateTime nowUtc = DateTime.UtcNow;
+            if (nowUtc - _lastLiveChartSampleUtc >= TimeSpan.FromMilliseconds(200))
             {
-                SelectedTrainSpeedChart?.AddPoint(selTrain.AnlikHiz, selTrain.CekilenGucKw, timeStr);
+                string timeStr = nowUtc.ToLocalTime().ToString("HH:mm:ss");
+                PowerChart?.AddPoint(ToplamCekilenGucKw, ToplamRejeneratifGucKw, timeStr);
+                VoltageChart?.AddPoint(OrtalamaKatenerGerilimiV, MinHatGerilimiV, timeStr);
+                TrafoLoadChart?.AddPoint(EnYuksekTrafoYukYuzdesi, null, timeStr);
+
+                if (SelectedItem is TrenKonumu selTrain)
+                {
+                    SelectedTrainSpeedChart?.AddPoint(selTrain.AnlikHiz, selTrain.CekilenGucKw, timeStr);
+                }
+
+                _lastLiveChartSampleUtc = nowUtc;
             }
         }
 

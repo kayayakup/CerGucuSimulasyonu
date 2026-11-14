@@ -734,7 +734,20 @@ namespace CerGucuSimulasyonu
             for (int i = 0; i < ViewModel.Data.HatKurplari.Count; i++)
             {
                 var kurp = ViewModel.Data.HatKurplari[i];
-                double x2 = KmToX(kurp.Bitis);
+                double lineLength = ViewModel.Data.HatUzunlugu > 0
+                    ? ViewModel.Data.HatUzunlugu
+                    : 15394;
+                double curveStart = Math.Clamp(kurp.Baslangic, 0, lineLength);
+                double curveEnd = Math.Clamp(kurp.Bitis, 0, lineLength);
+                if (curveEnd <= curveStart)
+                {
+                    continue;
+                }
+                double x1 = KmToX(curveStart);
+                double x2 = KmToX(curveEnd);
+                Color curveColor = kurp.HatTipi == "H1"
+                    ? Color.FromRgb(178, 126, 194)
+                    : Color.FromRgb(197, 161, 82);
                 string tooltip =
                     $"↪ {kurp.HatTipi} kurbu | R={kurp.Yaricap:0} m | {kurp.Baslangic:0}–{kurp.Bitis:0} m\n" +
                     (kurp.Yon == "Belirsiz"
@@ -744,40 +757,39 @@ namespace CerGucuSimulasyonu
                 string track = kurp.HatTipi;
                 var curveHighlight = new Polyline
                 {
-                    Stroke = new SolidColorBrush(track == "H1"
-                        ? Color.FromRgb(192, 132, 252)
-                        : Color.FromRgb(253, 224, 71)),
-                    StrokeThickness = 3,
-                    Opacity = 0.72,
-                    StrokeDashArray = new DoubleCollection { 5, 3 },
+                    Stroke = new SolidColorBrush(curveColor),
+                    StrokeThickness = 8,
+                    Opacity = 1,
                     StrokeStartLineCap = PenLineCap.Round,
                     StrokeEndLineCap = PenLineCap.Round,
                     Tag = kurp,
                     ToolTip = tooltip
                 };
-                double stepM = Math.Max(10, (kurp.Bitis - kurp.Baslangic) / 32);
-                for (double position = kurp.Baslangic; position < kurp.Bitis; position += stepM)
+                double stepM = Math.Max(10, (curveEnd - curveStart) / 32);
+                for (double position = curveStart; position < curveEnd; position += stepM)
                 {
                     curveHighlight.Points.Add(new Point(KmToX(position), GetTrackY(position, track)));
                 }
-                curveHighlight.Points.Add(new Point(x2, GetTrackY(kurp.Bitis, track)));
+                curveHighlight.Points.Add(new Point(x2, GetTrackY(curveEnd, track)));
                 AttachItemEvents(curveHighlight, kurp);
                 TrackCanvas.Children.Add(curveHighlight);
+                AddCurveBoundary(x1, curveStart, curveColor, kurp);
+                AddCurveBoundary(x2, curveEnd, curveColor, kurp);
 
-                double middlePosition = (kurp.Baslangic + kurp.Bitis) / 2;
-                double labelWidth = 96;
+                double middlePosition = (curveStart + curveEnd) / 2;
+                double labelWidth = 150;
                 if (!ShouldShowRegionLabel(kurp.Baslangic, kurp.Bitis, labelWidth, kurp))
                 {
                     continue;
                 }
 
                 var curveLabel = CreateRegionLabel(
-                    $"KURP R{kurp.Yaricap:0}m",
+                    $"KURP {curveStart:0}–{curveEnd:0} m | R{kurp.Yaricap:0}m",
                     track == "H1"
-                        ? Color.FromRgb(88, 28, 135)
-                        : Color.FromRgb(133, 77, 14),
+                        ? Color.FromRgb(79, 48, 88)
+                        : Color.FromRgb(92, 75, 38),
                     kurp,
-                    labelWidth,
+                    150,
                     tooltip);
                 AttachItemEvents(curveLabel, kurp);
                 double labelX = KmToX(middlePosition);
@@ -788,6 +800,27 @@ namespace CerGucuSimulasyonu
                 Canvas.SetLeft(curveLabel, labelX - labelWidth / 2);
                 Canvas.SetTop(curveLabel, GetAnnotationTop(middlePosition, track, lane));
                 TrackCanvas.Children.Add(curveLabel);
+            }
+
+            void AddCurveBoundary(double x, double positionM, Color color, HatKurbu curve)
+            {
+                double railY = GetTrackY(positionM, curve.HatTipi);
+                var boundary = new Line
+                {
+                    X1 = x + 1,
+                    X2 = x + 1,
+                    Y1 = railY - 9,
+                    Y2 = railY + 9,
+                    Stroke = new SolidColorBrush(color),
+                    StrokeThickness = 3,
+                    Tag = curve,
+                    ToolTip = tooltipFor(curve)
+                };
+                AttachItemEvents(boundary, curve);
+                TrackCanvas.Children.Add(boundary);
+
+                static string tooltipFor(HatKurbu item) =>
+                    $"{item.HatTipi} kurbu sınırı: {item.Baslangic:0}–{item.Bitis:0} m";
             }
         }
 
@@ -933,7 +966,9 @@ namespace CerGucuSimulasyonu
             return string.Join(Environment.NewLine, new[]
             {
                 $"🚃 {train.TrenAdi} (#{train.Id}) — canlı elektrik hesabı",
-                $"Konum: {train.Konum:0.0} m | Hat: {train.HatTipi} | Hız: {train.AnlikHiz:0.0} km/h | Durum: {train.Durum}",
+                $"Konum: {train.Konum:0.0} m | Hat: {train.HatTipi} | Hız: {train.AnlikHiz:0.0} km/h",
+                $"İşletim durumu: {train.IsletimDurumu} | Kontrol: {train.Durum}",
+                $"Fren geçişi: {MechanicalBrakeTooltip(train)}",
                 "",
                 "PANTOGRAF (yardımcılar dahil net değer)",
                 $"U_pant: {voltageV:0.0} V (besleme merkezleri + hat düşümü çözümünden)",
@@ -957,8 +992,26 @@ namespace CerGucuSimulasyonu
                 $"Çözüm: U_tren = Σ[wᵢ×(U_TM,i − I_tren×wᵢ×R_hat,i)]; mevcut parametrelerle kontrol hesabı ≈ {calculatedVoltageV:0.0} V",
                 BuildPantographFeedDetails(train),
                 $"Hat direnci: (katener {ViewModel.Data.CerKatener.RijitKatenerKmDirenci:0.###} + ray {ViewModel.Data.CerKatener.NormalRayKmDirenci:0.###}) mΩ/km; pantograf akımı çözüm boyunca güncellenir.",
+                "Not: Raporda rejeneratif fren eğrisi var, ayrı motor-freni eğrisi yok; motor freni durumu rejenerasyon akımı oluşmayan fren talebini gösterir.",
                 $"Limit: {train.LimitStatus} | İvme: {train.Ivme:0.00} m/s² | Yolcu: {train.YolcuSayisi} | Sonraki istasyon: {train.SonrakiIstasyon} ({train.SonrakiIstasyonMesafe:0} m)"
             });
+        }
+
+        private static string MechanicalBrakeTooltip(TrenKonumu train)
+        {
+            if (train.IsletimDurumu == "MEKANİK FREN")
+            {
+                return "5 km/h altında rejenerasyon devre dışı; mekanik fren";
+            }
+
+            if (train.IsletimDurumu.StartsWith("REJENERATİF FREN", StringComparison.Ordinal))
+            {
+                return "5 km/h ve üstünde rejeneratif fren eğrisi";
+            }
+
+            return train.IsletimDurumu == "MOTOR FRENİ"
+                ? "Rejeneratif güç akışı yok; ayrı motor-freni eğrisi raporda belirtilmiyor"
+                : "Aktif frenleme yok";
         }
 
         private string BuildSubstationElectricalTooltip(TrafoMerkezi substation)
@@ -975,20 +1028,34 @@ namespace CerGucuSimulasyonu
                 : 1620;
             double maximumVoltageV = ViewModel.Data.Tren.RegenerativeVoltageCutoffV(
                 ViewModel.Data.Tren.MaksGerilim);
-            double calculatedVoltageV = SimulationFormulas.SubstationVoltageV(
-                nominalVoltageV,
-                substation.AnlikAkimA,
-                sourceResistanceOhm,
-                maximumVoltageV);
             double powerFromReadingsKw = SimulationFormulas.DcPowerKw(
                 substation.AnlikAkimA,
                 substation.AnlikGerilimV);
             double ratedRectifierPowerKw = ViewModel.Data.CerKatener.DogrultucuGucu > 0
                 ? ViewModel.Data.CerKatener.DogrultucuGucu
                 : 3000;
-            double calculatedLoadPercent = SimulationFormulas.LoadPercent(
-                Math.Max(0, substation.AnlikGucKw),
+            double ratedTransformerPowerKva = ViewModel.Data.CerKatener.TrafoGucu > 0
+                ? ViewModel.Data.CerKatener.TrafoGucu
+                : 3300;
+            double calculatedRectifierLoadPercent = SimulationFormulas.LoadPercent(
+                substation.AnlikDogrultucuGucKw,
                 ratedRectifierPowerKw);
+            double calculatedTransformerLoadPercent = SimulationFormulas.RatedLoadPercent(
+                substation.AnlikAcGorunurGucKva,
+                ratedTransformerPowerKva);
+            double maximumRectifierCurrentA = ratedRectifierPowerKw * 1000.0 /
+                                              Math.Max(1, nominalVoltageV);
+            double calculatedRectifierCurrentA = SimulationFormulas.DiodeRectifierOutputCurrentA(
+                nominalVoltageV,
+                substation.AnlikGerilimV,
+                sourceResistanceOhm,
+                maximumRectifierCurrentA);
+            double acFrequencyHz = ViewModel.Data.CerKatener.AcFrekansiHz;
+            double dcBusCapacitanceF = ViewModel.Data.CerKatener.DcBaraEsdegerKapasitansiFarad;
+            double powerFactor = ViewModel.Data.CerKatener.DogrultucuGucFaktoru;
+            double transformerEfficiency = ViewModel.Data.CerKatener.TrafoVerimiYuzde / 100.0;
+            double rectifierEfficiency = ViewModel.Data.CerKatener.DogrultucuVerimiYuzde / 100.0;
+            double primaryVoltageKv = ViewModel.Data.CerKatener.TrafoPrimerGerilimiKv;
 
             return string.Join(Environment.NewLine, new[]
             {
@@ -997,15 +1064,23 @@ namespace CerGucuSimulasyonu
                 "",
                 "ANLIK ÖLÇÜLEN / ÇÖZÜLEN DEĞERLER",
                 $"Bara gerilimi U_TM: {substation.AnlikGerilimV:0.0} V",
-                $"Çıkış akımı I_TM: {substation.AnlikAkimA:0.0} A (pozitif besleme, negatif geri besleme)",
+                $"Net tren akımı I_TM: {substation.AnlikAkimA:0.0} A (pozitif tüketim, negatif rejeneratif enjeksiyon)",
                 $"Güç P_TM: {substation.AnlikGucKw:0.0} kW; U×I/1000 kontrolü: {powerFromReadingsKw:0.0} kW",
-                $"Yüklenme: %{substation.YuklenmeYuzdesi:0.0}; P/P_doğrultucu×100 kontrolü: %{calculatedLoadPercent:0.0}",
+                $"Doğrultucu DC çıkış: {substation.AnlikDogrultucuGucKw:0.0} kW, {substation.AnlikDogrultucuAkimiA:0.0} A; iki köprünün her biri: {substation.AnlikKopruDogrultucuGucuKw:0.0} kW, {substation.AnlikKopruDogrultucuAkimiA:0.0} A",
+                $"12-pulse dalgalanma temel frekansı: 12×{acFrequencyHz:0.##}={substation.AnlikDcDalgalanmaFrekansiHz:0.0} Hz; anahtarlama dalgalanması ayrı çözülmez",
+                $"Doğrultucu yükü: %{substation.YuklenmeYuzdesi:0.0} (kontrol %{calculatedRectifierLoadPercent:0.0}); trafo yükü: %{substation.TrafoYuklenmeYuzdesi:0.0} (kontrol %{calculatedTransformerLoadPercent:0.0})",
+                $"AC girişi: P={substation.AnlikAcGucKw:0.0} kW, S={substation.AnlikAcGorunurGucKva:0.0} kVA, I={substation.AnlikAcAkimiA:0.0} A",
                 "",
                 "KULLANILAN HESAPLAR VE GİRDİLER",
-                $"U_TM = clamp(U₀ − I_TM×R_kaynak, 0, U_max) = clamp({nominalVoltageV:0.0} − {substation.AnlikAkimA:0.0}×{sourceResistanceOhm:0.000000} Ω, 0, {maximumVoltageV:0.0}) ≈ {calculatedVoltageV:0.0} V",
+                $"I_rectifier=max(0,min(I_anma,(U₀−U_DC)/R_kaynak))={calculatedRectifierCurrentA:0.0} A; tek yönlü diyot ters akımı engeller; I_anma={maximumRectifierCurrentA:0.0} A",
+                $"C_DC×dU_DC/dt=I_rectifier−I_tren,net; C_DC={dcBusCapacitanceF:0.###} F (düzenlenebilir varsayım, belgede yok). Rejeneratif fazlalık DC barayı şarj eder.",
                 $"R_kaynak = (R_trafo + R_fider + R_dönüş)/1000 = ({transformerResistanceMilliOhm:0.0} + {substation.FiderKabloDirenci:0.0} + {substation.GeriDonusKabloDirenci:0.0}) mΩ = {sourceResistanceOhm:0.000000} Ω",
-                $"P_TM = U_TM×I_TM/1000; anma doğrultucu gücü = {ratedRectifierPowerKw:0.0} kW",
+                $"P_DC,doğrultucu=U_DC×I_rectifier; P_AC=P_DC/(η_doğrultucu×η_trafo)={substation.AnlikDogrultucuGucKw:0.0}/({rectifierEfficiency:0.000}×{transformerEfficiency:0.000}) kW",
+                $"S_AC=P_AC/cosφ; I_AC=S_AC/(√3×U_LL); varsayımlar: {primaryVoltageKv:0.##} kV, cosφ={powerFactor:0.00}, η_doğrultucu={rectifierEfficiency:P1}, η_trafo={transformerEfficiency:P1}",
+                $"Anma değerleri: doğrultucu {ratedRectifierPowerKw:0.0} kW; trafo {ratedTransformerPowerKva:0.0} kVA",
                 $"I_TM,hesap = Σ(I_tren×w_TM); w_TM,tren = G_TM/ΣG, G=1/(R_kaynak+R_hat). Tren besleme payları mesafe ve direnç ağırlıklı çözülür.",
+                $"Elektriksel zaman adımı ≤0,05 s; pantograf üst sınırı {maximumVoltageV:0.0} V. AC dalgalanması ve fren kıyıcısı modellenmez.",
+                "VLD ray-toprak erişilebilir gerilimini izler; bunun için ayrı ray-toprak ağı gerekir ve bu modelde yoktur.",
                 $"Beslenen tren: {substation.BeslenenTrenSayisi} | Durum: {substation.Durum} | Limit: {substation.LimitStatus}"
             });
         }
@@ -1443,11 +1518,12 @@ namespace CerGucuSimulasyonu
                             : Color.FromRgb(251, 146, 60);
 
                 double trainLengthPx = MetersToPixels(ViewModel.Data.Tren.TrenUzunlugu);
-                double trainSymbolWidth = Math.Max(18, trainLengthPx);
+                double trainSymbolWidth = Math.Max(68, trainLengthPx);
+                string arrow = tren.Yon == "ileri" ? "➔" : "⬅";
                 var trainBox = new Border
                 {
                     Width = trainSymbolWidth,
-                    Height = 10,
+                    Height = 18,
                     Background = new SolidColorBrush(bodyColor),
                     BorderBrush = isSelected
                         ? Brushes.White
@@ -1459,39 +1535,26 @@ namespace CerGucuSimulasyonu
                     BorderThickness = new Thickness(isSelected ? 2.5 : 1),
                     CornerRadius = new CornerRadius(4),
                     Tag = tren,
-                    ToolTip = CreateCalculationToolTip(BuildTrainElectricalTooltip(tren))
-                };
-                Panel.SetZIndex(trainBox, 100);
-
-                string arrow = tren.Yon == "ileri" ? "➔" : "⬅";
-                AttachItemEvents(trainBox, tren);
-                Canvas.SetLeft(trainBox, x - trainSymbolWidth / 2);
-                Canvas.SetTop(trainBox, isH1 ? y - 15 : y + 5);
-                TrackCanvas.Children.Add(trainBox);
-
-                var trainLabel = new Border
-                {
-                    Width = 68,
-                    Height = 18,
-                    Background = new SolidColorBrush(Color.FromArgb(235, 15, 23, 42)),
-                    BorderBrush = new SolidColorBrush(bodyColor),
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(4),
-                    IsHitTestVisible = false,
+                    ToolTip = CreateCalculationToolTip(BuildTrainElectricalTooltip(tren)),
                     Child = new TextBlock
                     {
                         Text = $"{tren.TrenAdi} {arrow}",
-                        FontSize = 9,
+                        FontSize = 8,
                         FontWeight = FontWeights.Bold,
-                        Foreground = Brushes.White,
+                        Foreground = tren.IsOutOfSpec
+                            ? Brushes.White
+                            : new SolidColorBrush(Color.FromRgb(15, 23, 42)),
                         TextAlignment = TextAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center
+                        VerticalAlignment = VerticalAlignment.Center,
+                        TextTrimming = TextTrimming.CharacterEllipsis
                     }
                 };
-                Panel.SetZIndex(trainLabel, 101);
-                Canvas.SetLeft(trainLabel, x - 36);
-                Canvas.SetTop(trainLabel, isH1 ? y - 37 : y + 17);
-                TrackCanvas.Children.Add(trainLabel);
+                Panel.SetZIndex(trainBox, 100);
+
+                AttachItemEvents(trainBox, tren);
+                Canvas.SetLeft(trainBox, x - trainSymbolWidth / 2);
+                Canvas.SetTop(trainBox, isH1 ? y - 19 : y + 1);
+                TrackCanvas.Children.Add(trainBox);
             }
         }
 

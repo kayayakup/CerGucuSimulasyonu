@@ -68,6 +68,70 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _trafoGucu = 3300;
         [ObservableProperty] private double _dogrultucuGucu = 3000;
         [ObservableProperty] private double _rayToprakArasiDirenc = 150;
+        // These AC-side values are explicit starting assumptions; the supplied switch documents do not specify them.
+        [ObservableProperty] private double _trafoPrimerGerilimiKv = 34.5;
+        [ObservableProperty] private double _trafoVerimiYuzde = 98.5;
+        [ObservableProperty] private double _dogrultucuVerimiYuzde = 98.0;
+        [ObservableProperty] private double _dogrultucuGucFaktoru = 0.96;
+        [ObservableProperty] private double _acFrekansiHz = 50;
+        // The supplied rectifier document does not specify DC-bus capacitance; this is a tunable model assumption.
+        [ObservableProperty] private double _dcBaraEsdegerKapasitansiFarad = 0.1;
+
+        partial void OnTrafoPrimerGerilimiKvChanged(double value)
+        {
+            double boundedValue = Math.Clamp(value, 0.1, 500);
+            if (value != boundedValue)
+            {
+                TrafoPrimerGerilimiKv = boundedValue;
+            }
+        }
+
+        partial void OnTrafoVerimiYuzdeChanged(double value)
+        {
+            double boundedValue = Math.Clamp(value, 1, 100);
+            if (value != boundedValue)
+            {
+                TrafoVerimiYuzde = boundedValue;
+            }
+        }
+
+        partial void OnDogrultucuVerimiYuzdeChanged(double value)
+        {
+            double boundedValue = Math.Clamp(value, 1, 100);
+            if (value != boundedValue)
+            {
+                DogrultucuVerimiYuzde = boundedValue;
+            }
+        }
+
+        partial void OnDogrultucuGucFaktoruChanged(double value)
+        {
+            double boundedValue = Math.Clamp(value, 0.01, 1);
+            if (value != boundedValue)
+            {
+                DogrultucuGucFaktoru = boundedValue;
+            }
+        }
+
+        partial void OnAcFrekansiHzChanged(double value)
+        {
+            double boundedValue = Math.Clamp(value, 1, 400);
+            if (value != boundedValue)
+            {
+                AcFrekansiHz = boundedValue;
+            }
+        }
+
+        partial void OnDcBaraEsdegerKapasitansiFaradChanged(double value)
+        {
+            double boundedValue = double.IsFinite(value)
+                ? Math.Clamp(value, 0.001, 100)
+                : 0.1;
+            if (value != boundedValue)
+            {
+                DcBaraEsdegerKapasitansiFarad = boundedValue;
+            }
+        }
     }
 
     public partial class TrafoMerkezi : ObservableObject
@@ -85,6 +149,18 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _anlikAkimA = 0;
         [ObservableProperty] private double _anlikGerilimV = 1620;
         [ObservableProperty] private double _yuklenmeYuzdesi = 0;
+        [ObservableProperty] private double _anlikDogrultucuGucKw = 0;
+        [ObservableProperty] private double _anlikDogrultucuAkimiA = 0;
+        [ObservableProperty] private double _anlikKopruDogrultucuGucuKw = 0;
+        [ObservableProperty] private double _anlikKopruDogrultucuAkimiA = 0;
+        [ObservableProperty] private double _anlikDcDalgalanmaFrekansiHz = 0;
+        [ObservableProperty] private double _anlikRejeneratifDcGucKw = 0;
+        [ObservableProperty] private double _anlikAcGucKw = 0;
+        [ObservableProperty] private double _anlikAcGorunurGucKva = 0;
+        [ObservableProperty] private double _anlikAcAkimiA = 0;
+        [ObservableProperty] private double _trafoYuklenmeYuzdesi = 0;
+        [ObservableProperty] private double _anlikDogrultucuKaybiKw = 0;
+        [ObservableProperty] private double _anlikTrafoKaybiKw = 0;
         [JsonIgnore] public bool IsOutOfSpec { get; set; }
         [JsonIgnore] public bool NeedsLimitReview { get; set; }
         [JsonIgnore] public string LimitStatus { get; set; } = "KONTROL BEKLİYOR";
@@ -264,6 +340,7 @@ namespace CerGucuSimulasyonu.Models
 
         // Canlı Simülasyon & Cer Gücü Dinamik Verileri
         [ObservableProperty] private string _durum = "HAREKET HALİNDE"; // HAREKET HALİNDE, İSTASYONDA, HIZLANIYOR, FRENLİYOR
+        [ObservableProperty] private string _isletimDurumu = "SEFER BEKLİYOR";
         [ObservableProperty] private double _hedefHiz = 70;
         [ObservableProperty] private double _ivme = 0; // m/s²
         [ObservableProperty] private double _cekilenGucKw = 0;

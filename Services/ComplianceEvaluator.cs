@@ -48,6 +48,12 @@ public sealed class ComplianceEvaluator
                     $"{observed.ToString("0.0", CultureInfo.InvariantCulture)} %",
                     "Trafo Duty Class ve proje limitleri tanimlanmadan otomatik PASS/FAIL verilmez.");
             }
+            case "ValidationEvidence":
+                return new ComplianceResult(
+                    reference,
+                    ComplianceStatus.Review,
+                    "Bagimsiz dogrulama kaniti gerekli",
+                    "Verilen rapordaki Hi-SimuX/SimuX dogrulama beyanı bu uygulamayi dogrulamaz.");
             default:
                 return new ComplianceResult(
                     reference,

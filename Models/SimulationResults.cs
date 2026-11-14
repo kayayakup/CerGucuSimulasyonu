@@ -28,6 +28,16 @@ public sealed record SubstationSnapshot(
     double CurrentA,
     double VoltageV,
     double LoadPercent,
+    double RectifierPowerKw,
+    double RectifierCurrentA,
+    double BridgeRectifierPowerKw,
+    double BridgeRectifierCurrentA,
+    double DcRippleFrequencyHz,
+    double RegenerativeDcPowerKw,
+    double AcInputPowerKw,
+    double AcApparentPowerKva,
+    double AcInputCurrentA,
+    double TransformerLoadPercent,
     int FedTrainCount,
     string State,
     bool IsOutOfSpec,
@@ -52,6 +62,8 @@ public sealed record SimulationSnapshot(
     double MinimumTrainVoltageV,
     double AverageTrainVoltageV,
     double MaximumSubstationLoadPercent,
+    double MaximumRectifierLoadPercent,
+    double MaximumTransformerLoadPercent,
     double AverageTrainSpeedKmh,
     IReadOnlyList<TrainSnapshot> Trains,
     IReadOnlyList<SubstationSnapshot> Substations,
@@ -76,6 +88,8 @@ public sealed class SimulationRunResult
     public double MaximumRegenerativePowerKw => Max(s => s.RegenerativePowerKw);
     public double MinimumTrainVoltageV => Min(s => s.MinimumTrainVoltageV);
     public double MaximumSubstationLoadPercent => Max(s => s.MaximumSubstationLoadPercent);
+    public double MaximumRectifierLoadPercent => Max(s => s.MaximumRectifierLoadPercent);
+    public double MaximumTransformerLoadPercent => Max(s => s.MaximumTransformerLoadPercent);
     public double TotalConsumedEnergyKwh => Snapshots.Count == 0 ? 0 : Snapshots[^1].ConsumedEnergyKwh;
     public double TotalRecoveredEnergyKwh => Snapshots.Count == 0 ? 0 : Snapshots[^1].RecoveredEnergyKwh;
 

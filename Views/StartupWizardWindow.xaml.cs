@@ -53,6 +53,12 @@ namespace CerGucuSimulasyonu.Views
             TxtRayDirenci.Text = _data.CerKatener.NormalRayKmDirenci.ToString("0.#");
             TxtTrafoGucu.Text = _data.CerKatener.TrafoGucu.ToString("0.#");
             TxtDogrultucuGucu.Text = _data.CerKatener.DogrultucuGucu.ToString("0.#");
+            TxtTrafoPrimerGerilimiKv.Text = _data.CerKatener.TrafoPrimerGerilimiKv.ToString("0.##");
+            TxtTrafoVerimiYuzde.Text = _data.CerKatener.TrafoVerimiYuzde.ToString("0.##");
+            TxtDogrultucuVerimiYuzde.Text = _data.CerKatener.DogrultucuVerimiYuzde.ToString("0.##");
+            TxtDogrultucuGucFaktoru.Text = _data.CerKatener.DogrultucuGucFaktoru.ToString("0.##");
+            TxtAcFrekansiHz.Text = _data.CerKatener.AcFrekansiHz.ToString("0.##");
+            TxtDcBaraKapasitansi.Text = _data.CerKatener.DcBaraEsdegerKapasitansiFarad.ToString("0.###");
         }
 
         private void SaveFieldsToData()
@@ -84,6 +90,12 @@ namespace CerGucuSimulasyonu.Views
             if (double.TryParse(TxtRayDirenci.Text, out var rRay)) _data.CerKatener.NormalRayKmDirenci = rRay;
             if (double.TryParse(TxtTrafoGucu.Text, out var pTr)) _data.CerKatener.TrafoGucu = pTr;
             if (double.TryParse(TxtDogrultucuGucu.Text, out var pRec)) _data.CerKatener.DogrultucuGucu = pRec;
+            if (double.TryParse(TxtTrafoPrimerGerilimiKv.Text, out var vAc)) _data.CerKatener.TrafoPrimerGerilimiKv = vAc;
+            if (double.TryParse(TxtTrafoVerimiYuzde.Text, out var etaTrafo)) _data.CerKatener.TrafoVerimiYuzde = etaTrafo;
+            if (double.TryParse(TxtDogrultucuVerimiYuzde.Text, out var etaRectifier)) _data.CerKatener.DogrultucuVerimiYuzde = etaRectifier;
+            if (double.TryParse(TxtDogrultucuGucFaktoru.Text, out var powerFactor)) _data.CerKatener.DogrultucuGucFaktoru = powerFactor;
+            if (double.TryParse(TxtAcFrekansiHz.Text, out var acFrequency)) _data.CerKatener.AcFrekansiHz = acFrequency;
+            if (double.TryParse(TxtDcBaraKapasitansi.Text, out var dcBusCapacitance)) _data.CerKatener.DcBaraEsdegerKapasitansiFarad = dcBusCapacitance;
             if (double.TryParse(TxtNominalGerilim.Text, out var vNom)) _data.CerKatener.YuksuzDcBaraGerilimi = vNom;
         }
 

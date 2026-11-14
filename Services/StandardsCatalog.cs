@@ -47,12 +47,12 @@ public static class StandardsCatalog
                 "MaximumSubstationLoad"),
             new StandardReference(
                 "EN 50641",
-                "Baski/yil girilecek",
-                "Madde girilecek",
+                "Rapor atfi; baski belirtilmiyor",
+                "Rapor atfi; madde belirtilmiyor",
                 "Demiryolu cer gucu simulasyon yazilimi dogrulama baglami",
                 "Model dogrulama kaniti",
                 "Dokumantasyon ve dogrulama kaydi",
-                "Bu uygulama sertifikasyon iddiasi uretmez; kanit alani bilerek REVIEW'dur.",
+                "Verilen rapor Hi-SimuX/SimuX icin dogrulamadan soz eder; bu uygulama icin kanit degildir. Bagimsiz dogrulama kaniti olmadan PASS verilmez.",
                 "ValidationEvidence")
         };
     }

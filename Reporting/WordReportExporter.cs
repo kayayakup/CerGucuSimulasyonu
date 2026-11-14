@@ -37,7 +37,8 @@ public sealed class WordReportExporter
                 new[] { "Maksimum cer gücü", $"{result.MaximumTractionPowerKw:0.0} kW" },
                 new[] { "Maksimum rejeneratif güç", $"{result.MaximumRegenerativePowerKw:0.0} kW" },
                 new[] { "Minimum tren gerilimi", $"{result.MinimumTrainVoltageV:0.0} V" },
-                new[] { "Maksimum trafo yüklenmesi", $"{result.MaximumSubstationLoadPercent:0.0} %" },
+                new[] { "Maksimum doğrultucu yüklenmesi", $"{result.MaximumRectifierLoadPercent:0.0} %" },
+                new[] { "Maksimum trafo yüklenmesi", $"{result.MaximumTransformerLoadPercent:0.0} %" },
                 new[] { "Tüketilen enerji", $"{result.TotalConsumedEnergyKwh:0.00} kWh" },
                 new[] { "Geri kazanılan enerji", $"{result.TotalRecoveredEnergyKwh:0.00} kWh" }
             });
@@ -56,7 +57,7 @@ public sealed class WordReportExporter
 
         AddParagraph(body, "Zaman Serisi Özeti (60 saniyelik örnekler)", "Heading1");
         AddTable(body,
-            new[] { "Saniye", "Cer [kW]", "Rejen. [kW]", "Min. Gerilim [V]", "Max. TM Yük [%]" },
+            new[] { "Saniye", "Cer [kW]", "Rejen. [kW]", "Min. Gerilim [V]", "Max. doğrultucu yük [%]", "Max. trafo yük [%]" },
             result.Snapshots
                 .Where(snapshot => snapshot.Second % 60 == 0 || snapshot == result.Snapshots[^1])
                 .Select(snapshot => new[]
@@ -65,8 +66,34 @@ public sealed class WordReportExporter
                     $"{snapshot.TractionPowerKw:0.0}",
                     $"{snapshot.RegenerativePowerKw:0.0}",
                     $"{snapshot.MinimumTrainVoltageV:0.0}",
-                    $"{snapshot.MaximumSubstationLoadPercent:0.0}"
+                    $"{snapshot.MaximumRectifierLoadPercent:0.0}",
+                    $"{snapshot.MaximumTransformerLoadPercent:0.0}"
                 }).ToArray());
+
+        AddParagraph(body, "Trafo Merkezi Elektrik Özeti (son kayıt)", "Heading1");
+        SimulationSnapshot? finalSnapshot = result.Snapshots.LastOrDefault();
+        AddTable(body,
+            new[]
+            {
+                "TM", "Net DC P [kW]", "Doğrultucu P [kW]", "Köprü başı P [kW]",
+                "Köprü başı I [A]", "DC ripple [Hz]", "Rejeneratif DC [kW]",
+                "AC P [kW]", "AC S [kVA]", "AC I [A]", "Doğrultucu yük [%]", "Trafo yük [%]"
+            },
+            finalSnapshot?.Substations.Select(substation => new[]
+            {
+                substation.Name,
+                $"{substation.PowerKw:0.0}",
+                $"{substation.RectifierPowerKw:0.0}",
+                $"{substation.BridgeRectifierPowerKw:0.0}",
+                $"{substation.BridgeRectifierCurrentA:0.0}",
+                $"{substation.DcRippleFrequencyHz:0.0}",
+                $"{substation.RegenerativeDcPowerKw:0.0}",
+                $"{substation.AcInputPowerKw:0.0}",
+                $"{substation.AcApparentPowerKva:0.0}",
+                $"{substation.AcInputCurrentA:0.0}",
+                $"{substation.LoadPercent:0.0}",
+                $"{substation.TransformerLoadPercent:0.0}"
+            }).ToArray() ?? Array.Empty<string[]>());
 
         AddParagraph(body, "Limit Dışı Trenler", "Heading1");
         var trainLimitRows = result.Snapshots
@@ -149,7 +176,9 @@ public sealed class WordReportExporter
                     entries.Min(entry => entry.Second).ToString(),
                     entries.Max(entry => entry.Second).ToString(),
                     string.Join(", ", entries.Select(entry => entry.Substation.LimitStatus).Distinct()),
-                    entries.Max(entry => entry.Substation.LoadPercent).ToString("0.0"),
+                    Math.Max(
+                        entries.Max(entry => entry.Substation.LoadPercent),
+                        entries.Max(entry => entry.Substation.TransformerLoadPercent)).ToString("0.0"),
                     entries.Max(entry => entry.Substation.PowerKw).ToString("0.0"),
                     entries.Min(entry => entry.Substation.VoltageV).ToString("0.0")
                 };
@@ -181,7 +210,9 @@ public sealed class WordReportExporter
                     entries.Min(entry => entry.Second).ToString(),
                     entries.Max(entry => entry.Second).ToString(),
                     string.Join(", ", entries.Select(entry => entry.Substation.LimitStatus).Distinct()),
-                    entries.Max(entry => entry.Substation.LoadPercent).ToString("0.0")
+                    Math.Max(
+                        entries.Max(entry => entry.Substation.LoadPercent),
+                        entries.Max(entry => entry.Substation.TransformerLoadPercent)).ToString("0.0")
                 };
             }).ToArray();
         if (substationReviewRows.Length > 0)

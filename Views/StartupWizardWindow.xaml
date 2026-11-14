@@ -360,6 +360,32 @@
                                     <TextBlock Text="Doğrultucu Gücü (kW):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
                                     <TextBox x:Name="TxtDogrultucuGucu" Width="100" HorizontalAlignment="Right" Text="3000"/>
                                 </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Trafo Primer Gerilimi (kV, varsayım):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtTrafoPrimerGerilimiKv" Width="100" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Trafo Verimi % (varsayım):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtTrafoVerimiYuzde" Width="100" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Doğrultucu Verimi % (varsayım):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtDogrultucuVerimiYuzde" Width="100" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="Doğrultucu Güç Faktörü (varsayım):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtDogrultucuGucFaktoru" Width="100" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="AC Frekansı (Hz, varsayım):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtAcFrekansiHz" Width="100" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <Grid Margin="0,4">
+                                    <TextBlock Text="TM DC Bara Eşdeğer Kapasitansı (F, varsayım):" VerticalAlignment="Center" Foreground="#CBD5E1"/>
+                                    <TextBox x:Name="TxtDcBaraKapasitansi" Width="100" HorizontalAlignment="Right"/>
+                                </Grid>
+                                <TextBlock Text="İki paralel 12 darbeli diyot köprüsü belgedendir; ters AC beslemesi yoktur. Her TM'nin DC bara kapasitansı belgede verilmediği için 0,1 F varsayımı kullanılır ve değiştirilebilir. VLD'nin 40–170 V ayarı / 120 V sınırı pantograf değil ray-toprak gerilimi içindir. Dalga biçimi ve fren kıyıcısı modellenmez."
+                                           FontSize="10" Foreground="#FBBF24" TextWrapping="Wrap" Margin="0,6,0,0"/>
 
                                 <Border Background="#1B172C" CornerRadius="6" Padding="10" Margin="0,10,0,0" BorderBrush="#4A1D96" BorderThickness="1">
                                     <StackPanel>

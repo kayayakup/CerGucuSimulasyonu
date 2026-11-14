@@ -15,6 +15,9 @@ public sealed class SimulationRecorder
     private int _lastRecordedSecond = -1;
     private double _consumedEnergyKwh;
     private double _recoveredEnergyKwh;
+    private double _lastTrainConsumedEnergyKwh;
+    private double _lastTrainRecoveredEnergyKwh;
+    private bool _hasTrainEnergyBaseline;
     private bool _isComplete;
 
     public SimulationRecorder(int maximumDurationSeconds = MaximumDurationSeconds)
@@ -41,28 +44,30 @@ public sealed class SimulationRecorder
         _lastRecordedSecond = -1;
         _consumedEnergyKwh = 0;
         _recoveredEnergyKwh = 0;
+        _lastTrainConsumedEnergyKwh = 0;
+        _lastTrainRecoveredEnergyKwh = 0;
+        _hasTrainEnergyBaseline = false;
         _isComplete = false;
     }
 
-    public bool CaptureIfDue(
-        SimulationData data,
-        double simulationTimeSeconds,
-        double elapsedStepSeconds = 0)
+    public bool CaptureIfDue(SimulationData data, double simulationTimeSeconds)
     {
         if (CurrentRun is null)
         {
             throw new InvalidOperationException("Start must be called before capturing simulation data.");
         }
 
-        double elapsedStep = Math.Max(0, elapsedStepSeconds);
-        _consumedEnergyKwh += data.Trenler.Sum(train =>
-            SimulationFormulas.EnergyKwh(
-                Math.Max(0, train.AnlikPantografGucuKw),
-                elapsedStep));
-        _recoveredEnergyKwh += data.Trenler.Sum(train =>
-            SimulationFormulas.EnergyKwh(
-                Math.Max(0, -train.CekilenGucKw),
-                elapsedStep));
+        double trainConsumedEnergyKwh = data.Trenler.Sum(train => train.ToplamTuketilenEnerjiKwh);
+        double trainRecoveredEnergyKwh = data.Trenler.Sum(train => train.ToplamRejeneratifEnerjiKwh);
+        if (_hasTrainEnergyBaseline)
+        {
+            _consumedEnergyKwh += Math.Max(0, trainConsumedEnergyKwh - _lastTrainConsumedEnergyKwh);
+            _recoveredEnergyKwh += Math.Max(0, trainRecoveredEnergyKwh - _lastTrainRecoveredEnergyKwh);
+        }
+
+        _lastTrainConsumedEnergyKwh = trainConsumedEnergyKwh;
+        _lastTrainRecoveredEnergyKwh = trainRecoveredEnergyKwh;
+        _hasTrainEnergyBaseline = true;
 
         int elapsedSecond = (int)Math.Min(
             _maximumDurationSeconds,
@@ -136,7 +141,7 @@ public sealed class SimulationRecorder
             train.CekilenGucKw,
             train.CekilenAkimA,
             train.YolcuSayisi,
-            train.Durum,
+            $"{train.IsletimDurumu} ({train.Durum})",
             train.EnYakinTrafo,
             train.IsOutOfSpec,
             train.NeedsLimitReview,
@@ -148,6 +153,16 @@ public sealed class SimulationRecorder
             substation.AnlikAkimA,
             substation.AnlikGerilimV,
             substation.YuklenmeYuzdesi,
+            substation.AnlikDogrultucuGucKw,
+            substation.AnlikDogrultucuAkimiA,
+            substation.AnlikKopruDogrultucuGucuKw,
+            substation.AnlikKopruDogrultucuAkimiA,
+            substation.AnlikDcDalgalanmaFrekansiHz,
+            substation.AnlikRejeneratifDcGucKw,
+            substation.AnlikAcGucKw,
+            substation.AnlikAcGorunurGucKva,
+            substation.AnlikAcAkimiA,
+            substation.TrafoYuklenmeYuzdesi,
             substation.BeslenenTrenSayisi,
             substation.Durum,
             substation.IsOutOfSpec,
@@ -171,6 +186,10 @@ public sealed class SimulationRecorder
         double averageVoltage = trains.Length == 0 ? 0 : trains.Average(train => train.VoltageV);
         double averageSpeed = trains.Length == 0 ? 0 : trains.Average(train => train.SpeedKmh);
         double maximumLoad = substations.Length == 0 ? 0 : substations.Max(substation => substation.LoadPercent);
+        double maximumRectifierLoad = maximumLoad;
+        double maximumTransformerLoad = substations.Length == 0
+            ? 0
+            : substations.Max(substation => substation.TransformerLoadPercent);
         return new SimulationSnapshot(
             second,
             tractionPower,
@@ -180,7 +199,9 @@ public sealed class SimulationRecorder
             recoveredEnergyKwh,
             minimumVoltage,
             averageVoltage,
-            maximumLoad,
+            Math.Max(maximumRectifierLoad, maximumTransformerLoad),
+            maximumRectifierLoad,
+            maximumTransformerLoad,
             averageSpeed,
             trains,
             substations,

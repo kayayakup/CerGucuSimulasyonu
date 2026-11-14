@@ -45,13 +45,13 @@ public sealed class ScenarioRunner
             recorder.Start(scenario);
 
             double elapsedSeconds = 0;
-            recorder.CaptureIfDue(scenarioData, elapsedSeconds, 0);
+            recorder.CaptureIfDue(scenarioData, elapsedSeconds);
             while (elapsedSeconds < durationSeconds)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 engine.AdvanceOneStep(timeStepSeconds);
                 elapsedSeconds += timeStepSeconds;
-                recorder.CaptureIfDue(scenarioData, elapsedSeconds, timeStepSeconds);
+                recorder.CaptureIfDue(scenarioData, elapsedSeconds);
 
                 if (((int)(elapsedSeconds / timeStepSeconds)) % 25 == 0)
                 {

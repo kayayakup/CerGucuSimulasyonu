@@ -425,7 +425,7 @@
                                             <TextBlock Text="{Binding ToplamGeriKazanilanEnerjiKwh, StringFormat='{}{0:N3} kWh'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/>
                                         </Grid>
                                         <Grid Margin="0,2">
-                                            <TextBlock Text="En Çok Yüklenen Trafo:" Foreground="#9CA3AF" FontSize="11"/>
+                                            <TextBlock Text="En Yüksek TM (trafo/doğrultucu):" Foreground="#9CA3AF" FontSize="11"/>
                                             <TextBlock Text="{Binding EnCokYuklenenTrafoAdi}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#C084FC" FontSize="11"/>
                                         </Grid>
                                         <Grid Margin="0,2">
@@ -461,7 +461,7 @@
                                                         <Border Background="#101B33" CornerRadius="6" Padding="8,5" Margin="0,0,0,6" BorderBrush="#2563EB" BorderThickness="1">
                                                             <DockPanel LastChildFill="True">
                                                                 <Border Background="#2563EB" CornerRadius="4" Padding="6,2" DockPanel.Dock="Right">
-                                                                    <TextBlock Text="{Binding Durum}" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
+                                                                    <TextBlock Text="{Binding IsletimDurumu}" Foreground="White" FontWeight="Bold" FontSize="9.5"/>
                                                                 </Border>
                                                                 <TextBlock Text="{Binding TrenAdi, StringFormat='🚃 {0} (Aktif Tren Metrikleri)'}" FontWeight="Bold" FontSize="13" Foreground="#38BDF8"/>
                                                             </DockPanel>
@@ -841,7 +841,8 @@
                                           Margin="0,0,0,14" MaxHeight="220">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Tren" Binding="{Binding TrenAdi}" Width="65"/>
-                                        <DataGridTextColumn Header="Hat" Binding="{Binding HatTipi}" Width="45"/>
+                                    <DataGridTextColumn Header="İşletim durumu" Binding="{Binding IsletimDurumu}" Width="205"/>
+                                    <DataGridTextColumn Header="Hat" Binding="{Binding HatTipi}" Width="45"/>
                                         <DataGridTextColumn Header="Konum (m)" Binding="{Binding Konum, StringFormat='{}{0:N0}'}" Width="80"/>
                                         <DataGridTextColumn Header="Hız (km/h)" Binding="{Binding AnlikHiz, StringFormat='{}{0:N0}'}" Width="75"/>
                                         <DataGridTextColumn Header="Cer motor (+/-) kW" Binding="{Binding CekilenGucKw, StringFormat='{}{0:N0}'}" Width="105"/>
@@ -864,9 +865,20 @@
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Trafo Adı" Binding="{Binding Ad}" Width="*"/>
                                         <DataGridTextColumn Header="Konum (m)" Binding="{Binding DilasKonumuH1, StringFormat='{}{0:N0}'}" Width="80"/>
-                                        <DataGridTextColumn Header="Güç (kW)" Binding="{Binding AnlikGucKw, StringFormat='{}{0:N0}'}" Width="70"/>
-                                        <DataGridTextColumn Header="I [A]" Binding="{Binding AnlikAkimA, StringFormat='{}{0:N0}'}" Width="70"/>
-                                        <DataGridTextColumn Header="Yük %" Binding="{Binding YuklenmeYuzdesi, StringFormat='%{0:N0}'}" Width="60"/>
+                                        <DataGridTextColumn Header="Net DC P [kW]" Binding="{Binding AnlikGucKw, StringFormat='{}{0:N0}'}" Width="90"/>
+                                        <DataGridTextColumn Header="Net DC I [A]" Binding="{Binding AnlikAkimA, StringFormat='{}{0:N0}'}" Width="85"/>
+                                        <DataGridTextColumn Header="DC bara U [V]" Binding="{Binding AnlikGerilimV, StringFormat='{}{0:N1}'}" Width="95"/>
+                                        <DataGridTextColumn Header="Doğrultucu DC P [kW]" Binding="{Binding AnlikDogrultucuGucKw, StringFormat='{}{0:N0}'}" Width="130"/>
+                                        <DataGridTextColumn Header="Doğrultucu DC I [A]" Binding="{Binding AnlikDogrultucuAkimiA, StringFormat='{}{0:N0}'}" Width="125"/>
+                                        <DataGridTextColumn Header="Köprü başı DC P [kW]" Binding="{Binding AnlikKopruDogrultucuGucuKw, StringFormat='{}{0:N0}'}" Width="135"/>
+                                        <DataGridTextColumn Header="Köprü başı DC I [A]" Binding="{Binding AnlikKopruDogrultucuAkimiA, StringFormat='{}{0:N0}'}" Width="130"/>
+                                        <DataGridTextColumn Header="12-pulse dalgalanma [Hz]" Binding="{Binding AnlikDcDalgalanmaFrekansiHz, StringFormat='{}{0:N0}'}" Width="150"/>
+                                        <DataGridTextColumn Header="Net rejeneratif DC [kW]" Binding="{Binding AnlikRejeneratifDcGucKw, StringFormat='{}{0:N0}'}" Width="145"/>
+                                        <DataGridTextColumn Header="AC giriş P [kW]" Binding="{Binding AnlikAcGucKw, StringFormat='{}{0:N0}'}" Width="105"/>
+                                        <DataGridTextColumn Header="AC giriş S [kVA]" Binding="{Binding AnlikAcGorunurGucKva, StringFormat='{}{0:N0}'}" Width="110"/>
+                                        <DataGridTextColumn Header="AC giriş I [A]" Binding="{Binding AnlikAcAkimiA, StringFormat='{}{0:N1}'}" Width="105"/>
+                                        <DataGridTextColumn Header="Doğrultucu yük %" Binding="{Binding YuklenmeYuzdesi, StringFormat='%{0:N1}'}" Width="115"/>
+                                        <DataGridTextColumn Header="Trafo yük %" Binding="{Binding TrafoYuklenmeYuzdesi, StringFormat='%{0:N1}'}" Width="95"/>
                                     </DataGrid.Columns>
                                 </DataGrid>
 
@@ -1066,6 +1078,38 @@
                                             <TextBlock Text="Doğrultucu Gücü (kW)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
                                             <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.DogrultucuGucu, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
                                         </Grid>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Trafo Primer Hatlar Arası (kV, varsayım)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.TrafoPrimerGerilimiKv, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Trafo Verimi % (varsayım)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.TrafoVerimiYuzde, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Doğrultucu Verimi % (varsayım)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.DogrultucuVerimiYuzde, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="Doğrultucu Güç Faktörü (varsayım)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.DogrultucuGucFaktoru, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="AC Frekansı (Hz, varsayım)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.AcFrekansiHz, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="80"/></Grid.ColumnDefinitions>
+                                            <TextBlock Text="TM DC Bara Eşdeğer Kapasitansı (F, varsayım)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.DcBaraEsdegerKapasitansiFarad, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
+                                        </Grid>
+                                        <TextBlock Text="Not: 12 darbeli, iki paralel diyot köprüsü belgedendir; diyotlu doğrultucu AC'ye ters güç veremez. Her TM'nin DC bara kapasitansı belgede yoktur; geçici gerilim için 0,1 F düzenlenebilir varsayım kullanılır. Dalgalanma şekli, fren kıyıcısı ve AC'ye rejenerasyon modellenmez. VLD'nin 40–170 V ayarı / 120 V sınırı pantograf gerilimi değil, ray-toprak erişilebilir gerilimi içindir."
+                                                   Foreground="#FBBF24" FontSize="10" TextWrapping="Wrap" Margin="2,6,2,0"/>
                                     </StackPanel>
                                 </Border>
 

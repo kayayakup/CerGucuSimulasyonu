@@ -302,6 +302,21 @@ public static class SimulationFormulas
     public static double SpeedRateKmhPerSecond(double accelerationMps2) =>
         accelerationMps2 * 3.6;
 
+    /// <summary>Limits acceleration changes to the configured jerk over the elapsed time.</summary>
+    public static double JerkLimitedAccelerationMps2(
+        double currentAccelerationMps2,
+        double requestedAccelerationMps2,
+        double jerkLimitMps3,
+        double elapsedSeconds)
+    {
+        double maximumChange = Math.Max(0, jerkLimitMps3) * Math.Max(0, elapsedSeconds);
+        return currentAccelerationMps2 +
+               Math.Clamp(
+                   requestedAccelerationMps2 - currentAccelerationMps2,
+                   -maximumChange,
+                   maximumChange);
+    }
+
     /// <summary>Calculates the requested braking speed change with a minimum deceleration floor.</summary>
     public static double RequestedBrakingSpeedChangeKmh(
         double speedDifferenceKmh,
@@ -321,7 +336,7 @@ public static class SimulationFormulas
     public static double StationApproachSpeedKmh(
         double distanceToStationM,
         double maximumOperatingSpeedKmh) =>
-        Math.Max(15, distanceToStationM / 400.0 * maximumOperatingSpeedKmh);
+        Math.Max(0, distanceToStationM / 400.0 * maximumOperatingSpeedKmh);
 
     /// <summary>Calculates the following train speed cap from the remaining safe-distance margin.</summary>
     public static double FollowingTrainSpeedLimitKmh(double gapM, double minimumSafeDistanceM) =>
@@ -356,6 +371,39 @@ public static class SimulationFormulas
     /// <summary>Calculates DC power in kW from current in amperes and voltage in volts.</summary>
     public static double DcPowerKw(double currentA, double voltageV) =>
         currentA * voltageV / 1000.0;
+
+    /// <summary>Calculates converter input active power from DC output and conversion efficiency.</summary>
+    public static double ConverterInputPowerKw(double dcOutputPowerKw, double efficiency) =>
+        efficiency > 0 ? Math.Max(0, dcOutputPowerKw) / efficiency : 0;
+
+    /// <summary>Calculates three-phase apparent power from active power and power factor.</summary>
+    public static double ThreePhaseApparentPowerKva(double activePowerKw, double powerFactor) =>
+        powerFactor > 0
+            ? Math.Max(0, activePowerKw) / Math.Clamp(powerFactor, 0.01, 1.0)
+            : 0;
+
+    /// <summary>Calculates three-phase line current from apparent power and line-to-line voltage.</summary>
+    public static double ThreePhaseLineCurrentA(double apparentPowerKva, double lineVoltageV) =>
+        lineVoltageV > 0
+            ? Math.Max(0, apparentPowerKva) * 1000.0 / (Math.Sqrt(3.0) * lineVoltageV)
+            : 0;
+
+    /// <summary>Calculates the average DC power and current per bridge for two parallel bridges.</summary>
+    public static (double PowerKw, double CurrentA) ParallelBridgeOutput(
+        double totalPowerKw,
+        double totalCurrentA,
+        int bridgeCount) =>
+        bridgeCount > 0
+            ? (Math.Max(0, totalPowerKw) / bridgeCount, Math.Max(0, totalCurrentA) / bridgeCount)
+            : (0, 0);
+
+    /// <summary>Calculates the ideal 12-pulse ripple frequency; ripple itself is not simulated.</summary>
+    public static double TwelvePulseRippleFrequencyHz(double acFrequencyHz) =>
+        Math.Max(0, acFrequencyHz) * 12.0;
+
+    /// <summary>Calculates a power loading percentage against a kW or kVA rating.</summary>
+    public static double RatedLoadPercent(double actualRatingUnit, double ratedPowerUnit) =>
+        ratedPowerUnit > 0 ? Math.Max(0, actualRatingUnit) / ratedPowerUnit * 100.0 : 0;
 
     /// <summary>Calculates transformer and cable source resistance in ohms.</summary>
     public static double SourceResistanceOhm(
@@ -397,6 +445,134 @@ public static class SimulationFormulas
             nominalVoltageV - outputCurrentA * sourceResistanceOhm,
             0,
             maximumVoltageV);
+
+    /// <summary>Calculates one-way diode-rectifier current from its Thevenin source and DC bus.</summary>
+    public static double DiodeRectifierOutputCurrentA(
+        double noLoadVoltageV,
+        double busVoltageV,
+        double sourceResistanceOhm,
+        double maximumCurrentA)
+    {
+        if (sourceResistanceOhm <= 0 || maximumCurrentA <= 0 || busVoltageV >= noLoadVoltageV)
+        {
+            return 0;
+        }
+
+        return Math.Min(
+            maximumCurrentA,
+            (noLoadVoltageV - busVoltageV) / sourceResistanceOhm);
+    }
+
+    /// <summary>
+    /// Advances a lumped DC bus with a one-way, current-limited diode rectifier.
+    /// Capacitance is a tunable equivalent assumption, not a value specified by the equipment document.
+    /// </summary>
+    public static double AdvanceDiodeRectifierBusVoltage(
+        double initialVoltageV,
+        double trainLoadCurrentA,
+        double elapsedSeconds,
+        double capacitanceF,
+        double noLoadVoltageV,
+        double sourceResistanceOhm,
+        double maximumRectifierCurrentA,
+        double maximumVoltageV)
+    {
+        if (elapsedSeconds <= 0 || capacitanceF <= 0 || sourceResistanceOhm <= 0)
+        {
+            return Math.Clamp(initialVoltageV, 0, maximumVoltageV);
+        }
+
+        double voltage = Math.Clamp(initialVoltageV, 0, maximumVoltageV);
+        double remaining = elapsedSeconds;
+        double currentLimit = Math.Max(0, maximumRectifierCurrentA);
+        double kneeVoltage = Math.Max(
+            0,
+            noLoadVoltageV - currentLimit * sourceResistanceOhm);
+        double timeConstant = sourceResistanceOhm * capacitanceF;
+
+        for (int segment = 0; segment < 4 && remaining > 1e-12; segment++)
+        {
+            if (voltage >= noLoadVoltageV)
+            {
+                if (trainLoadCurrentA <= 0)
+                {
+                    voltage -= trainLoadCurrentA * remaining / capacitanceF;
+                    break;
+                }
+
+                double timeToSourceConduction =
+                    (voltage - noLoadVoltageV) * capacitanceF / trainLoadCurrentA;
+                if (timeToSourceConduction >= remaining)
+                {
+                    voltage -= trainLoadCurrentA * remaining / capacitanceF;
+                    break;
+                }
+
+                voltage = noLoadVoltageV;
+                remaining -= timeToSourceConduction;
+                continue;
+            }
+
+            if (voltage <= kneeVoltage)
+            {
+                double slopeA = currentLimit - trainLoadCurrentA;
+                if (slopeA <= 0)
+                {
+                    voltage += slopeA * remaining / capacitanceF;
+                    break;
+                }
+
+                double timeToUnsaturatedRegion =
+                    (kneeVoltage - voltage) * capacitanceF / slopeA;
+                if (timeToUnsaturatedRegion >= remaining)
+                {
+                    voltage += slopeA * remaining / capacitanceF;
+                    break;
+                }
+
+                voltage = kneeVoltage;
+                remaining -= timeToUnsaturatedRegion;
+                continue;
+            }
+
+            double equilibriumVoltage = noLoadVoltageV -
+                                       trainLoadCurrentA * sourceResistanceOhm;
+            if (trainLoadCurrentA < 0 && equilibriumVoltage > noLoadVoltageV)
+            {
+                double crossingRatio =
+                    (equilibriumVoltage - noLoadVoltageV) /
+                    (equilibriumVoltage - voltage);
+                double timeToDiodeCutoff = -timeConstant * Math.Log(crossingRatio);
+                if (timeToDiodeCutoff < remaining)
+                {
+                    voltage = noLoadVoltageV;
+                    remaining -= timeToDiodeCutoff;
+                    continue;
+                }
+            }
+            else if (trainLoadCurrentA > currentLimit && equilibriumVoltage < kneeVoltage)
+            {
+                double crossingRatio =
+                    (equilibriumVoltage - kneeVoltage) /
+                    (equilibriumVoltage - voltage);
+                double timeToCurrentLimit =
+                    -timeConstant * Math.Log(crossingRatio);
+                if (timeToCurrentLimit < remaining)
+                {
+                    voltage = kneeVoltage;
+                    remaining -= timeToCurrentLimit;
+                    continue;
+                }
+            }
+
+            voltage = equilibriumVoltage +
+                      (voltage - equilibriumVoltage) *
+                      Math.Exp(-remaining / timeConstant);
+            break;
+        }
+
+        return Math.Clamp(voltage, 0, maximumVoltageV);
+    }
 
     /// <summary>Calculates train pantograph voltage from weighted substations and feeder voltage drops.</summary>
     public static double TrainVoltageV(
