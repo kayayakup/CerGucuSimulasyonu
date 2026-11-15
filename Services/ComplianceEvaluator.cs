@@ -28,16 +28,11 @@ public sealed class ComplianceEvaluator
             case "MinimumTrainVoltage":
             {
                 double observed = result.MinimumTrainVoltageV;
-                ComplianceStatus status = observed >= 1000
-                    ? ComplianceStatus.Pass
-                    : ComplianceStatus.Fail;
                 return new ComplianceResult(
                     reference,
-                    status,
+                    ComplianceStatus.Review,
                     $"{observed.ToString("0.0", CultureInfo.InvariantCulture)} V",
-                    status == ComplianceStatus.Pass
-                        ? "Kaydedilen minimum tren gerilimi 1000 V esiginin ustundedir."
-                        : "Kaydedilen minimum tren gerilimi 1000 V esiginin altindadir.");
+                    "Olculen minimum gerilim kaydedildi; standart baskisi, zaman esikleri ve uygulama kosullari dogrulanmadan PASS/FAIL verilemez.");
             }
             case "MaximumSubstationLoad":
             {

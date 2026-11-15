@@ -11,6 +11,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Scripts\**\*.cs" />
+    <Compile Remove="Tests\**\*.cs" />
+    <Page Remove="Scripts\**\*.xaml" />
+    <ApplicationDefinition Remove="Scripts\**\*.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="MaterialDesignThemes" Version="5.3.2" />
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />

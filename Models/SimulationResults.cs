@@ -10,6 +10,7 @@ public sealed record TrainSnapshot(
     double PositionM,
     double SpeedKmh,
     double AccelerationMps2,
+    double MechanicalBrakeEffortKn,
     double PowerKw,
     double CurrentA,
     double VoltageV,

@@ -392,19 +392,19 @@
                                         <UniformGrid Columns="2" Margin="0,2">
                                             <Border Background="#111220" CornerRadius="6" Padding="8" Margin="2">
                                                 <StackPanel>
-                                                    <TextBlock Text="Toplam Çekilen Güç" Foreground="#94A3B8" FontSize="10"/>
+                                                    <TextBlock Text="Tren Cer Motoru Çekiş Gücü" Foreground="#94A3B8" FontSize="10"/>
                                                     <TextBlock Text="{Binding ToplamCekilenGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="14" Foreground="#F59E0B"/>
                                                 </StackPanel>
                                             </Border>
                                             <Border Background="#111220" CornerRadius="6" Padding="8" Margin="2">
                                                 <StackPanel>
-                                                    <TextBlock Text="Rejeneratif Güç" Foreground="#94A3B8" FontSize="10"/>
+                                                    <TextBlock Text="Tren Rejeneratif Motor Gücü" Foreground="#94A3B8" FontSize="10"/>
                                                     <TextBlock Text="{Binding ToplamRejeneratifGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="14" Foreground="#34D399"/>
                                                 </StackPanel>
                                             </Border>
                                             <Border Background="#111220" CornerRadius="6" Padding="8" Margin="2">
                                                 <StackPanel>
-                                                    <TextBlock Text="Net Şebeke Yükü" Foreground="#94A3B8" FontSize="10"/>
+                                                    <TextBlock Text="Tren Pantograf Net Gücü (yardımcılar dahil)" Foreground="#94A3B8" FontSize="10"/>
                                                     <TextBlock Text="{Binding NetSistemGucuKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="14" Foreground="#38BDF8"/>
                                                 </StackPanel>
                                             </Border>
@@ -417,11 +417,11 @@
                                         </UniformGrid>
 
                                         <Grid Margin="0,6,0,2">
-                                            <TextBlock Text="Toplam Tüketilen Enerji:" Foreground="#9CA3AF" FontSize="11"/>
+                                            <TextBlock Text="Tren Pantograf Net Tüketimi:" Foreground="#9CA3AF" FontSize="11"/>
                                             <TextBlock Text="{Binding ToplamTuketilenEnerjiKwh, StringFormat='{}{0:N3} kWh'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/>
                                         </Grid>
                                         <Grid Margin="0,2">
-                                            <TextBlock Text="Geri Kazanılan Enerji:" Foreground="#9CA3AF" FontSize="11"/>
+                                            <TextBlock Text="Tren Rejeneratif Üretimi (şebekeye aktarım doğrulanmaz):" Foreground="#9CA3AF" FontSize="11"/>
                                             <TextBlock Text="{Binding ToplamGeriKazanilanEnerjiKwh, StringFormat='{}{0:N3} kWh'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/>
                                         </Grid>
                                         <Grid Margin="0,2">
@@ -508,9 +508,10 @@
                                                             </StackPanel>
                                                         </Grid>
 
-                                                        <Grid Margin="0,2"><TextBlock Text="Anlık Konum (Hat KM):" Foreground="#9CA3AF" FontSize="11"/><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"><TextBlock.Text><MultiBinding StringFormat="{}{0:N0} m ({1:N3} km)"><Binding Path="Konum"/><Binding Path="Konum" ConverterParameter="1000"/></MultiBinding></TextBlock.Text></TextBlock></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Anlık Konum:" Foreground="#9CA3AF" FontSize="11"/><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"><TextBlock.Text><MultiBinding StringFormat="{}{0:N0} m ({1:N3} km)"><Binding Path="Konum"/><Binding Path="KonumKm"/></MultiBinding></TextBlock.Text></TextBlock></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Hat &amp; Seyir Yönü:" Foreground="#9CA3AF" FontSize="11"/><TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"><TextBlock.Text><MultiBinding StringFormat="{}{0} ({1})"><Binding Path="HatTipi"/><Binding Path="Yon"/></MultiBinding></TextBlock.Text></TextBlock></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="İvmelenme:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding Ivme, StringFormat='{}{0:N2} m/s²'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Mekanik Fren Kuvveti:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding AnlikMekanikFrenKuvvetiKn, StringFormat='{}{0:N1} kN'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2">
                                                             <TextBlock Text="Limit Kontrolü:" Foreground="#9CA3AF" FontSize="11"/>
                                                             <TextBlock Text="{Binding LimitStatus}" HorizontalAlignment="Right" FontWeight="Bold" FontSize="10">
@@ -532,8 +533,8 @@
                                                         <Grid Margin="0,2"><TextBlock Text="Yolcu Yükü:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding YolcuSayisi, StringFormat='{}{0} Yolcu'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#60A5FA" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Sonraki İstasyon:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding SonrakiIstasyon}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Kalan Mesafe:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding SonrakiIstasyonMesafe, StringFormat='{}{0:N0} m'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Besleyen DC Trafo:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding EnYakinTrafo}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#C084FC" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Tüketilen Enerji:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding ToplamTuketilenEnerjiKwh, StringFormat='{}{0:N3} kWh'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#F59E0B" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Baskın Besleyen DC Trafo:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding EnYakinTrafo}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#C084FC" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2"><TextBlock Text="Pantograf Net Tüketimi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding ToplamTuketilenEnerjiKwh, StringFormat='{}{0:N3} kWh'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#F59E0B" FontSize="11"/></Grid>
                                                     </StackPanel>
                                                 </DataTemplate>
 
@@ -599,7 +600,17 @@
                                                         <Grid Margin="0,2"><TextBlock Text="Fider Kablo Direnci:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding FiderKabloDirenci, StringFormat='{}{0:N1} mΩ'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Geri Dönüş Kablo Direnci:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding GeriDonusKabloDirenci, StringFormat='{}{0:N1} mΩ'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="White" FontSize="11"/></Grid>
                                                         <Grid Margin="0,2"><TextBlock Text="Beslenen Aktif Tren:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding BeslenenTrenSayisi, StringFormat='{}{0} Tren'}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
-                                                        <Grid Margin="0,2"><TextBlock Text="Nominal Güç Kapasitesi:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="3300 kVA / 3000 kW" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11"/></Grid>
+                                                        <Grid Margin="0,2">
+                                                            <TextBlock Text="Nominal Güç Kapasitesi:" Foreground="#9CA3AF" FontSize="11"/>
+                                                            <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#34D399" FontSize="11">
+                                                                <TextBlock.Text>
+                                                                    <MultiBinding StringFormat="{}{0:N0} kVA / {1:N0} kW">
+                                                                        <Binding Path="DataContext.Data.CerKatener.TrafoGucu" RelativeSource="{RelativeSource AncestorType={x:Type Window}}"/>
+                                                                        <Binding Path="DataContext.Data.CerKatener.DogrultucuGucu" RelativeSource="{RelativeSource AncestorType={x:Type Window}}"/>
+                                                                    </MultiBinding>
+                                                                </TextBlock.Text>
+                                                            </TextBlock>
+                                                        </Grid>
                                                     </StackPanel>
                                                 </DataTemplate>
 
@@ -745,13 +756,13 @@
                                                         <UniformGrid Columns="2" Margin="0,2,0,6">
                                                             <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
                                                                 <StackPanel>
-                                                                    <TextBlock Text="⚡ Seksiyon Toplam Güç" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="Tren pantograf net güçleri toplamı" Foreground="#94A3B8" FontSize="9.5"/>
                                                                     <TextBlock Text="{Binding AnlikToplamGucKw, StringFormat='{}{0:N1} kW'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
                                                                 </StackPanel>
                                                             </Border>
                                                             <Border Background="#161827" CornerRadius="6" Padding="6" Margin="2">
                                                                 <StackPanel>
-                                                                    <TextBlock Text="⚡ Seksiyon I" Foreground="#94A3B8" FontSize="9.5"/>
+                                                                    <TextBlock Text="Tren pantograf akımları cebirsel toplamı" Foreground="#94A3B8" FontSize="9.5"/>
                                                                     <TextBlock Text="{Binding AnlikToplamAkimA, StringFormat='{}{0:N1} A'}" FontWeight="Bold" FontSize="13.5" Foreground="#F59E0B"/>
                                                                 </StackPanel>
                                                             </Border>
@@ -775,7 +786,7 @@
                                                         <Grid Margin="0,2"><TextBlock Text="Montaj Karnesi Etapları:" Foreground="#9CA3AF" FontSize="11"/><TextBlock Text="{Binding MontajEtaplari}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#FACC15" FontSize="11"/></Grid>
 
                                                         <Border Background="#101827" CornerRadius="6" Padding="8" Margin="0,6,0,0">
-                                                            <TextBlock Text="📋 EK-1 Hat-01 Montaj Karnesi standardına göre seksiyonlar izoleli overlap ayırıcılar (PE 938) ile ayrılmış olup cer gücü bu bölgelere göre hesaplanmaktadır." Foreground="#94A3B8" FontSize="10.5" TextWrapping="Wrap"/>
+                                                            <TextBlock Text="Güç ve akım, bu aralıktaki trenlerin pantograf ölçülerinin toplamıdır; gerçek seksiyon kol akımı değildir. Mevcut elektrik çözümü iletkenlik-ağırlıklı yaklaşımdır; izoleli ayırıcılar ve paralel ray bağlantıları ağ topolojisinde çözülmez." Foreground="#94A3B8" FontSize="10.5" TextWrapping="Wrap"/>
                                                         </Border>
                                                     </StackPanel>
                                                 </DataTemplate>
@@ -1108,7 +1119,7 @@
                                             <TextBlock Text="TM DC Bara Eşdeğer Kapasitansı (F, varsayım)" VerticalAlignment="Center" Foreground="#C5C7D9"/>
                                             <TextBox Grid.Column="1" Text="{Binding Data.CerKatener.DcBaraEsdegerKapasitansiFarad, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right"/>
                                         </Grid>
-                                        <TextBlock Text="Not: 12 darbeli, iki paralel diyot köprüsü belgedendir; diyotlu doğrultucu AC'ye ters güç veremez. Her TM'nin DC bara kapasitansı belgede yoktur; geçici gerilim için 0,1 F düzenlenebilir varsayım kullanılır. Dalgalanma şekli, fren kıyıcısı ve AC'ye rejenerasyon modellenmez. VLD'nin 40–170 V ayarı / 120 V sınırı pantograf gerilimi değil, ray-toprak erişilebilir gerilimi içindir."
+                                        <TextBlock Text="Not: 12 darbeli, iki paralel diyot köprüsü belgedendir; diyotlu doğrultucu AC'ye ters güç veremez. Her TM'nin DC bara kapasitansı belgede yoktur; geçici gerilim için 0,1 F düzenlenebilir varsayım kullanılır. Dalgalanma şekli ve fren kıyıcısı modellenmez. Elektrik ağı iletkenlik-ağırlıklı yaklaşık çözümdür; KCL/KVL düğüm çözümü değildir, seksiyon ayırıcıları ve ray paralellemeleri topolojiye dahil edilmez. Ray-toprak gerilimi, kaçak akım ve VLD çalışma durumu mevcut bağlantı/ölçüm verileri yetersiz olduğundan hesaplanmaz. VLD 40–170 V ayarı / 120 V sınırı pantograf gerilimi değil, ray-toprak erişilebilir gerilimi içindir."
                                                    Foreground="#FBBF24" FontSize="10" TextWrapping="Wrap" Margin="2,6,2,0"/>
                                     </StackPanel>
                                 </Border>

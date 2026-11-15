@@ -26,7 +26,14 @@ namespace CerGucuSimulasyonu.Services
         private sealed record TrainPowerDemand(
             double TractionEffortKn,
             double RegenerativeEffortKn,
+            double RequiredBrakingEffortKn,
             double AuxiliaryPowerKw);
+
+        private sealed record TrainMotionStart(
+            double PositionM,
+            double SpeedKmh,
+            string Direction,
+            double DistanceKm);
 
         private sealed record TrainElectricalState(
             TrenKonumu Train,
@@ -38,7 +45,8 @@ namespace CerGucuSimulasyonu.Services
             double RegenerativeEffortKn,
             double TractionPowerKw,
             double RegenerativePowerKw,
-            double NetPowerKw);
+            double NetPowerKw,
+            double MechanicalBrakeEffortKn);
 
         private sealed record ElectricalSolution(
             Dictionary<TrenKonumu, TrainPowerFlow> PowerFlows,
@@ -77,6 +85,11 @@ namespace CerGucuSimulasyonu.Services
         /// </summary>
         public void AdvanceOneStep(double dt)
         {
+            if (!double.IsFinite(dt) || dt <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(dt));
+            }
+
             double elapsed = 0;
             while (elapsed < dt)
             {
@@ -101,10 +114,17 @@ namespace CerGucuSimulasyonu.Services
             double auxiliaryPowerKw = SimulationFormulas.AuxiliaryPowerKw(
                 _data.Tren.YardimciGuc > 0 ? _data.Tren.YardimciGuc : 300.0,
                 _data.Tren.YardimciGucKullanimOrani);
+            var motionStarts = new Dictionary<TrenKonumu, TrainMotionStart>();
 
             // 1. Kinematic update for each train
             foreach (var tren in _data.Trenler)
             {
+                var motionStart = new TrainMotionStart(
+                    tren.Konum,
+                    tren.AnlikHiz,
+                    tren.Yon,
+                    tren.KatEdilenMesafeKm);
+
                 // Dispatch check for multi-train headway (e.g. 0s, 90s, 180s)
                 if (!tren.IsDispatched)
                 {
@@ -124,6 +144,7 @@ namespace CerGucuSimulasyonu.Services
                         tren.AnlikPantografAkimiA = 0;
                         tren.AnlikCekisKuvvetiKn = 0;
                         tren.AnlikRejeneratifFrenKuvvetiKn = 0;
+                        tren.AnlikMekanikFrenKuvvetiKn = 0;
                         tren.Durum = $"SEFER BEKLİYOR (~{Math.Max(0, tren.DispatchTimeSeconds - _simTotalElapsed):0} sn)";
                         tren.IsletimDurumu = "SEFER BEKLİYOR";
                         tren.IsOutOfSpec = false;
@@ -281,22 +302,17 @@ namespace CerGucuSimulasyonu.Services
                 }
                 else
                 {
-                    double resistanceKn = CalculateResistanceKn(tren, trainWeightTon, tren.AnlikHiz);
-                    double coastingAccelerationMps2 = -resistanceKn / effectiveTrainMassTon;
-                    double previousSpeed = tren.AnlikHiz;
-                    tren.AnlikHiz = Math.Max(
+                    double appliedAcceleration = SimulationFormulas.JerkLimitedAccelerationMps2(
+                        tren.Ivme,
                         0,
-                        tren.AnlikHiz +
-                        SimulationFormulas.SpeedRateKmhPerSecond(coastingAccelerationMps2) * dt);
-                    tren.Ivme = Math.Round(
-                        SimulationFormulas.AccelerationFromSpeedChangeMps2(
-                            tren.AnlikHiz - previousSpeed,
-                            dt),
-                        2);
-                    tren.Durum = "BOŞTA SEYİR (COASTING)";
+                        jerkLimit,
+                        dt);
+                    ApplyAcceleration(tren, appliedAcceleration, dt);
+                    tren.Durum = "SABİT HIZ KONTROLÜ";
                 }
 
                 // Position update
+                motionStarts[tren] = motionStart;
                 double deltaDistance = SimulationFormulas.DistanceMeters(tren.AnlikHiz, dt);
                 tren.KatEdilenMesafeKm += SimulationFormulas.MetersToKilometers(deltaDistance);
                 if (tren.Yon == "ileri")
@@ -439,13 +455,33 @@ namespace CerGucuSimulasyonu.Services
                 train.KatenerGerilimiV = Math.Round(voltage, 1);
                 train.AnlikCekisKuvvetiKn = flow.TractionEffortKn;
                 train.AnlikRejeneratifFrenKuvvetiKn = flow.RegenerativeEffortKn;
+                train.AnlikMekanikFrenKuvvetiKn = flow.MechanicalBrakeEffortKn;
                 train.CekilenGucKw = Math.Round(signedTractionPower, 1);
                 train.CekilenAkimA = Math.Round(signedTractionCurrent, 1);
                 train.AnlikPantografGucuKw = Math.Round(flow.NetPowerKw, 1);
                 train.AnlikPantografAkimiA = Math.Round(pantographCurrent, 1);
+                train.EnYakinTrafo = state.Feeds
+                    .OrderByDescending(feed => feed.Weight)
+                    .FirstOrDefault()
+                    ?.Substation.Ad ?? "Besleme yok";
+                UpdateMotionFromElectricalForces(
+                    train,
+                    flow,
+                    state.Demand,
+                    motionStarts,
+                    trainWeightTon,
+                    effectiveTrainMassTon,
+                    maxLine,
+                    dt);
                 train.IsletimDurumu = DetermineOperatingMode(state, flow);
+                if (train.Durum.StartsWith("CER KUVVETİ/AKIMI SINIRLI", StringComparison.Ordinal))
+                {
+                    train.IsletimDurumu = "CER KUVVETİ/AKIMI SINIRLI";
+                }
                 UpdateTrainLimitStatus(train, minimumOperatingVoltage, maximumOperatingVoltage);
             }
+
+            UpdateCatenarySectionMetrics();
 
             // 3. Publish transformer output using the solved current and voltage.
             foreach (var substation in _data.TrafoMerkezleri)
@@ -744,33 +780,25 @@ namespace CerGucuSimulasyonu.Services
         {
             double resistanceKn = CalculateResistanceKn(train, trainWeightTon, train.AnlikHiz);
 
-            if (train.Durum.StartsWith("BOŞTA SEYİR", StringComparison.Ordinal))
+            if (train.Durum.StartsWith("BOŞTA SEYİR", StringComparison.Ordinal) ||
+                train.Durum.StartsWith("İSTASYONDA", StringComparison.Ordinal) ||
+                !train.IsDispatched)
             {
-                return new TrainPowerDemand(0, 0, auxiliaryPowerKw);
+                return new TrainPowerDemand(0, 0, 0, auxiliaryPowerKw);
             }
 
-            if (train.Ivme < -0.05)
-            {
-                return new TrainPowerDemand(
-                    0,
-                    train.AnlikHiz < MechanicalBrakeTransitionSpeedKmh
-                        ? 0
-                        : SimulationFormulas.BrakingEffortKn(effectiveTrainMassTon, train.Ivme),
-                    auxiliaryPowerKw);
-            }
-
-            if (train.Ivme > 0.05)
-            {
-                double accelerationEffortKn = SimulationFormulas.InertialForceKn(
-                    effectiveTrainMassTon,
-                    Math.Max(0, train.Ivme));
-                return new TrainPowerDemand(
-                    SimulationFormulas.RequiredTractionEffortKn(accelerationEffortKn, resistanceKn),
-                    0,
-                    auxiliaryPowerKw);
-            }
-
-            return new TrainPowerDemand(0, 0, auxiliaryPowerKw);
+            var requiredEfforts = SimulationFormulas.RequiredEffortsKn(
+                effectiveTrainMassTon,
+                train.Ivme,
+                resistanceKn);
+            double regenerativeEffortKn = train.AnlikHiz >= MechanicalBrakeTransitionSpeedKmh
+                ? requiredEfforts.BrakingEffortKn
+                : 0;
+            return new TrainPowerDemand(
+                requiredEfforts.TractionEffortKn,
+                regenerativeEffortKn,
+                requiredEfforts.BrakingEffortKn,
+                auxiliaryPowerKw);
         }
 
         private static string DetermineOperatingMode(
@@ -785,7 +813,13 @@ namespace CerGucuSimulasyonu.Services
 
             if (train.Durum.StartsWith("FRENLİYOR", StringComparison.Ordinal))
             {
-                if (train.AnlikHiz < MechanicalBrakeTransitionSpeedKmh)
+                if (flow.RegenerativeEffortKn > 0.1 &&
+                    flow.MechanicalBrakeEffortKn > 0.1)
+                {
+                    return "REJENERATİF + MEKANİK FREN";
+                }
+
+                if (flow.MechanicalBrakeEffortKn > 0.1)
                 {
                     return "MEKANİK FREN";
                 }
@@ -831,7 +865,13 @@ namespace CerGucuSimulasyonu.Services
         {
             if (state.Feeds.Count == 0 || voltageV <= 0)
             {
-                return new TrainPowerFlow(0, 0, 0, 0, 0);
+                return new TrainPowerFlow(
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    state.Demand.RequiredBrakingEffortKn);
             }
 
             double speedMs = SimulationFormulas.SpeedMetersPerSecond(state.Train.AnlikHiz);
@@ -855,6 +895,9 @@ namespace CerGucuSimulasyonu.Services
                 regenerativeForceKn,
                 state.Train.AnlikHiz,
                 efficiency);
+            double mechanicalBrakeForceKn = Math.Max(
+                0,
+                state.Demand.RequiredBrakingEffortKn - regenerativeForceKn);
             double netPowerKw = SimulationFormulas.NetPantographPowerKw(
                 tractionPowerKw,
                 state.Demand.AuxiliaryPowerKw,
@@ -864,7 +907,92 @@ namespace CerGucuSimulasyonu.Services
                 regenerativeForceKn,
                 tractionPowerKw,
                 regenerativePowerKw,
-                netPowerKw);
+                netPowerKw,
+                mechanicalBrakeForceKn);
+        }
+
+        private void UpdateMotionFromElectricalForces(
+            TrenKonumu train,
+            TrainPowerFlow flow,
+            TrainPowerDemand demand,
+            IReadOnlyDictionary<TrenKonumu, TrainMotionStart> motionStarts,
+            double trainWeightTon,
+            double effectiveTrainMassTon,
+            double maximumLinePositionM,
+            double elapsedSeconds)
+        {
+            if (elapsedSeconds <= 0 ||
+                !motionStarts.TryGetValue(train, out TrainMotionStart? start) ||
+                train.Yon != start.Direction ||
+                effectiveTrainMassTon <= 0)
+            {
+                return;
+            }
+
+            double resistanceKn = CalculateResistanceKn(
+                train,
+                trainWeightTon,
+                train.AnlikHiz);
+            double actualAccelerationMps2 =
+                (flow.TractionEffortKn -
+                 flow.RegenerativeEffortKn -
+                 flow.MechanicalBrakeEffortKn -
+                 resistanceKn) /
+                effectiveTrainMassTon;
+            double actualSpeedKmh = Math.Max(
+                0,
+                start.SpeedKmh +
+                SimulationFormulas.SpeedRateKmhPerSecond(actualAccelerationMps2) *
+                elapsedSeconds);
+            double distanceM = SimulationFormulas.DistanceMeters(
+                (start.SpeedKmh + actualSpeedKmh) / 2.0,
+                elapsedSeconds);
+
+            train.AnlikHiz = actualSpeedKmh;
+            train.Ivme = SimulationFormulas.AccelerationFromSpeedChangeMps2(
+                actualSpeedKmh - start.SpeedKmh,
+                elapsedSeconds);
+            train.Konum = start.Direction == "ileri"
+                ? Math.Clamp(start.PositionM + distanceM, 0, maximumLinePositionM)
+                : Math.Clamp(start.PositionM - distanceM, 0, maximumLinePositionM);
+            train.KatEdilenMesafeKm = start.DistanceKm +
+                SimulationFormulas.MetersToKilometers(distanceM);
+
+            if (demand.TractionEffortKn > flow.TractionEffortKn + 0.1 &&
+                actualSpeedKmh < train.HedefHiz - SpeedControlHysteresisKmh)
+            {
+                train.Durum = "CER KUVVETİ/AKIMI SINIRLI";
+            }
+        }
+
+        private void UpdateCatenarySectionMetrics()
+        {
+            foreach (KatenerSeksiyonu section in _data.KatenerSeksiyonlari)
+            {
+                double sectionStartM = Math.Min(section.BaslangicKm, section.BitisKm);
+                double sectionEndM = Math.Max(section.BaslangicKm, section.BitisKm);
+                bool includesLineEnd = sectionEndM >= _data.HatUzunlugu;
+                TrenKonumu[] trains = _data.Trenler
+                    .Where(train =>
+                        train.IsDispatched &&
+                        train.IsletimDurumu != "SEFER BEKLİYOR" &&
+                        train.HatTipi == section.HatTipi &&
+                        train.Konum >= sectionStartM &&
+                        (train.Konum < sectionEndM ||
+                         (includesLineEnd && train.Konum <= sectionEndM)))
+                    .ToArray();
+
+                section.AnlikToplamGucKw = Math.Round(
+                    trains.Sum(train => train.AnlikPantografGucuKw),
+                    1);
+                section.AnlikToplamAkimA = Math.Round(
+                    trains.Sum(train => train.AnlikPantografAkimiA),
+                    1);
+                section.OrtalamaGerilimV = trains.Length > 0
+                    ? Math.Round(trains.Average(train => train.KatenerGerilimiV), 1)
+                    : 0;
+                section.AktifTrenSayisi = trains.Length;
+            }
         }
 
         private IReadOnlyList<SubstationFeed> GetSubstationFeeds(TrenKonumu train)

@@ -522,7 +522,7 @@ namespace CerGucuSimulasyonu.ViewModels
             StopSimulation();
             StatusText = "Toplu senaryo koşusu başlatıldı...";
             var runner = new ScenarioRunner();
-            ScenarioResults = await runner.RunAsync(Data, ScenarioCatalog.CreateDefault());
+            ScenarioResults = await runner.RunAsync(Data, ScenarioCatalog.CreateDefault(Data));
             if (ScenarioResults.Count > 0)
             {
                 LastRunResult = ScenarioResults[0];
@@ -610,23 +610,27 @@ namespace CerGucuSimulasyonu.ViewModels
 
         private void UpdateUiMetricsAndCharts()
         {
-            double totalTractionKw = Data.Trenler
-                .Where(t => t.AnlikPantografGucuKw > 0)
-                .Sum(t => t.AnlikPantografGucuKw);
-            double totalRegenKw = Data.Trenler
+            TrenKonumu[] activeTrains = Data.Trenler
+                .Where(train => train.IsDispatched && train.IsletimDurumu != "SEFER BEKLİYOR")
+                .ToArray();
+            double totalTractionKw = activeTrains
+                .Where(train => train.CekilenGucKw > 0)
+                .Sum(train => train.CekilenGucKw);
+            double totalRegenKw = activeTrains
                 .Where(t => t.CekilenGucKw < 0)
                 .Sum(t => Math.Abs(t.CekilenGucKw));
 
             ToplamCekilenGucKw = Math.Round(totalTractionKw, 1);
             ToplamRejeneratifGucKw = Math.Round(totalRegenKw, 1);
             NetSistemGucuKw = Math.Round(
-                Data.Trenler.Sum(t => t.AnlikPantografGucuKw),
+                activeTrains.Sum(t => t.AnlikPantografGucuKw),
                 1);
 
-            ToplamTuketilenEnerjiKwh = Math.Round(Data.Trenler.Sum(t => t.ToplamTuketilenEnerjiKwh), 3);
-            ToplamGeriKazanilanEnerjiKwh = Math.Round(Data.Trenler.Sum(t => t.ToplamRejeneratifEnerjiKwh), 3);
+            ToplamTuketilenEnerjiKwh = Math.Round(activeTrains.Sum(t => t.ToplamTuketilenEnerjiKwh), 3);
+            ToplamGeriKazanilanEnerjiKwh = Math.Round(activeTrains.Sum(t => t.ToplamRejeneratifEnerjiKwh), 3);
 
             var peakTrafo = Data.TrafoMerkezleri
+                .Where(substation => substation.Durum != "DEVRE DIŞI")
                 .OrderByDescending(t => Math.Max(t.YuklenmeYuzdesi, t.TrafoYuklenmeYuzdesi))
                 .FirstOrDefault();
             EnYuksekTrafoYukYuzdesi = peakTrafo == null
@@ -634,13 +638,23 @@ namespace CerGucuSimulasyonu.ViewModels
                 : Math.Max(peakTrafo.YuklenmeYuzdesi, peakTrafo.TrafoYuklenmeYuzdesi);
             EnCokYuklenenTrafoAdi = EnYuksekTrafoYukYuzdesi > 0 ? peakTrafo?.Ad ?? "-" : "-";
 
-            if (Data.Trenler.Count > 0)
+            TrenKonumu[] poweredTrains = activeTrains
+                .Where(train => train.KatenerGerilimiV > 0)
+                .ToArray();
+            if (poweredTrains.Length > 0)
             {
-                OrtalamaKatenerGerilimiV = Math.Round(Data.Trenler.Average(t => t.KatenerGerilimiV), 1);
-                MinHatGerilimiV = Math.Round(Data.Trenler.Min(t => t.KatenerGerilimiV), 1);
-                OrtalamaTrenHiziKmh = Math.Round(Data.Trenler.Average(t => t.AnlikHiz), 1);
-                ToplamTasınanYolcu = Data.Trenler.Sum(t => t.YolcuSayisi);
+                OrtalamaKatenerGerilimiV = Math.Round(poweredTrains.Average(t => t.KatenerGerilimiV), 1);
+                MinHatGerilimiV = Math.Round(poweredTrains.Min(t => t.KatenerGerilimiV), 1);
             }
+            else
+            {
+                OrtalamaKatenerGerilimiV = 0;
+                MinHatGerilimiV = 0;
+            }
+            OrtalamaTrenHiziKmh = activeTrains.Length > 0
+                ? Math.Round(activeTrains.Average(train => train.AnlikHiz), 1)
+                : 0;
+            ToplamTasınanYolcu = activeTrains.Sum(train => train.YolcuSayisi);
 
             foreach (var ist in Data.Istasyonlar)
             {

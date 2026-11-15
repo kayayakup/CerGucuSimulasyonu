@@ -39,8 +39,8 @@ public sealed class WordReportExporter
                 new[] { "Minimum tren gerilimi", $"{result.MinimumTrainVoltageV:0.0} V" },
                 new[] { "Maksimum doğrultucu yüklenmesi", $"{result.MaximumRectifierLoadPercent:0.0} %" },
                 new[] { "Maksimum trafo yüklenmesi", $"{result.MaximumTransformerLoadPercent:0.0} %" },
-                new[] { "Tüketilen enerji", $"{result.TotalConsumedEnergyKwh:0.00} kWh" },
-                new[] { "Geri kazanılan enerji", $"{result.TotalRecoveredEnergyKwh:0.00} kWh" }
+                new[] { "Pantograf net tüketimi", $"{result.TotalConsumedEnergyKwh:0.00} kWh" },
+                new[] { "Tren rejeneratif üretimi (şebekeye aktarım doğrulanmaz)", $"{result.TotalRecoveredEnergyKwh:0.00} kWh" }
             });
 
         AddParagraph(body, "Standart Referansları ve Uygunluk", "Heading1");

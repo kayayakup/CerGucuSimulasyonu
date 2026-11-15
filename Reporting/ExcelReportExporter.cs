@@ -40,8 +40,8 @@ public sealed class ExcelReportExporter
             new[] { "Min. tren gerilimi [V]", result.MinimumTrainVoltageV.ToString("0.0") },
             new[] { "Maks. doğrultucu yüklenmesi [%]", result.MaximumRectifierLoadPercent.ToString("0.0") },
             new[] { "Maks. trafo yüklenmesi [%]", result.MaximumTransformerLoadPercent.ToString("0.0") },
-            new[] { "Tüketilen enerji [kWh]", result.TotalConsumedEnergyKwh.ToString("0.00") },
-            new[] { "Geri kazanılan enerji [kWh]", result.TotalRecoveredEnergyKwh.ToString("0.00") }
+            new[] { "Pantograf net tüketimi [kWh]", result.TotalConsumedEnergyKwh.ToString("0.00") },
+            new[] { "Tren rejeneratif üretimi; şebekeye aktarım doğrulanmaz [kWh]", result.TotalRecoveredEnergyKwh.ToString("0.00") }
         };
         WriteTable(sheet, 6, 1, new[] { "Metrik", "Değer" }, rows);
         FormatSheet(sheet);
@@ -65,7 +65,7 @@ public sealed class ExcelReportExporter
             snapshot.AverageTrainSpeedKmh.ToString("0.0")
         }).ToArray();
         WriteTable(sheet, 1, 1,
-            new[] { "Saniye", "Cer [kW]", "Rejen. [kW]", "Net [kW]", "Tüketim [kWh]", "Geri kazanım [kWh]", "Min. gerilim [V]", "Ort. gerilim [V]", "Max. doğrultucu yük [%]", "Max. trafo yük [%]", "Ort. hız [km/h]" },
+            new[] { "Saniye", "Cer [kW]", "Tren rejeneratif üretimi [kW]", "Pantograf net güç [kW]", "Pantograf net tüketimi [kWh]", "Tren rejeneratif üretimi [kWh]", "Min. gerilim [V]", "Ort. gerilim [V]", "Max. doğrultucu yük [%]", "Max. trafo yük [%]", "Ort. hız [km/h]" },
             rows);
         FormatSheet(sheet);
     }
@@ -79,14 +79,15 @@ public sealed class ExcelReportExporter
         {
             entry.Second.ToString(), entry.Train.TrainName, entry.Train.Line, entry.Train.Direction,
             entry.Train.PositionM.ToString("0.0"), entry.Train.SpeedKmh.ToString("0.0"),
-            entry.Train.AccelerationMps2.ToString("0.00"), entry.Train.PowerKw.ToString("0.0"),
+            entry.Train.AccelerationMps2.ToString("0.00"), entry.Train.MechanicalBrakeEffortKn.ToString("0.0"),
+            entry.Train.PowerKw.ToString("0.0"),
             entry.Train.CurrentA.ToString("0.0"), entry.Train.VoltageV.ToString("0.0"),
             entry.Train.TractionPowerKw.ToString("0.0"), entry.Train.TractionCurrentA.ToString("0.0"),
             entry.Train.PassengerCount.ToString(), entry.Train.State, entry.Train.NearestSubstation,
             entry.Train.LimitStatus
         }).ToArray();
         WriteTable(sheet, 1, 1,
-            new[] { "Saniye", "Tren", "Hat", "Yön", "Konum [m]", "Hız [km/h]", "İvme [m/s²]", "Pantograf net güç [kW]", "Pantograf net I [A]", "Gerilim [V]", "Cer motor gücü (+/-) [kW]", "Cer motor I (+/-) [A]", "Yolcu", "Durum", "En yakın TM", "Limit Durumu" },
+            new[] { "Saniye", "Tren", "Hat", "Yön", "Konum [m]", "Hız [km/h]", "İvme [m/s²]", "Mekanik fren kuvveti [kN]", "Pantograf net güç [kW]", "Pantograf net I [A]", "Gerilim [V]", "Cer motor gücü (+/-) [kW]", "Cer motor I (+/-) [A]", "Yolcu", "Durum", "Baskın besleyen TM", "Limit Durumu" },
             rows);
         for (int index = 0; index < entries.Length; index++)
         {

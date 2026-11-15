@@ -330,6 +330,8 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private int _id;
         [ObservableProperty] private string _trenAdi = "Tren 01";
         [ObservableProperty] private double _konum = 0;
+        [JsonIgnore] public double KonumKm => Konum / 1000.0;
+        partial void OnKonumChanged(double value) => OnPropertyChanged(nameof(KonumKm));
         [ObservableProperty] private string _hatTipi = "H1"; // H1 veya H2
         [ObservableProperty] private string _yon = "ileri";  // ileri veya geri
         [ObservableProperty] private double _anlikHiz = 0;
@@ -347,6 +349,9 @@ namespace CerGucuSimulasyonu.Models
         [ObservableProperty] private double _cekilenAkimA = 0;
         [JsonIgnore] public double AnlikCekisKuvvetiKn { get; set; }
         [JsonIgnore] public double AnlikRejeneratifFrenKuvvetiKn { get; set; }
+        [ObservableProperty]
+        [property: JsonIgnore]
+        private double _anlikMekanikFrenKuvvetiKn;
         [ObservableProperty] private double _anlikPantografGucuKw = 0;
         [ObservableProperty] private double _anlikPantografAkimiA = 0;
         [ObservableProperty] private double _katenerGerilimiV = 1620;

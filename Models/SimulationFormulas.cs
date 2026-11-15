@@ -51,6 +51,18 @@ public static class SimulationFormulas
     public static double RequiredTractionEffortKn(double inertialForceKn, double resistanceKn) =>
         Math.Max(0, inertialForceKn + resistanceKn);
 
+    /// <summary>Splits the signed force required by the motion equation into traction and braking.</summary>
+    public static (double TractionEffortKn, double BrakingEffortKn) RequiredEffortsKn(
+        double effectiveMassTon,
+        double accelerationMps2,
+        double resistanceKn)
+    {
+        double requiredNetEffortKn = effectiveMassTon * accelerationMps2 + resistanceKn;
+        return (
+            Math.Max(0, requiredNetEffortKn),
+            Math.Max(0, -requiredNetEffortKn));
+    }
+
     /// <summary>Calculates braking effort needed to decelerate the effective train mass.</summary>
     public static double BrakingEffortKn(double effectiveMassTon, double decelerationMps2) =>
         effectiveMassTon * Math.Abs(decelerationMps2);
@@ -286,9 +298,9 @@ public static class SimulationFormulas
         double curveResistanceKn) =>
         davisResistanceKn + gradeResistanceKn + curveResistanceKn;
 
-    /// <summary>Calculates acceleration from net force and effective train mass.</summary>
+    /// <summary>Calculates signed acceleration from net force and effective train mass.</summary>
     public static double AccelerationMps2(double effortKn, double resistanceKn, double massTon) =>
-        massTon > 0 ? Math.Max(0, (effortKn - resistanceKn) / massTon) : 0;
+        massTon > 0 ? (effortKn - resistanceKn) / massTon : 0;
 
     /// <summary>Converts a speed change in km/h over elapsed seconds to acceleration in m/s².</summary>
     public static double AccelerationFromSpeedChangeMps2(double deltaSpeedKmh, double elapsedSeconds) =>

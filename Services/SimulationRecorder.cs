@@ -56,6 +56,10 @@ public sealed class SimulationRecorder
         {
             throw new InvalidOperationException("Start must be called before capturing simulation data.");
         }
+        if (!double.IsFinite(simulationTimeSeconds) || simulationTimeSeconds < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(simulationTimeSeconds));
+        }
 
         double trainConsumedEnergyKwh = data.Trenler.Sum(train => train.ToplamTuketilenEnerjiKwh);
         double trainRecoveredEnergyKwh = data.Trenler.Sum(train => train.ToplamRejeneratifEnerjiKwh);
@@ -135,6 +139,7 @@ public sealed class SimulationRecorder
             train.Konum,
             train.AnlikHiz,
             train.Ivme,
+            train.AnlikMekanikFrenKuvvetiKn,
             train.AnlikPantografGucuKw,
             train.AnlikPantografAkimiA,
             train.KatenerGerilimiV,
@@ -177,19 +182,30 @@ public sealed class SimulationRecorder
             section.OrtalamaGerilimV,
             section.AktifTrenSayisi)).ToArray();
 
-        double tractionPower = trains.Where(train => train.PowerKw > 0).Sum(train => train.PowerKw);
+        TrainSnapshot[] activeTrains = trains
+            .Where(train => !train.State.StartsWith("SEFER BEKLİYOR", StringComparison.Ordinal))
+            .ToArray();
+        TrainSnapshot[] poweredTrains = activeTrains
+            .Where(train => train.VoltageV > 0)
+            .ToArray();
+        double tractionPower = trains
+            .Where(train => train.TractionPowerKw > 0)
+            .Sum(train => train.TractionPowerKw);
         double regenerativePower = trains
             .Where(train => train.TractionPowerKw < 0)
             .Sum(train => -train.TractionPowerKw);
-        double netPower = trains.Sum(train => train.PowerKw);
-        double minimumVoltage = trains.Length == 0 ? 0 : trains.Min(train => train.VoltageV);
-        double averageVoltage = trains.Length == 0 ? 0 : trains.Average(train => train.VoltageV);
-        double averageSpeed = trains.Length == 0 ? 0 : trains.Average(train => train.SpeedKmh);
-        double maximumLoad = substations.Length == 0 ? 0 : substations.Max(substation => substation.LoadPercent);
+        double netPower = poweredTrains.Sum(train => train.PowerKw);
+        double minimumVoltage = poweredTrains.Length == 0 ? 0 : poweredTrains.Min(train => train.VoltageV);
+        double averageVoltage = poweredTrains.Length == 0 ? 0 : poweredTrains.Average(train => train.VoltageV);
+        double averageSpeed = activeTrains.Length == 0 ? 0 : activeTrains.Average(train => train.SpeedKmh);
+        SubstationSnapshot[] activeSubstations = substations
+            .Where(substation => substation.State != "DEVRE DIŞI")
+            .ToArray();
+        double maximumLoad = activeSubstations.Length == 0 ? 0 : activeSubstations.Max(substation => substation.LoadPercent);
         double maximumRectifierLoad = maximumLoad;
-        double maximumTransformerLoad = substations.Length == 0
+        double maximumTransformerLoad = activeSubstations.Length == 0
             ? 0
-            : substations.Max(substation => substation.TransformerLoadPercent);
+            : activeSubstations.Max(substation => substation.TransformerLoadPercent);
         return new SimulationSnapshot(
             second,
             tractionPower,

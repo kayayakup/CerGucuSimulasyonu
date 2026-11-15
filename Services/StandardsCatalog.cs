@@ -15,8 +15,8 @@ public static class StandardsCatalog
                 "Madde girilecek",
                 "Minimum hat/tren gerilimi ve esik gerilim sureleri",
                 "Minimum tren gerilimi",
-                ">= 1000 V veya proje limiti",
-                "Kaynak baskisi ve madde numarasi kullanici tarafindan dogrulanmalidir.",
+                "Uygulanabilir baski ve proje kosullarina gore",
+                "Kaynak baskisi, madde numarasi ve zaman esikleri dogrulanmadigindan bu metrik PASS/FAIL uretmez.",
                 "MinimumTrainVoltage"),
             new StandardReference(
                 "EN 50122-1",
